@@ -97,10 +97,7 @@ class DocumentChunk(SQLModel, table=True):
     file: File = Relationship(back_populates="chunks")
     entities: List["Entity"] = Relationship(back_populates="chunks", link_model=ChunkEntity)
     # Hierarchy relationships
-    children: List["DocumentChunk"] = Relationship(
-        back_populates="parent", 
-        sa_relationship_kwargs={"remote_side": "DocumentChunk.id"}
-    )
+    children: List["DocumentChunk"] = Relationship(back_populates="parent")
     parent: Optional["DocumentChunk"] = Relationship(
         back_populates="children", 
         sa_relationship_kwargs={"remote_side": "DocumentChunk.id"}
