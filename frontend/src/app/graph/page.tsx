@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Connection, Edge } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { api } from "@/lib/api"
-import { Loader2, Share2, Search, Info } from "lucide-react"
+import { Loader2, Share2, Search, Info, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,8 +14,23 @@ export default function GraphPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [queryHistory, setQueryHistory] = useState<string[]>([])
   const [selectedEntity, setSelectedEntity] = useState<any>(null)
   const [rfInstance, setRfInstance] = useState<any>(null)
+
+  const handleSearch = (q: string) => {
+    setQueryHistory(prev => [...prev, searchQuery])
+    setSearchQuery(q)
+    loadGraph(q)
+  }
+
+  const handleGoBack = () => {
+    if (queryHistory.length === 0) return
+    const prevQuery = queryHistory[queryHistory.length - 1]
+    setQueryHistory(prev => prev.slice(0, -1))
+    setSearchQuery(prevQuery)
+    loadGraph(prevQuery)
+  }
 
   const loadGraph = async (query: string = "") => {
     setLoading(true)
@@ -111,6 +126,11 @@ export default function GraphPage() {
     <div className="flex h-[calc(100vh-10rem)] gap-6">
       <div className="flex-1 border rounded-lg bg-card relative overflow-hidden">
         <div className="absolute top-4 left-4 z-10 flex gap-2">
+          {queryHistory.length > 0 && (
+            <Button variant="outline" size="icon" onClick={handleGoBack} title="Go Back">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -118,10 +138,10 @@ export default function GraphPage() {
               className="pl-8 w-64 bg-background/80 backdrop-blur"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && loadGraph(searchQuery)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch(searchQuery)}
             />
           </div>
-          <Button onClick={() => loadGraph(searchQuery)} disabled={loading}>
+          <Button onClick={() => handleSearch(searchQuery)} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
           </Button>
         </div>
@@ -170,7 +190,7 @@ export default function GraphPage() {
                     </p>
                   </div>
                 )}
-                <Button className="w-full mt-4" size="sm" onClick={() => loadGraph(selectedEntity.label)}>
+                <Button className="w-full mt-4" size="sm" onClick={() => handleSearch(selectedEntity.label)}>
                   Find Related Documents
                 </Button>
               </div>

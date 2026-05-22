@@ -12,7 +12,7 @@ class GraphService:
     async def extract_entities_from_chunk(self, chunk_content: str) -> Dict[str, List[Dict[str, str]]]:
         prompt = f"""Extract key entities and their relationships from the following text. 
         Return the result EXACTLY as a JSON object with two keys: 'entities' and 'relations'.
-        'entities' is a list of objects with 'name' and 'type'.
+        'entities' is a list of objects with 'name' and 'type'. For 'type', use standard broad categories (e.g., PERSON, ORGANIZATION, LOCATION, CONCEPT, EVENT, PRODUCT, TECHNOLOGY). DO NOT use 'unknown'. If unclear, default to 'CONCEPT'.
         'relations' is a list of objects with 'source', 'target', and 'relation'.
         
         Text: {chunk_content}
@@ -49,8 +49,13 @@ class GraphService:
         for ent in entities:
             name = ent.get("name")
             e_type = ent.get("type")
-            if not name or not e_type:
+            
+            if not name:
                 continue
+                
+            if not e_type or str(e_type).strip().upper() in ["UNKNOWN", "NULL", "NONE", ""]:
+                e_type = "CONCEPT"
+                ent["type"] = e_type
                 
             # Find or create Entity
             stmt = select(Entity).where(Entity.workspace_id == workspace_id, Entity.name == name)
