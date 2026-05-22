@@ -62,9 +62,9 @@ class File(SQLModel, table=True):
     workspace: "Workspace" = Relationship(back_populates="files")
     folder: Optional[Folder] = Relationship(back_populates="files")
     uploader: "User" = Relationship(back_populates="uploaded_files")
-    pages: List["DocumentPage"] = Relationship(back_populates="file")
-    chunks: List["DocumentChunk"] = Relationship(back_populates="file")
-    assets: List["FileAsset"] = Relationship(back_populates="file")
+    pages: List["DocumentPage"] = Relationship(back_populates="file", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    chunks: List["DocumentChunk"] = Relationship(back_populates="file", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    assets: List["FileAsset"] = Relationship(back_populates="file", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     tags: List[Tag] = Relationship(back_populates="files", link_model=FileTag)
 
 class DocumentPage(SQLModel, table=True):
@@ -97,7 +97,10 @@ class DocumentChunk(SQLModel, table=True):
     file: File = Relationship(back_populates="chunks")
     entities: List["Entity"] = Relationship(back_populates="chunks", link_model=ChunkEntity)
     # Hierarchy relationships
-    children: List["DocumentChunk"] = Relationship(back_populates="parent")
+    children: List["DocumentChunk"] = Relationship(
+        back_populates="parent",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
     parent: Optional["DocumentChunk"] = Relationship(
         back_populates="children", 
         sa_relationship_kwargs={"remote_side": "DocumentChunk.id"}

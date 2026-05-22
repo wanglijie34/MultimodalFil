@@ -15,6 +15,7 @@ export default function GraphPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEntity, setSelectedEntity] = useState<any>(null)
+  const [rfInstance, setRfInstance] = useState<any>(null)
 
   const loadGraph = async (query: string = "") => {
     setLoading(true)
@@ -28,7 +29,7 @@ export default function GraphPage() {
         
         data.results.forEach((res: any, i: number) => {
           const entityId = `entity-${res.entity}`
-          const docId = `doc-${res.document_id}`
+          const docId = `chunk-${res.chunk_id}`
           
           if (!newNodes.find(n => n.id === entityId)) {
             newNodes.push({
@@ -42,7 +43,10 @@ export default function GraphPage() {
           if (!newNodes.find(n => n.id === docId)) {
             newNodes.push({
               id: docId,
-              data: { label: `Doc: ${res.document_id.slice(0,8)}...` },
+              data: { 
+                label: `Chunk: ${res.chunk_id?.slice(0,8) || "Unknown"}...`,
+                text: res.text
+              },
               position: { x: Math.random() * 400, y: Math.random() * 400 },
               style: { background: "#10b981", color: "#fff", borderRadius: "4px" }
             })
@@ -59,16 +63,29 @@ export default function GraphPage() {
         
         setNodes(newNodes)
         setEdges(newEdges)
+        if (rfInstance) {
+          setTimeout(() => rfInstance.fitView({ padding: 0.2, duration: 800 }), 50)
+        }
       } else {
-        const entities = await api.graph.listEntities()
-        const initialNodes = entities.map((e: any, i: number) => ({
+        const data = await api.graph.listEntities()
+        const initialNodes = (data.nodes || []).map((e: any, i: number) => ({
           id: e.name,
           data: { label: e.name, type: e.type },
-          position: { x: (i % 5) * 150, y: Math.floor(i / 5) * 100 },
+          position: { x: (i % 5) * 150 + Math.random() * 20, y: Math.floor(i / 5) * 100 + Math.random() * 20 },
           style: { background: "#3b82f6", color: "#fff", borderRadius: "8px", padding: "10px" }
         }))
+        const initialEdges = (data.edges || []).map((e: any, i: number) => ({
+          id: `e-${e.source}-${e.target}-${i}`,
+          source: e.source,
+          target: e.target,
+          label: e.relation || e.label || "RELATED",
+          animated: false
+        }))
         setNodes(initialNodes)
-        setEdges([])
+        setEdges(initialEdges)
+        if (rfInstance) {
+          setTimeout(() => rfInstance.fitView({ padding: 0.2, duration: 800 }), 50)
+        }
       }
     } catch (err) {
       console.error(err)
@@ -116,6 +133,7 @@ export default function GraphPage() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onInit={setRfInstance}
           fitView
         >
           <Background />
@@ -144,7 +162,15 @@ export default function GraphPage() {
                     {selectedEntity.type || "UNKNOWN"}
                   </p>
                 </div>
-                <Button className="w-full mt-4" size="sm">
+                {selectedEntity.text && (
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Content</label>
+                    <p className="text-xs font-medium mt-1 p-2 bg-muted rounded-md text-muted-foreground max-h-40 overflow-y-auto">
+                      {selectedEntity.text}
+                    </p>
+                  </div>
+                )}
+                <Button className="w-full mt-4" size="sm" onClick={() => loadGraph(selectedEntity.label)}>
                   Find Related Documents
                 </Button>
               </div>

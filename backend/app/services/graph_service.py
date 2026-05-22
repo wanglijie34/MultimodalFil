@@ -1,55 +1,158 @@
 import json
 from typing import List, Dict, Any
 from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.integrations.neo4j_client import neo4j_integration
 from app.services.llm_service import llm_service
+from app.models.graph import Entity, ChunkEntity, EntityRelation
 from loguru import logger
 
 class GraphService:
-    async def extract_entities_from_chunk(self, chunk_content: str) -> List[Dict[str, str]]:
-        prompt = f"""Extract key entities and their types from the following text. 
-        Return the result as a JSON list of objects with 'name' and 'type'.
+    async def extract_entities_from_chunk(self, chunk_content: str) -> Dict[str, List[Dict[str, str]]]:
+        prompt = f"""Extract key entities and their relationships from the following text. 
+        Return the result EXACTLY as a JSON object with two keys: 'entities' and 'relations'.
+        'entities' is a list of objects with 'name' and 'type'.
+        'relations' is a list of objects with 'source', 'target', and 'relation'.
         
         Text: {chunk_content}
         JSON:"""
         
         try:
             response = await llm_service.chat([{"role": "user", "content": prompt}])
-            # Basic JSON extraction logic
             if "```json" in response:
                 response = response.split("```json")[1].split("```")[0]
             elif "```" in response:
                 response = response.split("```")[1].split("```")[0]
             
-            entities = json.loads(response.strip())
-            return entities
+            data = json.loads(response.strip())
+            return {
+                "entities": data.get("entities", []),
+                "relations": data.get("relations", [])
+            }
         except Exception as e:
             logger.error(f"Failed to extract entities: {e}")
-            return []
+            return {"entities": [], "relations": []}
 
-    async def add_entities_to_graph(self, file_id: str, entities: List[Dict[str, str]]):
+    async def process_graph_extraction(self, db: AsyncSession, workspace_id: UUID, chunk_id: UUID, chunk_content: str):
+        """Extracts entities/relations and saves them to both Postgres and Neo4j."""
+        data = await self.extract_entities_from_chunk(chunk_content)
+        entities = data.get("entities", [])
+        relations = data.get("relations", [])
+        
+        if not entities:
+            return
+            
+        entity_id_map = {}
+        
+        # 1. Save to Postgres
+        for ent in entities:
+            name = ent.get("name")
+            e_type = ent.get("type")
+            if not name or not e_type:
+                continue
+                
+            # Find or create Entity
+            stmt = select(Entity).where(Entity.workspace_id == workspace_id, Entity.name == name)
+            result = await db.execute(stmt)
+            db_ent = result.scalar_one_or_none()
+            
+            if not db_ent:
+                db_ent = Entity(workspace_id=workspace_id, name=name, type=e_type)
+                db.add(db_ent)
+                await db.flush() # get ID
+                
+            entity_id_map[name] = db_ent.id
+            
+            # Link to Chunk
+            chunk_link = ChunkEntity(chunk_id=chunk_id, entity_id=db_ent.id)
+            db.add(chunk_link)
+            
+        # Save Relations to Postgres
+        for rel in relations:
+            source_name = rel.get("source")
+            target_name = rel.get("target")
+            r_type = rel.get("relation")
+            
+            source_id = entity_id_map.get(source_name)
+            target_id = entity_id_map.get(target_name)
+            
+            if source_id and target_id and r_type:
+                db_rel = EntityRelation(
+                    source_id=source_id,
+                    target_id=target_id,
+                    relation_type=r_type
+                )
+                db.add(db_rel)
+                
+        # Commit Postgres changes
+        try:
+            await db.commit()
+        except Exception as e:
+            logger.error(f"Postgres commit failed for graph extraction: {e}")
+            await db.rollback()
+            return
+            
+        # 2. Save to Neo4j
+        await self.add_entities_to_graph(str(chunk_id), entities, relations)
+
+    async def add_entities_to_graph(self, chunk_id: str, entities: List[Dict[str, str]], relations: List[Dict[str, str]] = None):
+        """Persists the extracted entities and relations to Neo4j."""
+        if not relations:
+            relations = []
+            
+        # Create Entities and link to DocumentChunk
         for entity in entities:
             query = """
             MERGE (e:Entity {name: $name})
             SET e.type = $type
-            MERGE (f:Document {id: $file_id})
-            MERGE (f)-[:MENTIONS]->(e)
+            MERGE (c:DocumentChunk {id: $chunk_id})
+            MERGE (c)-[:MENTIONS]->(e)
             """
             neo4j_integration.run_query(query, {
-                "name": entity["name"],
-                "type": entity["type"],
-                "file_id": file_id
+                "name": entity.get("name"),
+                "type": entity.get("type"),
+                "chunk_id": chunk_id
             })
             
-    async def search_graph(self, query_text: str):
+        # Create Relations
+        for rel in relations:
+            query = """
+            MATCH (source:Entity {name: $source_name})
+            MATCH (target:Entity {name: $target_name})
+            MERGE (source)-[r:RELATED_TO {type: $rel_type}]->(target)
+            """
+            neo4j_integration.run_query(query, {
+                "source_name": rel.get("source"),
+                "target_name": rel.get("target"),
+                "rel_type": rel.get("relation", "RELATED")
+            })
+            
+    async def search_graph(self, query_text: str, db: AsyncSession = None):
         # Very simple search: find entities mentioned in documents
         cypher = """
         MATCH (e:Entity)
         WHERE e.name CONTAINS $query
-        MATCH (e)<-[:MENTIONS]-(d:Document)
-        RETURN e.name as entity, e.type as type, d.id as document_id
+        MATCH (e)<-[:MENTIONS]-(c:DocumentChunk)
+        RETURN e.name as entity, e.type as type, c.id as chunk_id
         """
-        return neo4j_integration.run_query(cypher, {"query": query_text})
+        results = neo4j_integration.run_query(cypher, {"query": query_text})
+        
+        if db and results:
+            from app.models.file import DocumentChunk
+            from sqlalchemy import select
+            
+            chunk_ids = list(set([r["chunk_id"] for r in results if r.get("chunk_id")]))
+            if chunk_ids:
+                stmt = select(DocumentChunk).where(DocumentChunk.id.in_(chunk_ids))
+                db_result = await db.execute(stmt)
+                chunks = db_result.scalars().all()
+                chunk_map = {str(c.id): c.content for c in chunks}
+                
+                for r in results:
+                    r["text"] = chunk_map.get(str(r["chunk_id"]), "")
+                    
+        return results
 
     async def get_entity_context(self, chunk_ids: List[str]) -> str:
         """LightRAG-style: Expand context using entity neighbors"""
@@ -60,7 +163,7 @@ class GraphService:
         MATCH (c:DocumentChunk)-[:MENTIONS]->(e:Entity)
         WHERE c.id IN $chunk_ids
         MATCH (e)-[r]-(neighbor:Entity)
-        RETURN e.name as source, type(r) as relation, neighbor.name as target
+        RETURN e.name as source, r.type as relation, neighbor.name as target
         LIMIT 20
         """
         triples = neo4j_integration.run_query(cypher, {"chunk_ids": chunk_ids})

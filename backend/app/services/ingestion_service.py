@@ -88,13 +88,31 @@ class IngestionService:
             db_file.status = "summarizing"
             await db.commit()
             await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "summarizing"})
-            await self._generate_hierarchical_summaries(db, chunks)
+            summary_chunks = await self._generate_hierarchical_summaries(db, chunks)
             
             # 8. Graph Extraction
             db_file.status = "graph_extracting"
             await db.commit()
             await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "graph_extracting"})
-            # Trigger graph extraction for key chunks
+            
+            from app.services.graph_service import graph_service
+            
+            # Using semaphore to avoid LLM rate limits
+            graph_sem = asyncio.Semaphore(5)
+            async def _extract_chunk(chunk):
+                async with graph_sem:
+                    try:
+                        await graph_service.process_graph_extraction(
+                            db=db,
+                            workspace_id=db_file.workspace_id,
+                            chunk_id=chunk.id,
+                            chunk_content=chunk.content
+                        )
+                    except Exception as ge:
+                        logger.error(f"Graph extraction failed for chunk {chunk.id}: {ge}")
+
+            graph_chunks = summary_chunks if summary_chunks else chunks
+            await asyncio.gather(*[_extract_chunk(c) for c in graph_chunks])
             
             # Update counts
             db_file.page_count = len(parsed_doc.pages)
@@ -165,6 +183,8 @@ class IngestionService:
             s_embeddings = await embedding_service.embed_batch(s_texts)
             await vector_store_service.index_chunks(summary_chunks, s_embeddings)
             logger.info(f"Generated and indexed {len(summary_chunks)} level-1 summaries for RAPTOR")
+            
+        return summary_chunks
 
     async def _get_total_chunk_count(self, db: AsyncSession, file_id: UUID) -> int:
         from sqlalchemy import func, select
