@@ -17,6 +17,41 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
         logger.info("Database tables initialized")
+        
+        # Seed default user and workspace
+        from app.db.session import AsyncSessionLocal
+        from app.models.user import User, Workspace
+        from sqlalchemy.future import select
+        import uuid
+        
+        DEFAULT_WORKSPACE_ID = uuid.UUID("00000000-0000-0000-0000-000000000000")
+        DEFAULT_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+        
+        async with AsyncSessionLocal() as db:
+            user = await db.execute(select(User).where(User.id == DEFAULT_USER_ID))
+            if not user.scalar_one_or_none():
+                db_user = User(
+                    id=DEFAULT_USER_ID,
+                    email="admin@example.com",
+                    display_name="Admin",
+                    password_hash="fakehash",
+                    role="admin"
+                )
+                db.add(db_user)
+                await db.commit()
+                
+            workspace = await db.execute(select(Workspace).where(Workspace.id == DEFAULT_WORKSPACE_ID))
+            if not workspace.scalar_one_or_none():
+                db_workspace = Workspace(
+                    id=DEFAULT_WORKSPACE_ID,
+                    owner_id=DEFAULT_USER_ID,
+                    name="Default Workspace",
+                    description="Default workspace for all files"
+                )
+                db.add(db_workspace)
+                await db.commit()
+        logger.info("Database seeded with default user and workspace")
+        
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
     yield

@@ -1,4 +1,5 @@
 import numpy as np
+import asyncio
 from typing import List
 from app.core.config import settings
 from loguru import logger
@@ -15,12 +16,12 @@ class EmbeddingService:
         if self.provider == "dashscope" or (self.provider == "deepseek" and settings.DASHSCOPE_API_KEY):
             # Using DashScope for embeddings even if provider is deepseek for chat
             try:
-                from openai import OpenAI
-                client = OpenAI(
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI(
                     api_key=settings.DASHSCOPE_API_KEY,
                     base_url=settings.DASHSCOPE_BASE_URL
                 )
-                response = client.embeddings.create(
+                response = await client.embeddings.create(
                     model="text-embedding-v4",
                     input=[text],
                     dimensions=self.vector_size
@@ -33,7 +34,9 @@ class EmbeddingService:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.GOOGLE_API_KEY)
-                result = genai.embed_content(
+                # Run sync call in a thread to avoid blocking the event loop
+                result = await asyncio.to_thread(
+                    genai.embed_content,
                     model="models/text-embedding-004",
                     content=text,
                     task_type="retrieval_document"
@@ -44,9 +47,9 @@ class EmbeddingService:
         
         elif self.provider == "openai" and settings.OPENAI_API_KEY:
             try:
-                from openai import OpenAI
-                client = OpenAI(api_key=settings.OPENAI_API_KEY)
-                response = client.embeddings.create(
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+                response = await client.embeddings.create(
                     input=[text],
                     model="text-embedding-3-small"
                 )
@@ -65,7 +68,13 @@ class EmbeddingService:
         return np.random.uniform(-1, 1, self.vector_size).tolist()
 
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
-        # For MVP, we'll just loop. Production should use batch API.
-        return [await self.embed_text(t) for t in texts]
+        # Use a semaphore to limit concurrent API requests
+        sem = asyncio.Semaphore(50)
+        
+        async def sem_embed(t):
+            async with sem:
+                return await self.embed_text(t)
+                
+        return await asyncio.gather(*(sem_embed(t) for t in texts))
 
 embedding_service = EmbeddingService()

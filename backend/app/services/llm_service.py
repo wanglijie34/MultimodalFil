@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional, Dict
 from app.core.config import settings
 from loguru import logger
@@ -16,16 +17,16 @@ class LLMService:
                 # Convert messages to Gemini format
                 # simplified for MVP
                 prompt = messages[-1]["content"]
-                response = model.generate_content(prompt)
+                response = await asyncio.to_thread(model.generate_content, prompt)
                 return response.text
             except Exception as e:
                 logger.error(f"Gemini chat failed: {e}")
         
         elif self.provider == "openai" and settings.OPENAI_API_KEY:
             try:
-                from openai import OpenAI
-                client = OpenAI(api_key=settings.OPENAI_API_KEY)
-                response = client.chat.completions.create(
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+                response = await client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=messages
                 )
@@ -35,12 +36,12 @@ class LLMService:
 
         elif self.provider == "deepseek" and settings.DEEPSEEK_API_KEY:
             try:
-                from openai import OpenAI
-                client = OpenAI(
+                from openai import AsyncOpenAI
+                client = AsyncOpenAI(
                     api_key=settings.DEEPSEEK_API_KEY,
                     base_url=settings.DEEPSEEK_BASE_URL
                 )
-                response = client.chat.completions.create(
+                response = await client.chat.completions.create(
                     model="deepseek-v4-flash", 
                     messages=messages
                 )

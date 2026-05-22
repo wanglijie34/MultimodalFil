@@ -22,8 +22,11 @@ class VectorStoreService:
                 }
             ))
         
-        qdrant_integration.upsert_chunks(points)
-        logger.info(f"Indexed {len(points)} chunks into Qdrant")
+        batch_size = 500
+        for i in range(0, len(points), batch_size):
+            batch = points[i:i+batch_size]
+            qdrant_integration.upsert_chunks(batch)
+        logger.info(f"Indexed {len(points)} chunks into Qdrant in {len(range(0, len(points), batch_size))} batches")
 
     async def search(self, vector: List[float], workspace_id: UUID = None, top_k: int = 10):
         # We can add workspace_id filtering if needed using Qdrant filters

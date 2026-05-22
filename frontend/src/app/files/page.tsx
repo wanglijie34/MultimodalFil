@@ -12,6 +12,20 @@ export default function FilesPage() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
 
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case 'uploaded': return { percent: 10, label: 'Uploaded', color: 'bg-blue-500' };
+      case 'parsing': return { percent: 25, label: 'Parsing Document', color: 'bg-blue-500' };
+      case 'chunking': return { percent: 45, label: 'Chunking Text', color: 'bg-indigo-500' };
+      case 'embedding': return { percent: 65, label: 'Generating Embeddings', color: 'bg-purple-500' };
+      case 'summarizing': return { percent: 80, label: 'Summarizing', color: 'bg-fuchsia-500' };
+      case 'graph_extracting': return { percent: 95, label: 'Extracting Graph', color: 'bg-pink-500' };
+      case 'indexed': return { percent: 100, label: 'Indexed', color: 'bg-green-500' };
+      case 'failed': return { percent: 100, label: 'Failed', color: 'bg-red-500' };
+      default: return { percent: 0, label: status, color: 'bg-gray-500' };
+    }
+  };
+
   const loadFiles = async () => {
     setLoading(true)
     try {
@@ -26,6 +40,26 @@ export default function FilesPage() {
 
   useEffect(() => {
     loadFiles()
+
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/api/v1/ws"
+    const ws = new WebSocket(wsUrl)
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'file_status') {
+          setFiles((prev) => 
+            prev.map(f => f.id === data.file_id ? { ...f, status: data.status } : f)
+          )
+        }
+      } catch (err) {
+        console.error("WS parse error", err)
+      }
+    }
+
+    return () => {
+      ws.close()
+    }
   }, [])
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,15 +97,11 @@ export default function FilesPage() {
           <Button variant="outline" size="icon" onClick={loadFiles} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
-          <label className="cursor-pointer">
-            <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
-            <Button disabled={uploading}>
-              <span>
-                {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                Upload File
-              </span>
-            </Button>
-          </label>
+          <Button disabled={uploading} onClick={() => document.getElementById('file-upload')?.click()}>
+            {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Upload File
+          </Button>
+          <input id="file-upload" type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
         </div>
       </div>
 
@@ -88,7 +118,9 @@ export default function FilesPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {files.map((file) => (
+          {files.map((file) => {
+            const info = getStatusInfo(file.status)
+            return (
             <Card key={file.id}>
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
@@ -97,9 +129,15 @@ export default function FilesPage() {
                   </div>
                   <div>
                     <p className="font-medium">{file.original_filename}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {file.file_type.toUpperCase()} • {(file.file_size / 1024 / 1024).toFixed(2)} MB • {file.status}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {file.file_type.toUpperCase()} • {(file.file_size / 1024 / 1024).toFixed(2)} MB • {info.label}
                     </p>
+                    <div className="mt-2 w-48 bg-secondary rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-500 ease-in-out ${info.color}`} 
+                        style={{ width: `${info.percent}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -109,7 +147,7 @@ export default function FilesPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )})}
         </div>
       )}
     </div>

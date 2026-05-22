@@ -10,7 +10,10 @@ from app.parsers.docx_parser import DOCXParser
 from app.parsers.pptx_parser import PPTXParser
 from app.parsers.txt_parser import TXTParser
 from app.parsers.md_parser import MDParser
+from app.parsers.epub_parser import EPUBParser
+import asyncio
 from app.services.chunking_service import chunking_service
+from app.core.websocket import manager
 from loguru import logger
 
 class IngestionService:
@@ -20,7 +23,8 @@ class IngestionService:
             "docx": DOCXParser(),
             "pptx": PPTXParser(),
             "txt": TXTParser(),
-            "md": MDParser()
+            "md": MDParser(),
+            "epub": EPUBParser()
         }
 
     async def process_file(self, db: AsyncSession, file_id: UUID):
@@ -33,6 +37,7 @@ class IngestionService:
 
         db_file.status = "parsing"
         await db.commit()
+        await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "parsing"})
 
         try:
             # 2. Download from MinIO to local temp file
@@ -52,6 +57,7 @@ class IngestionService:
             # 4. Save pages
             db_file.status = "chunking"
             await db.commit()
+            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "chunking"})
             
             for page in parsed_doc.pages:
                 db_page = DocumentPage(
@@ -63,12 +69,12 @@ class IngestionService:
             
             # 5. Chunk
             chunks = chunking_service.chunk_document(parsed_doc)
-            for chunk in chunks:
-                db.add(chunk)
+            db.add_all(chunks)
             
             # 6. Embed and Index (Phase 4)
             db_file.status = "embedding"
             await db.commit()
+            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "embedding"})
             
             from app.services.embedding_service import embedding_service
             from app.services.vector_store_service import vector_store_service
@@ -81,11 +87,13 @@ class IngestionService:
             # 7. RAPTOR: Generate Hierarchical Summaries
             db_file.status = "summarizing"
             await db.commit()
+            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "summarizing"})
             await self._generate_hierarchical_summaries(db, chunks)
             
             # 8. Graph Extraction
             db_file.status = "graph_extracting"
             await db.commit()
+            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "graph_extracting"})
             # Trigger graph extraction for key chunks
             
             # Update counts
@@ -93,12 +101,14 @@ class IngestionService:
             db_file.chunk_count = await self._get_total_chunk_count(db, file_id)
             db_file.status = "indexed" 
             await db.commit()
+            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "indexed"})
             
         except Exception as e:
             logger.exception(f"Error ingesting file {file_id}: {e}")
             db_file.status = "failed"
             db_file.error_message = str(e)
             await db.commit()
+            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "failed"})
 
     async def _generate_hierarchical_summaries(self, db: AsyncSession, leaf_chunks: List[DocumentChunk]):
         """RAPTOR-style summary generation"""
@@ -115,25 +125,37 @@ class IngestionService:
             pages[pg].append(chunk.content)
             
         summary_chunks = []
-        for pg, texts in pages.items():
+        sem = asyncio.Semaphore(10)
+
+        async def process_page(pg, texts):
             combined_text = "\n".join(texts)
-            if len(combined_text.split()) < 100: continue # Skip very short pages
+            if len(combined_text.split()) < 100: return None
             
             prompt = f"Summarize the following document page in 2-3 concise sentences:\n\n{combined_text}"
-            summary_text = await llm_service.chat([{"role": "user", "content": prompt}])
-            
-            s_chunk = DocumentChunk(
-                id=uuid4(),
-                file_id=leaf_chunks[0].file_id,
-                is_summary=True,
-                level=1,
-                page_number=pg,
-                chunk_index=999 + pg, # Use high index for summaries
-                content=summary_text,
-                meta={"source_page": pg}
-            )
-            db.add(s_chunk)
-            summary_chunks.append(s_chunk)
+            async with sem:
+                try:
+                    summary_text = await llm_service.chat([{"role": "user", "content": prompt}])
+                    return DocumentChunk(
+                        id=uuid4(),
+                        file_id=leaf_chunks[0].file_id,
+                        is_summary=True,
+                        level=1,
+                        page_number=pg,
+                        chunk_index=999 + pg, # Use high index for summaries
+                        content=summary_text,
+                        meta={"source_page": pg}
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to generate summary for page {pg}: {e}")
+                    return None
+
+        tasks = [process_page(pg, texts) for pg, texts in pages.items()]
+        results = await asyncio.gather(*tasks)
+
+        for s_chunk in results:
+            if s_chunk:
+                db.add(s_chunk)
+                summary_chunks.append(s_chunk)
             
         await db.commit()
         

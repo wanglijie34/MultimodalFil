@@ -5,10 +5,15 @@ from loguru import logger
 
 class QdrantIntegration:
     def __init__(self):
+        # If API key is an empty string from .env, treat it as None
+        api_key = settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None
+        
         self.client = QdrantClient(
             host=settings.QDRANT_HOST,
             port=settings.QDRANT_PORT,
-            api_key=settings.QDRANT_API_KEY
+            api_key=api_key,
+            https=settings.QDRANT_HTTPS,
+            check_compatibility=False
         )
         self.collection_name = "document_chunks"
         # Updated to 1024 for DashScope text-embedding-v4

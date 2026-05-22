@@ -25,3 +25,5 @@ python-docx
 python-pptx
 pypdf
 loguru
+EbookLib
+beautifulsoup4

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # Vector DB
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
+    QDRANT_HTTPS: bool = False
     QDRANT_API_KEY: Optional[str] = None
 
     # Graph DB
