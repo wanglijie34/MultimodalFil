@@ -43,11 +43,11 @@ class QdrantIntegration:
         )
 
     def search(self, vector, top_k=10, filters=None):
-        return self.client.search(
+        return self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=vector,
+            query=vector,
             limit=top_k,
             query_filter=filters
-        )
+        ).points
 
 qdrant_integration = QdrantIntegration()

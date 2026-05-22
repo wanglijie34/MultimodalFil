@@ -105,6 +105,7 @@ class IngestionService:
                         await graph_service.process_graph_extraction(
                             db=db,
                             workspace_id=db_file.workspace_id,
+                            file_id=db_file.id,
                             chunk_id=chunk.id,
                             chunk_content=chunk.content
                         )
@@ -145,7 +146,7 @@ class IngestionService:
         summary_chunks = []
         sem = asyncio.Semaphore(10)
 
-        async def process_page(pg, texts):
+        async def process_level1(pg, texts):
             combined_text = "\n".join(texts)
             if len(combined_text.split()) < 100: return None
             
@@ -159,7 +160,7 @@ class IngestionService:
                         is_summary=True,
                         level=1,
                         page_number=pg,
-                        chunk_index=999 + pg, # Use high index for summaries
+                        chunk_index=999 + pg,
                         content=summary_text,
                         meta={"source_page": pg}
                     )
@@ -167,13 +168,43 @@ class IngestionService:
                     logger.error(f"Failed to generate summary for page {pg}: {e}")
                     return None
 
-        tasks = [process_page(pg, texts) for pg, texts in pages.items()]
-        results = await asyncio.gather(*tasks)
+        l1_tasks = [process_level1(pg, texts) for pg, texts in pages.items()]
+        l1_results = await asyncio.gather(*l1_tasks)
 
-        for s_chunk in results:
+        l1_chunks = []
+        for s_chunk in l1_results:
             if s_chunk:
                 db.add(s_chunk)
+                l1_chunks.append(s_chunk)
                 summary_chunks.append(s_chunk)
+                
+        # Level 2 Summaries (Global Themes)
+        if len(l1_chunks) > 1:
+            # Chunk L1 summaries into blocks of 10 to form L2
+            l1_texts = [c.content for c in l1_chunks]
+            l2_chunks = []
+            block_size = 10
+            for i in range(0, len(l1_texts), block_size):
+                block = l1_texts[i:i+block_size]
+                combined_l1 = "\n".join(block)
+                prompt = f"Synthesize these page summaries into a comprehensive macro-level thematic summary (focusing on major events, global topics, and comprehensive concepts):\n\n{combined_l1}"
+                try:
+                    l2_text = await llm_service.chat([{"role": "user", "content": prompt}])
+                    l2_chunk = DocumentChunk(
+                        id=uuid4(),
+                        file_id=leaf_chunks[0].file_id,
+                        is_summary=True,
+                        level=2,
+                        page_number=0,
+                        chunk_index=9000 + i,
+                        content=l2_text,
+                        meta={"type": "macro_summary"}
+                    )
+                    db.add(l2_chunk)
+                    l2_chunks.append(l2_chunk)
+                    summary_chunks.append(l2_chunk)
+                except Exception as e:
+                    logger.error(f"Failed to generate Level 2 summary: {e}")
             
         await db.commit()
         
@@ -182,7 +213,7 @@ class IngestionService:
             s_texts = [s.content for s in summary_chunks]
             s_embeddings = await embedding_service.embed_batch(s_texts)
             await vector_store_service.index_chunks(summary_chunks, s_embeddings)
-            logger.info(f"Generated and indexed {len(summary_chunks)} level-1 summaries for RAPTOR")
+            logger.info(f"Generated and indexed {len(l1_chunks)} L1 and {len(summary_chunks) - len(l1_chunks)} L2 summaries for RAPTOR")
             
         return summary_chunks
 

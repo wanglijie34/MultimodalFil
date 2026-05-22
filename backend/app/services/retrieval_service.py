@@ -15,7 +15,8 @@ class RetrievalService:
         query: str, 
         workspace_id: UUID, 
         top_k: int = 5,
-        search_mode: str = "hybrid" # local, global, hybrid
+        search_mode: str = "hybrid", # local, global, hybrid
+        file_id: UUID = None
     ) -> List[Dict[str, Any]]:
         logger.info(f"Performing {search_mode} search for: {query}")
         
@@ -24,12 +25,15 @@ class RetrievalService:
         
         # If global mode, we might want to target summaries specifically
         # For hybrid/local, we target all chunks
-        vector_results = await vector_store_service.search(query_vector, top_k=top_k)
+        vector_results = await vector_store_service.search(query_vector, top_k=top_k, file_id=file_id)
         
         # 2. Keyword Search (Simple fallback)
         keyword_chunks = []
         if search_mode in ["hybrid", "local"]:
-            keyword_query = select(DocumentChunk).where(DocumentChunk.content.ilike(f"%{query}%")).limit(top_k)
+            keyword_query = select(DocumentChunk).where(DocumentChunk.content.ilike(f"%{query}%"))
+            if file_id:
+                keyword_query = keyword_query.where(DocumentChunk.file_id == file_id)
+            keyword_query = keyword_query.limit(top_k)
             keyword_result = await db.execute(keyword_query)
             keyword_chunks = keyword_result.scalars().all()
         
@@ -39,7 +43,10 @@ class RetrievalService:
             summary_query = select(DocumentChunk).where(
                 (DocumentChunk.is_summary == True) & 
                 (DocumentChunk.content.ilike(f"%{query}%"))
-            ).limit(3)
+            )
+            if file_id:
+                summary_query = summary_query.where(DocumentChunk.file_id == file_id)
+            summary_query = summary_query.limit(3)
             summary_res = await db.execute(summary_query)
             summary_chunks = summary_res.scalars().all()
         

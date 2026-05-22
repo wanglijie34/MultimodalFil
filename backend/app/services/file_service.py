@@ -77,6 +77,24 @@ class FileService:
             # Delete from MinIO
             minio_client.delete_file(db_file.storage_key)
             
+            # Delete from Neo4j
+            from app.integrations.neo4j_client import neo4j_integration
+            try:
+                # 1. Delete all chunks associated with the file
+                neo4j_integration.run_query("""
+                MATCH (c:DocumentChunk {file_id: $file_id})
+                DETACH DELETE c
+                """, {"file_id": str(file_id)})
+                
+                # 2. Cleanup orphaned Entities (Entities with no MENTIONS relationships)
+                neo4j_integration.run_query("""
+                MATCH (e:Entity)
+                WHERE NOT (e)<-[:MENTIONS]-()
+                DETACH DELETE e
+                """)
+            except Exception as e:
+                logger.error(f"Failed to cleanup Neo4j graph for file {file_id}: {e}")
+            
             # Delete from DB
             await db.delete(db_file)
             await db.commit()

@@ -41,11 +41,23 @@ export const api = {
     ask: (query: string) => fetchApi(`/search/ask?query=${encodeURIComponent(query)}`, { method: "POST" }),
   },
   agent: {
-    createRun: (query: string) => fetchApi(`/agent/runs?query=${encodeURIComponent(query)}`, { method: "POST" }),
+    createRun: (query: string, fileId?: string) => {
+      const url = `/agent/runs?query=${encodeURIComponent(query)}${fileId && fileId !== "all" ? `&file_id=${fileId}` : ""}`;
+      return fetchApi(url, { method: "POST" });
+    },
+    listRuns: () => fetchApi('/agent/runs'),
   },
   graph: {
-    search: (query: string) => fetchApi(`/graph/search?query=${encodeURIComponent(query)}`),
-    listEntities: () => fetchApi("/graph/entities"),
+    search: (query: string, fileId?: string) => {
+      let url = `/graph/search?query=${encodeURIComponent(query)}`;
+      if (fileId && fileId !== "all") url += `&file_id=${fileId}`;
+      return fetchApi(url);
+    },
+    listEntities: (fileId?: string) => {
+      let url = "/graph/entities";
+      if (fileId && fileId !== "all") url += `?file_id=${fileId}`;
+      return fetchApi(url);
+    },
   },
   reports: {
     list: () => fetchApi("/reports"),

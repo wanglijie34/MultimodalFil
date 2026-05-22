@@ -17,6 +17,12 @@ export default function GraphPage() {
   const [queryHistory, setQueryHistory] = useState<string[]>([])
   const [selectedEntity, setSelectedEntity] = useState<any>(null)
   const [rfInstance, setRfInstance] = useState<any>(null)
+  const [files, setFiles] = useState<any[]>([])
+  const [selectedFileId, setSelectedFileId] = useState<string>("all")
+
+  useEffect(() => {
+    api.files.list().then(setFiles).catch(console.error)
+  }, [])
 
   const handleSearch = (q: string) => {
     setQueryHistory(prev => [...prev, searchQuery])
@@ -32,12 +38,12 @@ export default function GraphPage() {
     loadGraph(prevQuery)
   }
 
-  const loadGraph = async (query: string = "") => {
+  const loadGraph = async (query: string = "", fileId = selectedFileId) => {
     setLoading(true)
     try {
       let data;
       if (query) {
-        data = await api.graph.search(query)
+        data = await api.graph.search(query, fileId)
         // Transform search results to nodes/edges
         const newNodes: any[] = []
         const newEdges: any[] = []
@@ -82,7 +88,7 @@ export default function GraphPage() {
           setTimeout(() => rfInstance.fitView({ padding: 0.2, duration: 800 }), 50)
         }
       } else {
-        const data = await api.graph.listEntities()
+        const data = await api.graph.listEntities(fileId)
         const initialNodes = (data.nodes || []).map((e: any, i: number) => ({
           id: e.name,
           data: { label: e.name, type: e.type },
@@ -110,8 +116,8 @@ export default function GraphPage() {
   }
 
   useEffect(() => {
-    loadGraph()
-  }, [])
+    loadGraph(searchQuery, selectedFileId)
+  }, [selectedFileId])
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -144,6 +150,17 @@ export default function GraphPage() {
           <Button onClick={() => handleSearch(searchQuery)} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
           </Button>
+          
+          <select 
+            className="flex h-10 w-48 items-center justify-between rounded-md border border-input bg-background/80 backdrop-blur px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={selectedFileId}
+            onChange={(e) => setSelectedFileId(e.target.value)}
+          >
+            <option value="all">All Files</option>
+            {files.map(f => (
+              <option key={f.id} value={f.id}>{f.original_filename}</option>
+            ))}
+          </select>
         </div>
 
         <ReactFlow

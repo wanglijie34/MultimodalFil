@@ -12,14 +12,15 @@ class RAGService:
         db: AsyncSession, 
         query: str, 
         workspace_id: UUID,
-        top_k: int = 5
+        top_k: int = 5,
+        file_id: UUID = None
     ) -> Dict[str, Any]:
         # 1. Hierarchical Retrieval (RAPTOR-inspired)
         # Search summaries first to get global context
-        summary_results = await retrieval_service.search(db, query, workspace_id, top_k=3)
+        summary_results = await retrieval_service.search(db, query, workspace_id, top_k=3, file_id=file_id)
         
         # 2. Detailed Retrieval
-        relevant_chunks = await retrieval_service.search(db, query, workspace_id, top_k=top_k)
+        relevant_chunks = await retrieval_service.search(db, query, workspace_id, top_k=top_k, file_id=file_id)
         
         # 3. Graph Context Expansion (LightRAG-inspired)
         chunk_ids = [c["chunk_id"] for c in relevant_chunks]

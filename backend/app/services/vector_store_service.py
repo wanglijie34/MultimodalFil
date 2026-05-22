@@ -28,9 +28,20 @@ class VectorStoreService:
             qdrant_integration.upsert_chunks(batch)
         logger.info(f"Indexed {len(points)} chunks into Qdrant in {len(range(0, len(points), batch_size))} batches")
 
-    async def search(self, vector: List[float], workspace_id: UUID = None, top_k: int = 10):
+    async def search(self, vector: List[float], workspace_id: UUID = None, top_k: int = 10, file_id: UUID = None):
         # We can add workspace_id filtering if needed using Qdrant filters
-        results = qdrant_integration.search(vector=vector, top_k=top_k)
+        filters = None
+        if file_id:
+            filters = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="file_id",
+                        match=models.MatchValue(value=str(file_id))
+                    )
+                ]
+            )
+            
+        results = qdrant_integration.search(vector=vector, top_k=top_k, filters=filters)
         return results
 
 vector_store_service = VectorStoreService()

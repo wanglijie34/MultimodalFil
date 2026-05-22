@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -34,7 +34,7 @@ class GraphService:
             logger.error(f"Failed to extract entities: {e}")
             return {"entities": [], "relations": []}
 
-    async def process_graph_extraction(self, db: AsyncSession, workspace_id: UUID, chunk_id: UUID, chunk_content: str):
+    async def process_graph_extraction(self, db: AsyncSession, workspace_id: UUID, file_id: UUID, chunk_id: UUID, chunk_content: str):
         """Extracts entities/relations and saves them to both Postgres and Neo4j."""
         data = await self.extract_entities_from_chunk(chunk_content)
         entities = data.get("entities", [])
@@ -99,9 +99,9 @@ class GraphService:
             return
             
         # 2. Save to Neo4j
-        await self.add_entities_to_graph(str(chunk_id), entities, relations)
+        await self.add_entities_to_graph(str(chunk_id), str(file_id), entities, relations)
 
-    async def add_entities_to_graph(self, chunk_id: str, entities: List[Dict[str, str]], relations: List[Dict[str, str]] = None):
+    async def add_entities_to_graph(self, chunk_id: str, file_id: str, entities: List[Dict[str, str]], relations: List[Dict[str, str]] = None):
         """Persists the extracted entities and relations to Neo4j."""
         if not relations:
             relations = []
@@ -112,12 +112,14 @@ class GraphService:
             MERGE (e:Entity {name: $name})
             SET e.type = $type
             MERGE (c:DocumentChunk {id: $chunk_id})
+            SET c.file_id = $file_id
             MERGE (c)-[:MENTIONS]->(e)
             """
             neo4j_integration.run_query(query, {
                 "name": entity.get("name"),
                 "type": entity.get("type"),
-                "chunk_id": chunk_id
+                "chunk_id": chunk_id,
+                "file_id": file_id
             })
             
         # Create Relations
@@ -133,15 +135,24 @@ class GraphService:
                 "rel_type": rel.get("relation", "RELATED")
             })
             
-    async def search_graph(self, query_text: str, db: AsyncSession = None):
+    async def search_graph(self, query_text: str, file_id: Optional[UUID] = None, db: AsyncSession = None):
         # Very simple search: find entities mentioned in documents
-        cypher = """
-        MATCH (e:Entity)
-        WHERE e.name CONTAINS $query
-        MATCH (e)<-[:MENTIONS]-(c:DocumentChunk)
-        RETURN e.name as entity, e.type as type, c.id as chunk_id
-        """
-        results = neo4j_integration.run_query(cypher, {"query": query_text})
+        if file_id:
+            cypher = """
+            MATCH (e:Entity)
+            WHERE e.name CONTAINS $query
+            MATCH (e)<-[:MENTIONS]-(c:DocumentChunk {file_id: $file_id})
+            RETURN e.name as entity, e.type as type, c.id as chunk_id
+            """
+            results = neo4j_integration.run_query(cypher, {"query": query_text, "file_id": str(file_id)})
+        else:
+            cypher = """
+            MATCH (e:Entity)
+            WHERE e.name CONTAINS $query
+            MATCH (e)<-[:MENTIONS]-(c:DocumentChunk)
+            RETURN e.name as entity, e.type as type, c.id as chunk_id
+            """
+            results = neo4j_integration.run_query(cypher, {"query": query_text})
         
         if db and results:
             from app.models.file import DocumentChunk

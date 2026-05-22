@@ -1,55 +1,137 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from uuid import UUID
 from langgraph.graph import StateGraph, START, END
-from app.agents.state import AgentState
+from app.agents.state import AgentState, TraceLog
 from app.services.retrieval_service import retrieval_service
-from app.services.rag_service import rag_service
+from app.services.graph_service import graph_service
 from app.services.llm_service import llm_service
 from loguru import logger
+import json
 
-# Nodes
+def append_trace(state: AgentState, name: str, status: str, thought: str) -> List[TraceLog]:
+    logs = state.get("trace_logs", [])
+    return logs + [{"name": name, "status": status, "thought": thought}]
+
 async def router_node(state: AgentState) -> AgentState:
-    logger.info("Agent: Routing and Planning")
     query = state["user_query"]
+    prompt = f"""You are a query router. The user asks: "{query}"
+Determine if this is a complex/comprehensive query that needs breaking down into sub-queries to search across chapters.
+If complex, break it into 2-3 specific sub-queries. Otherwise, return just the original query as a sub-query.
+Output JSON format: {{"task_type": "complex" | "simple", "sub_queries": ["query1", "query2"]}}"""
     
-    prompt = f"""You are a planner for InsightGraph Agent. Analyze the query: "{query}"
-    Decide:
-    1. Search Mode: 'local' (for specific facts), 'global' (for summaries/themes), or 'hybrid'.
-    2. Task Type: 'simple_qa', 'comparison', or 'complex_analysis'.
-    
-    Return JSON: {{"search_mode": "...", "task_type": "..."}}"""
+    thought = ""
+    sub_queries = [query]
+    task_type = "simple"
     
     try:
         response = await llm_service.chat([{"role": "user", "content": prompt}])
-        # Extract JSON (simplified)
-        import json
-        plan = json.loads(response[response.find("{"):response.rfind("}")+1])
-        return {**state, "task_type": plan["task_type"], "errors": [plan["search_mode"]]} # Using errors list as a temporary state carrier
-    except:
-        return {**state, "task_type": "simple_qa"}
+        json_str = response[response.find("{"):response.rfind("}")+1]
+        plan = json.loads(json_str)
+        sub_queries = plan.get("sub_queries", [query])
+        task_type = plan.get("task_type", "simple")
+        thought = f"Analyzed query. Task type: {task_type}. Generated {len(sub_queries)} sub-queries: {', '.join(sub_queries)}"
+    except Exception as e:
+        thought = f"Router parsing failed, defaulting to simple query. Error: {e}"
+        
+    return {
+        **state,
+        "task_type": task_type,
+        "sub_queries": sub_queries,
+        "trace_logs": append_trace(state, "Router", "completed", thought)
+    }
 
 async def retrieval_node(state: AgentState) -> AgentState:
-    # In a real implementation, we'd use the search_mode from state
-    logger.info(f"Agent: Performing Retrieval for {state['user_query']}")
-    # This node would call retrieval_service with the correct mode
-    return state
+    db = state.get("db")
+    workspace_id = UUID(state["workspace_id"])
+    file_id = UUID(state["file_id"]) if state.get("file_id") and state["file_id"] != "all" else None
+    
+    all_chunks = []
+    chunk_ids = []
+    
+    # Execute all sub-queries
+    for sq in state.get("sub_queries", [state["user_query"]]):
+        # 1. Search Vector DB (chunks + summaries)
+        chunks = await retrieval_service.search(db, sq, workspace_id, top_k=5, file_id=file_id)
+        all_chunks.extend(chunks)
+        
+        # 2. Extract Graph Entities explicitly from query
+        graph_res = await graph_service.search_graph(sq, db)
+        if graph_res:
+            for r in graph_res:
+                if r.get("chunk_id"):
+                    chunk_ids.append(r["chunk_id"])
+    
+    # Deduplicate chunks
+    unique_chunks = {c["chunk_id"]: c for c in all_chunks}.values()
+    final_chunks = list(unique_chunks)
+    
+    chunk_ids.extend([c["chunk_id"] for c in final_chunks])
+    graph_context = await graph_service.get_entity_context(list(set(chunk_ids)))
+    
+    # Append graph context as a special chunk if it exists
+    if graph_context:
+        final_chunks.append({
+            "chunk_id": "graph-context",
+            "file_id": "Knowledge Graph",
+            "page_number": "-",
+            "content": graph_context
+        })
+        
+    thought = f"Retrieved {len(final_chunks)} unique evidence blocks using vector search and graph expansion."
+    return {
+        **state,
+        "retrieved_chunks": final_chunks,
+        "citations": final_chunks,
+        "trace_logs": append_trace(state, "Retrieval & Graph", "completed", thought)
+    }
 
 async def verifier_node(state: AgentState) -> AgentState:
-    logger.info("Agent: Verifying evidence sufficiency")
-    # Simulation: if it's the first run, we might want more data
-    needs_retry = len(state.get("retrieved_chunks", [])) < 3
+    chunks = state.get("retrieved_chunks", [])
+    retries = state.get("retries", 0)
+    
+    is_sufficient = len(chunks) > 0 or retries >= 1
+    thought = "Evidence is sufficient to draft an answer." if is_sufficient else "Not enough evidence, need to retry."
     
     return {
-        **state, 
-        "verification_result": {
-            "is_sufficient": not needs_retry,
-            "reason": "Need more diverse sources" if needs_retry else "Evidence looks good"
-        }
+        **state,
+        "retries": retries + 1,
+        "verification_result": {"is_sufficient": is_sufficient},
+        "trace_logs": append_trace(state, "Verifier", "completed", thought)
     }
 
 async def writer_node(state: AgentState) -> AgentState:
-    logger.info("Agent: Generating final answer")
-    return {**state, "final_answer": "Final synthesized answer with research-backed improvements."}
+    chunks = state.get("retrieved_chunks", [])
+    query = state["user_query"]
+    
+    context_parts = []
+    for i, chunk in enumerate(chunks):
+        context_parts.append(f"Source [{i+1}] (File: {chunk['file_id']}, Page: {chunk['page_number']}):\n{chunk['content']}")
+        
+    context_str = "\n\n".join(context_parts)
+    
+    system_prompt = (
+        "You are an AI assistant for InsightGraph Agent. "
+        "Answer the user's question based ONLY on the provided context. "
+        "If you don't know the answer, say you don't know. "
+        "Always cite your sources using [Source X] format."
+    )
+    user_prompt = f"Context:\n{context_str}\n\nQuestion: {query}"
+    
+    try:
+        answer = await llm_service.chat([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ])
+        thought = "Synthesized final answer successfully."
+    except Exception as e:
+        answer = "Error generating response."
+        thought = f"Failed to generate answer: {e}"
+        
+    return {
+        **state,
+        "final_answer": answer,
+        "trace_logs": append_trace(state, "Writer", "completed", thought)
+    }
 
 def build_agent_graph():
     workflow = StateGraph(AgentState)
@@ -63,10 +145,9 @@ def build_agent_graph():
     workflow.add_edge("router", "retrieval")
     workflow.add_edge("retrieval", "verifier")
     
-    # Conditional edge for the verification loop
     workflow.add_conditional_edges(
         "verifier",
-        lambda x: "retrieval" if not x["verification_result"]["is_sufficient"] else "writer",
+        lambda x: "retrieval" if not x.get("verification_result", {}).get("is_sufficient", True) else "writer",
         {
             "retrieval": "retrieval",
             "writer": "writer"
