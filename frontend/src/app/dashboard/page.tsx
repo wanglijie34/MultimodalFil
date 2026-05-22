@@ -1,12 +1,50 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, MessageSquare, Share2, Activity } from "lucide-react"
+import { api } from "@/lib/api"
+
+interface DashboardStats {
+  total_files: number
+  agent_runs: number
+  knowledge_entities: number
+  storage_used_bytes: number
+}
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (!+bytes) return '0 Bytes'
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
 
 export default function DashboardPage() {
+  const [statsData, setStatsData] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await api.system.getStats()
+        setStatsData(data)
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
   const stats = [
-    { name: "Total Files", value: "0", icon: FileText },
-    { name: "Agent Runs", value: "0", icon: MessageSquare },
-    { name: "Knowledge Entities", value: "0", icon: Share2 },
-    { name: "Storage Used", value: "0 MB", icon: Activity },
+    { name: "Total Files", value: loading ? "..." : (statsData?.total_files || 0).toString(), icon: FileText },
+    { name: "Agent Runs", value: loading ? "..." : (statsData?.agent_runs || 0).toString(), icon: MessageSquare },
+    { name: "Knowledge Entities", value: loading ? "..." : (statsData?.knowledge_entities || 0).toString(), icon: Share2 },
+    { name: "Storage Used", value: loading ? "..." : formatBytes(statsData?.storage_used_bytes || 0), icon: Activity },
   ]
 
   return (
@@ -37,7 +75,9 @@ export default function DashboardPage() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">No recent activity found.</p>
+            <p className="text-sm text-muted-foreground">
+              {loading ? "Loading activity..." : "No recent activity found."}
+            </p>
           </CardContent>
         </Card>
         <Card className="col-span-3">
@@ -48,7 +88,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-sm font-medium">Backend: Online</span>
+                <span className="text-sm font-medium">Backend: {loading ? "Checking..." : "Online"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500" />

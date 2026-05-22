@@ -52,4 +52,7 @@ export const api = {
     get: (id: string) => fetchApi(`/reports/${id}`),
     generate: (topic: string) => fetchApi(`/reports?topic=${encodeURIComponent(topic)}`, { method: "POST" }),
   },
+  system: {
+    getStats: () => fetchApi("/system/stats"),
+  },
 };
