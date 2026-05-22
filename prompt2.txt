@@ -416,7 +416,6 @@ RESEARCH ADOPTION PRINCIPLE
 ====================================================
 
 You are NOT required to fully reproduce academic papers.
-
 Your real task is:
 
 1. Read the paper.

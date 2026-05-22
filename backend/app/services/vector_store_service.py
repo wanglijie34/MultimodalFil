@@ -18,7 +18,7 @@ class VectorStoreService:
                     "chunk_index": chunk.chunk_index,
                     "content": chunk.content,
                     "modality": chunk.modality,
-                    **chunk.metadata
+                    **chunk.meta
                 }
             ))
         

@@ -1,5 +1,6 @@
 import os
 import tempfile
+from typing import List, Dict, Optional, Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.file import File, DocumentPage, DocumentChunk
@@ -129,7 +130,7 @@ class IngestionService:
                 page_number=pg,
                 chunk_index=999 + pg, # Use high index for summaries
                 content=summary_text,
-                metadata={"source_page": pg}
+                meta={"source_page": pg}
             )
             db.add(s_chunk)
             summary_chunks.append(s_chunk)
@@ -147,11 +148,5 @@ class IngestionService:
         from sqlalchemy import func, select
         result = await db.execute(select(func.count()).select_from(DocumentChunk).where(DocumentChunk.file_id == file_id))
         return result.scalar() or 0
-            
-        except Exception as e:
-            logger.exception(f"Error ingesting file {file_id}: {e}")
-            db_file.status = "failed"
-            db_file.error_message = str(e)
-            await db.commit()
 
 ingestion_service = IngestionService()

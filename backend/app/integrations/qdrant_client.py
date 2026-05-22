@@ -11,11 +11,8 @@ class QdrantIntegration:
             api_key=settings.QDRANT_API_KEY
         )
         self.collection_name = "document_chunks"
-        # In a real app, vector size depends on the model. 
-        # OpenAI text-embedding-3-small is 1536. 
-        # Gemini text-embedding-004 is 768.
-        # We'll use 768 as default for Gemini.
-        self.vector_size = 768 
+        # Updated to 1024 for DashScope text-embedding-v4
+        self.vector_size = 1024 
         self._ensure_collection()
 
     def _ensure_collection(self):

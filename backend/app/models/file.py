@@ -1,7 +1,12 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
 from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
+
+if TYPE_CHECKING:
+    from app.models.user import User, Workspace
+
+from app.models.graph import Entity, ChunkEntity
 
 class FileTag(SQLModel, table=True):
     file_id: UUID = Field(foreign_key="file.id", primary_key=True)
@@ -71,7 +76,7 @@ class DocumentPage(SQLModel, table=True):
     thumbnail_key: Optional[str] = None # Added for visual preview
     width: Optional[float] = None
     height: Optional[float] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: Dict[str, Any] = Field(default_factory=dict, sa_type=JSON, sa_column_kwargs={"name": "metadata"})
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     file: File = Relationship(back_populates="pages")
@@ -87,10 +92,10 @@ class DocumentChunk(SQLModel, table=True):
     modality: str = Field(default="text")
     content: str
     token_count: int = Field(default=0)
-    metadata: Dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: Dict[str, Any] = Field(default_factory=dict, sa_type=JSON, sa_column_kwargs={"name": "metadata"})
 
     file: File = Relationship(back_populates="chunks")
-    entities: List["Entity"] = Relationship(back_populates="chunks", link_model="ChunkEntity")
+    entities: List["Entity"] = Relationship(back_populates="chunks", link_model=ChunkEntity)
     # Hierarchy relationships
     children: List["DocumentChunk"] = Relationship(
         back_populates="parent", 
@@ -109,6 +114,6 @@ class FileAsset(SQLModel, table=True):
     storage_key: str
     caption: Optional[str] = None
     ocr_text: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    meta: Dict[str, Any] = Field(default_factory=dict, sa_type=JSON, sa_column_kwargs={"name": "metadata"})
 
     file: File = Relationship(back_populates="assets")

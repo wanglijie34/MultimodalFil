@@ -1,7 +1,10 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
 from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
+
+if TYPE_CHECKING:
+    from app.models.user import User, Workspace
 
 class AgentRun(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)

@@ -6,11 +6,28 @@ from loguru import logger
 class EmbeddingService:
     def __init__(self):
         self.provider = settings.AI_PROVIDER
-        self.vector_size = 768 # Default for Gemini
+        self.vector_size = 1024 # Recommended for text-embedding-v4
 
     async def embed_text(self, text: str) -> List[float]:
         if not text:
             return [0.0] * self.vector_size
+
+        if self.provider == "dashscope" or (self.provider == "deepseek" and settings.DASHSCOPE_API_KEY):
+            # Using DashScope for embeddings even if provider is deepseek for chat
+            try:
+                from openai import OpenAI
+                client = OpenAI(
+                    api_key=settings.DASHSCOPE_API_KEY,
+                    base_url=settings.DASHSCOPE_BASE_URL
+                )
+                response = client.embeddings.create(
+                    model="text-embedding-v4",
+                    input=[text],
+                    dimensions=self.vector_size
+                )
+                return response.data[0].embedding
+            except Exception as e:
+                logger.error(f"DashScope embedding failed: {e}")
 
         if self.provider == "gemini" and settings.GOOGLE_API_KEY:
             try:

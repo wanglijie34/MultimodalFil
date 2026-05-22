@@ -35,7 +35,7 @@ class ChunkingService:
                     chunk_index=chunk_index,
                     content=chunk_content,
                     token_count=len(chunk_content.split()), # Rough estimation
-                    metadata={"page_number": page.page_number}
+                    meta={"page_number": page.page_number}
                 ))
                 
                 chunk_index += 1

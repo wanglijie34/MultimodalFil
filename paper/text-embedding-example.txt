@@ -1,0 +1,331 @@
+核心功能
+切换向量维度
+text-embedding-v4 、 text-embedding-v3、tongyi-embedding-vision-plus-2026-03-06、tongyi-embedding-vision-flash-2026-03-06、qwen3-vl-embedding和qwen2.5-vl-embedding支持自定义向量维度。更高的维度能保留更丰富的语义信息，但也会相应增加存储和计算成本。
+
+通用场景（推荐）：1024 维度是性能与成本的最佳平衡点，适用于绝大多数语义检索任务。
+
+追求精度：对于高精度要求领域，可选择 1536 或 2048 维度。这会带来一定的精度提升，但存储和计算开销会显著增加。
+
+资源受限：在对成本极其敏感的场景下，可选择 768 及以下维度。这能显著降低资源消耗，但会损失部分语义信息。
+
+OpenAI兼容接口DashScope
+ 
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    # 各地域的API Key不同。获取API Key：https://help.aliyun.com/zh/model-studio/get-api-key
+    api_key=os.getenv("DASHSCOPE_API_KEY"),
+    # 以下是北京地域base-url，如果使用新加坡地域的模型，需要将base_url替换为：https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+)
+
+resp = client.embeddings.create(
+    model="text-embedding-v4",
+    input=["喜欢，以后还来这里买"],
+    # 将向量维度设置为 256
+    dimensions=256
+)
+print(f"向量维度: {len(resp.data[0].embedding)}")
+区分查询与文档文本 (text_type)
+该参数目前仅支持通过DashScope SDK及API启用。
+为了在搜索类任务中取得最佳效果，应根据任务目标对不同的内容进行有针对性的向量化处理，以充分发挥各自的作用。text_type 参数正是为此设计：
+
+text_type: 'query'：用于用户输入的查询文本。模型将生成一个类似“标题”的向量，更具方向性，专为“提问”和“查找”进行优化。
+
+text_type: 'document' (默认值)：用于存入底库的文档文本。模型将生成一个类似“正文”的向量，包含更全面的信息，专为“被匹配”进行优化。
+
+当使用短文本去匹配长文本时，应区分 query 和 document。而在聚类、分类等所有文本处于相同角色的任务中，则无需设置此参数。
+
+使用任务指令提升效果 (instruct)
+该参数目前仅支持通过DashScope SDK及API启用。
+通过提供明确的英文任务指令（instruct），可以引导 text-embedding-v4 模型针对特定检索场景优化向量质量，有效提升精度。使用此功能时，必须将 text_type 参数设置为 query。
+
+ 
+# 场景：为搜索引擎构建文档向量时，可以添加指令以优化用于检索的向量质量。
+resp = dashscope.TextEmbedding.call(
+    model="text-embedding-v4",
+    input="机器学习的相关论文",
+    text_type="query",
+    instruct="Given a research paper query, retrieve relevant research paper"
+)
+稠密与稀疏向量
+该参数目前仅支持通过DashScope SDK及API启用。
+text-embedding-v4和text-embedding-v3支持输出三种类型的向量，以适应不同检索策略的需求。
+
+
+
+
+
+向量类型 (output_type)
+
+核心优势
+
+主要不足
+
+典型应用场景
+
+dense
+
+深度语义理解，能识别同义词和上下文，与召回结果更相关。
+
+计算和存储成本较高；无法保证关键词的精确匹配。
+
+语义搜索、智能问答、内容推荐。
+
+sparse
+
+高计算效率，专注于关键词的精确匹配和快速过滤。
+
+牺牲了语义理解能力，无法处理同义词或上下文。
+
+日志检索、商品SKU搜索、精确信息过滤。
+
+dense&sparse
+
+结合语义与关键词，搜索效果最好。生成成本不变，API调用开销与单向量模式相同。
+
+存储需求大，系统架构和检索逻辑更复杂。
+
+高质量、生产级的混合搜索引擎。
+
+应用示例
+以下为功能演示代码。在生产环境中，请预先计算向量并持久化存储在向量数据库中，检索时仅需计算查询向量。
+语义搜索
+通过计算查询与文档之间的向量相似度，实现精准的语义匹配。
+
+ 
+import dashscope
+import numpy as np
+from dashscope import TextEmbedding
+
+def cosine_similarity(a, b):
+    """计算余弦相似度"""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def semantic_search(query, documents, top_k=5):
+    """语义搜索"""
+    # 生成查询向量
+    query_resp = TextEmbedding.call(
+        model="text-embedding-v4",
+        input=query,
+        dimension=1024
+    )
+    query_embedding = query_resp.output['embeddings'][0]['embedding']
+
+    # 生成文档向量
+    doc_resp = TextEmbedding.call(
+        model="text-embedding-v4",
+        input=documents,
+        dimension=1024
+    )
+
+    # 计算相似度
+    similarities = []
+    for i, doc_emb in enumerate(doc_resp.output['embeddings']):
+        similarity = cosine_similarity(query_embedding, doc_emb['embedding'])
+        similarities.append((i, similarity))
+
+    # 排序并返回top_k结果
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    return [(documents[i], sim) for i, sim in similarities[:top_k]]
+
+# 使用示例
+documents = [
+    "人工智能是计算机科学的一个分支",
+    "机器学习是实现人工智能的重要方法",
+    "深度学习是机器学习的一个子领域"
+]
+query = "什么是AI？"
+results = semantic_search(query, documents, top_k=2)
+for doc, sim in results:
+    print(f"相似度: {sim:.3f}, 文档: {doc}")
+    
+推荐系统
+通过分析用户历史行为向量，发现用户的兴趣偏好并推荐相似物品。
+
+ 
+import dashscope
+import numpy as np
+from dashscope import TextEmbedding
+
+def cosine_similarity(a, b):
+    """计算余弦相似度"""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+def build_recommendation_system(user_history, all_items, top_k=10):
+    """构建推荐系统"""
+    # 生成用户历史向量
+    history_resp = TextEmbedding.call(
+        model="text-embedding-v4",
+        input=user_history,
+        dimension=1024
+    )
+
+    # 计算用户偏好向量（取平均）
+    user_embedding = np.mean([
+        emb['embedding'] for emb in history_resp.output['embeddings']
+    ], axis=0)
+
+    # 生成所有物品向量
+    items_resp = TextEmbedding.call(
+        model="text-embedding-v4",
+        input=all_items,
+        dimension=1024
+    )
+
+    # 计算推荐分数
+    recommendations = []
+    for i, item_emb in enumerate(items_resp.output['embeddings']):
+        score = cosine_similarity(user_embedding, item_emb['embedding'])
+        recommendations.append((all_items[i], score))
+
+    # 排序并返回推荐结果
+    recommendations.sort(key=lambda x: x[1], reverse=True)
+    return recommendations[:top_k]
+
+# 使用示例
+user_history = ["科幻类", "动作类", "悬疑类"]
+all_movies = ["未来世界", "太空探险", "古代战争", "浪漫之旅", "超级英雄"]
+recommendations = build_recommendation_system(user_history, all_movies)
+for movie, score in recommendations:
+    print(f"推荐分数: {score:.3f}, 电影: {movie}")
+文本聚类
+通过分析向量间的距离，将相似的文本自动分组。
+
+ 
+# 需要安装 scikit-learn: pip install scikit-learn
+import dashscope
+import numpy as np
+from sklearn.cluster import KMeans
+
+
+def cluster_texts(texts, n_clusters=2):
+    """将一组文本进行聚类"""
+    # 1. 获取所有文本的向量
+    resp = dashscope.TextEmbedding.call(
+        model="text-embedding-v4",
+        input=texts,
+        dimension=1024
+    )
+    embeddings = np.array([item['embedding'] for item in resp.output['embeddings']])
+
+    # 2. 使用KMeans算法进行聚类
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init='auto').fit(embeddings)
+
+    # 3. 整理并返回结果
+    clusters = {i: [] for i in range(n_clusters)}
+    for i, label in enumerate(kmeans.labels_):
+        clusters[label].append(texts[i])
+    return clusters
+
+
+# 使用示例
+documents_to_cluster = [
+    "手机公司A发售新款手机",
+    "搜索引擎公司B推出新款系统",
+    "世界杯决赛阿根廷对阵法国",
+    "奥运会中国队再添一金",
+    "某公司发布最新AI芯片",
+    "欧洲杯赛事报道"
+]
+clusters = cluster_texts(documents_to_cluster, n_clusters=2)
+for cluster_id, docs in clusters.items():
+    print(f"--- 类别 {cluster_id} ---")
+    for doc in docs:
+        print(f"- {doc}")
+文本分类
+通过计算输入文本与预定义标签的向量相似度，实现在没有预先标记的示例的情况下，对新类别进行识别和分类。
+
+ 
+import dashscope
+import numpy as np
+
+
+def cosine_similarity(a, b):
+    """计算余弦相似度"""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
+def classify_text_zero_shot(text, labels):
+    """零样本文本分类"""
+    # 1. 获取输入文本和所有标签的向量
+    resp = dashscope.TextEmbedding.call(
+        model="text-embedding-v4",
+        input=[text] + labels,
+        dimension=1024
+    )
+    embeddings = resp.output['embeddings']
+    text_embedding = embeddings[0]['embedding']
+    label_embeddings = [emb['embedding'] for emb in embeddings[1:]]
+
+    # 2. 计算与每个标签的相似度
+    scores = [cosine_similarity(text_embedding, label_emb) for label_emb in label_embeddings]
+
+    # 3. 返回相似度最高的标签
+    best_match_index = np.argmax(scores)
+    return labels[best_match_index], scores[best_match_index]
+
+
+# 使用示例
+text_to_classify = "这件衣服的料子很舒服，款式也好看"
+possible_labels = ["数码产品", "服装配饰", "食品饮料", "家居生活"]
+
+label, score = classify_text_zero_shot(text_to_classify, possible_labels)
+print(f"输入文本: '{text_to_classify}'")
+print(f"最匹配的分类是: '{label}' (相似度: {score:.3f})")
+异常检测
+通过计算文本向量与正常样本中心的向量相似度，识别出与常规模式显著不同的异常数据。
+
+示例代码中的阈值（threshold）仅为演示目的。在真实业务场景中，相似度的具体数值会因数据内容和分布的不同而变化，没有一个固定的阈值。建议基于自己的数据集来校准此值。
+ 
+import dashscope
+import numpy as np
+
+
+def cosine_similarity(a, b):
+    """计算余弦相似度"""
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
+def detect_anomaly(new_comment, normal_comments, threshold=0.6):
+    # 1. 向量化所有正常评论和新评论
+    all_texts = normal_comments + [new_comment]
+    resp = dashscope.TextEmbedding.call(
+        model="text-embedding-v4",
+        input=all_texts,
+        dimension=1024
+    )
+    embeddings = [item['embedding'] for item in resp.output['embeddings']]
+
+    # 2. 计算正常评论的中心向量（平均值）
+    normal_embeddings = np.array(embeddings[:-1])
+    normal_center_vector = np.mean(normal_embeddings, axis=0)
+
+    # 3. 计算新评论与中心向量的相似度
+    new_comment_embedding = np.array(embeddings[-1])
+    similarity = cosine_similarity(new_comment_embedding, normal_center_vector)
+
+    # 4. 判断是否为异常
+    is_anomaly = similarity < threshold
+    return is_anomaly, similarity
+
+
+# 使用示例
+normal_user_comments = [
+    "今天的会议很有成效",
+    "项目进展顺利",
+    "下周发布新版本",
+    "用户反馈良好"
+]
+
+test_comments = {
+    "正常评论": "功能符合预期",
+    "异常-无意义乱码": "asdfghjkl zxcvbnm"
+}
+
+print("--- 异常检测示例 ---")
+for desc, comment in test_comments.items():
+    is_anomaly, score = detect_anomaly(comment, normal_user_comments)
+    result = "是" if is_anomaly else "否"
+    print(f"评论: '{comment}'")
+    print(f"是否为异常: {result} (与正常样本相似度: {score:.3f})\n")

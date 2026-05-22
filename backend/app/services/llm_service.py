@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from app.core.config import settings
 from loguru import logger
 
@@ -32,6 +32,21 @@ class LLMService:
                 return response.choices[0].message.content
             except Exception as e:
                 logger.error(f"OpenAI chat failed: {e}")
+
+        elif self.provider == "deepseek" and settings.DEEPSEEK_API_KEY:
+            try:
+                from openai import OpenAI
+                client = OpenAI(
+                    api_key=settings.DEEPSEEK_API_KEY,
+                    base_url=settings.DEEPSEEK_BASE_URL
+                )
+                response = client.chat.completions.create(
+                    model="deepseek-v4-flash", 
+                    messages=messages
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                logger.error(f"DeepSeek chat failed: {e}")
 
         # Fallback
         return "This is a simulated AI response. Please configure AI API keys for real answers."

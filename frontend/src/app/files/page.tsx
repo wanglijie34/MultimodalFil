@@ -65,7 +65,7 @@ export default function FilesPage() {
           </Button>
           <label className="cursor-pointer">
             <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
-            <Button asChild disabled={uploading}>
+            <Button disabled={uploading}>
               <span>
                 {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                 Upload File

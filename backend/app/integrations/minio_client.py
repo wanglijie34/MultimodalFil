@@ -9,7 +9,7 @@ class MinIOClient:
             "s3",
             endpoint_url=f"http://{settings.MINIO_ENDPOINT}" if not settings.MINIO_SECURE else f"https://{settings.MINIO_ENDPOINT}",
             aws_access_key_id=settings.MINIO_ACCESS_KEY,
-            aws_secret_key_id=settings.MINIO_SECRET_KEY,
+            aws_secret_access_key=settings.MINIO_SECRET_KEY,
             config=Config(signature_version="s3v4"),
             region_name="us-east-1", # MinIO usually doesn't care
         )

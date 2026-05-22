@@ -75,3 +75,41 @@ See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for detailed progress and roadmap.
 ## 📄 License
 
 MIT
+
+
+
+ 当前项目的启动命令有以下两种主要方式：
+
+  ### 1. 使用 Docker Compose 整体启动（推荐）
+
+  在项目根目录下，直接使用 Docker Compose
+  启动包含前端、后端以及所有依赖服务（PostgreSQL, Qdrant, Neo4j, MinIO,
+  Redis）：
+
+    docker compose up -d
+
+  • 前端访问地址：http://localhost:3000
+  • 后端 API 文档：http://localhost:8000/api/v1/docs
+  ──────
+  ### 2. 本地开发分步启动
+
+  如果你想在本地开发模式下分别启动前端和后端，可以在安装依赖后运行以下命令：
+
+  #### 后端 (Backend)
+
+  进入 backend 目录，并在虚拟环境中运行：
+
+    python -m app.main
+    # 或者使用 uvicorn 启动：
+    uvicorn app.main:app --reload --port 8000
+
+  #### 前端 (Frontend)
+
+  进入 frontend 目录，运行：
+
+    npm run dev
+
+  │ [!NOTE]
+  │ 本地开发分步启动时，仍需确保数据库等基础组件（PostgreSQL, Qdrant, Neo4j,
+  │ MinIO, Redis）在本地或 Docker 中处于运行状态，并已正确配置根目录下的
+  │ .env 环境变量文件。
