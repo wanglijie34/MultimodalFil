@@ -39,46 +39,71 @@ class RetrievalService:
         file_id: UUID = None
     ) -> List[Dict[str, Any]]:
         logger.info(f"Performing {search_mode} search for: {query}")
-        
-        # 1. Vector Search (Local Context)
-        query_vector = await embedding_service.embed_text(query)
         search_terms = self._extract_search_terms(query)
         query_profile = describe_query_profile(query)
-        
-        # If global mode, we might want to target summaries specifically
-        # For hybrid/local, we target all chunks
-        vector_results = await vector_store_service.search(query_vector, top_k=top_k, file_id=file_id)
-        
-        # 2. Keyword Search (Simple fallback)
-        keyword_chunks = []
-        if search_mode in ["hybrid", "local"] and search_terms:
-            keyword_query = select(DocumentChunk).where(
-                or_(*[DocumentChunk.content.ilike(f"%{term}%") for term in search_terms])
-            )
-            if file_id:
-                keyword_query = keyword_query.where(DocumentChunk.file_id == file_id)
-            keyword_query = keyword_query.limit(top_k * 4)
-            keyword_result = await db.execute(keyword_query)
-            keyword_chunks = keyword_result.scalars().all()
-        
-        # 3. Global Summary Search (RAPTOR/LightRAG inspired)
-        summary_chunks = []
-        if search_mode in ["global", "hybrid"] and search_terms:
-            summary_query = select(DocumentChunk).where(
-                (DocumentChunk.is_summary == True) &
-                or_(*[DocumentChunk.content.ilike(f"%{term}%") for term in search_terms])
-            )
-            if file_id:
-                summary_query = summary_query.where(DocumentChunk.file_id == file_id)
-            summary_query = summary_query.limit(max(3, top_k))
-            summary_res = await db.execute(summary_query)
-            summary_chunks = summary_res.scalars().all()
-        
-        # 4. Merge and Rerank
+        vector_results = []
+        if search_mode in ["hybrid", "local", "global"]:
+            query_vector = await embedding_service.embed_text(query)
+            vector_results = await vector_store_service.search(query_vector, top_k=max(top_k * 2, 8), file_id=file_id)
+
+        keyword_chunks = await self.keyword_search(db, search_terms, top_k=top_k, file_id=file_id) if search_mode in ["hybrid", "local"] else []
+        summary_chunks = await self.summary_search(db, search_terms, top_k=top_k, file_id=file_id) if search_mode in ["global", "hybrid"] else []
+
+        return self.merge_results(
+            vector_results=vector_results,
+            keyword_chunks=keyword_chunks,
+            summary_chunks=summary_chunks,
+            search_terms=search_terms,
+            query=query,
+            query_profile=query_profile,
+            top_k=top_k,
+        )
+
+    async def vector_search(self, query: str, top_k: int = 8, file_id: UUID = None):
+        query_vector = await embedding_service.embed_text(query)
+        return await vector_store_service.search(query_vector, top_k=max(top_k * 2, 8), file_id=file_id)
+
+    async def keyword_search(self, db: AsyncSession, search_terms: List[str], top_k: int = 8, file_id: UUID = None):
+        if not search_terms:
+            return []
+
+        keyword_query = select(DocumentChunk).where(
+            or_(*[DocumentChunk.content.ilike(f"%{term}%") for term in search_terms])
+        )
+        if file_id:
+            keyword_query = keyword_query.where(DocumentChunk.file_id == file_id)
+        keyword_query = keyword_query.limit(top_k * 4)
+        keyword_result = await db.execute(keyword_query)
+        return keyword_result.scalars().all()
+
+    async def summary_search(self, db: AsyncSession, search_terms: List[str], top_k: int = 8, file_id: UUID = None):
+        if not search_terms:
+            return []
+
+        summary_query = select(DocumentChunk).where(
+            (DocumentChunk.is_summary == True) &
+            or_(*[DocumentChunk.content.ilike(f"%{term}%") for term in search_terms])
+        )
+        if file_id:
+            summary_query = summary_query.where(DocumentChunk.file_id == file_id)
+        summary_query = summary_query.limit(max(4, top_k))
+        summary_res = await db.execute(summary_query)
+        return summary_res.scalars().all()
+
+    def merge_results(
+        self,
+        *,
+        vector_results: List[Any],
+        keyword_chunks: List[DocumentChunk],
+        summary_chunks: List[DocumentChunk],
+        search_terms: List[str],
+        query: str,
+        query_profile: Dict[str, Any],
+        top_k: int = 8,
+    ) -> List[Dict[str, Any]]:
         seen_ids = set()
         merged_results = []
-        
-        # Add summary results with high priority if in global mode
+
         for chunk in summary_chunks:
             matched_terms = sum(1 for term in search_terms if term.lower() in chunk.content.lower())
             seen_ids.add(str(chunk.id))
@@ -125,19 +150,13 @@ class RetrievalService:
                     "file_category": meta.get("file_category"),
                     "indexing_profile": meta.get("indexing_profile"),
                 })
-        
+
         merged_results.sort(key=lambda x: x["score"], reverse=True)
-        top_results = merged_results[:top_k * 2] # Get more for reranking
-        
-        # 5. Rerank (Aliyun Qwen3-Rerank inspired)
+        top_results = merged_results[:top_k * 2]
+
         if settings.DASHSCOPE_API_KEY and top_results:
             try:
-                # Simple implementation using DashScope rerank
-                # Note: This is a conceptual integration as the exact OpenAI-compatible 
-                # rerank path might vary, but here we'll use a simplified scoring logic
-                # or a placeholder for the actual API call.
                 logger.info(f"Reranking {len(top_results)} results with qwen3-rerank")
-                # For MVP, we'll keep the existing scores or simulate a boost for high-quality matches
                 pass
             except Exception as e:
                 logger.error(f"Reranking failed: {e}")

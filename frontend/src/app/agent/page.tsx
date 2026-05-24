@@ -1,10 +1,24 @@
 "use client"
 
-import { startTransition, type PointerEvent as ReactPointerEvent, useDeferredValue, useEffect, useMemo, useState } from "react"
+import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
+import {
+  Background,
+  Check,
+  Controls,
+  type Edge as FlowEdge,
+  Handle,
+  MarkerType,
+  MiniMap,
+  type Node as FlowNode,
+  type NodeProps,
+  Position,
+  ReactFlow,
+  ReactFlowProvider,
+  type XYPosition,
+} from "@xyflow/react"
 import {
   BookOpen,
   Bot,
-  Check,
   FileText,
   History,
   Loader2,
@@ -12,7 +26,6 @@ import {
   MessageSquarePlus,
   Network,
   Pencil,
-  RotateCcw,
   ScrollText,
   Search,
   Send,
@@ -23,8 +36,6 @@ import {
   Trash2,
   User,
   X,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -101,6 +112,16 @@ type StructuredFact = {
   sourceRefs: string[]
 }
 
+type AnswerGraphNodeData = {
+  label: string
+  sublabel?: string
+  detail?: string
+  kind: "core" | "fact" | "detail" | "source"
+  citationIndex?: number
+  onCitationClick?: (citation: Citation) => void
+  citation?: Citation
+}
+
 type GraphNode = {
   id: string
   kind: "core" | "fact" | "detail" | "source"
@@ -116,6 +137,7 @@ type GraphEdge = {
   from: string
   to: string
   label: string
+  strength?: "primary" | "secondary"
 }
 
 type GraphPoint = {
@@ -126,6 +148,13 @@ type GraphPoint = {
 type HistoryGroup = {
   label: string
   items: AgentRun[]
+}
+
+type TraceStage = {
+  key: string
+  label: string
+  parallel?: boolean
+  items: AgentTrace[]
 }
 
 type ConfirmState =
@@ -286,13 +315,17 @@ function extractAnswerTags(content: string, sourceQuery?: string, facts: Structu
   return tags.slice(0, 8)
 }
 
+// Legacy SVG graph helpers are intentionally kept as a fallback reference while React Flow is now the primary graph renderer.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function buildGraphModel(graphTitle: string, graphFacts: StructuredFact[]) {
   const spacing = 132
   const factWidth = 108
   const detailWidth = 120
   const sourceWidth = 78
   const totalWidth = Math.max(graphFacts.length - 1, 0) * spacing
-  const startX = 220 - totalWidth / 2
+  const width = Math.max(440, totalWidth + 300)
+  const centerX = width / 2
+  const startX = centerX - totalWidth / 2
 
   const nodes: GraphNode[] = [
     {
@@ -300,7 +333,7 @@ function buildGraphModel(graphTitle: string, graphFacts: StructuredFact[]) {
       kind: "core",
       label: graphTitle.slice(0, 28),
       sublabel: "Question",
-      x: 220,
+      x: centerX,
       y: 68,
       width: 148,
       height: 54,
@@ -329,7 +362,7 @@ function buildGraphModel(graphTitle: string, graphFacts: StructuredFact[]) {
       width: factWidth,
       height: 50,
     })
-    edges.push({ from: "core", to: factId, label: "explains" })
+    edges.push({ from: "core", to: factId, label: "explains", strength: "primary" })
 
     nodes.push({
       id: detailId,
@@ -341,7 +374,7 @@ function buildGraphModel(graphTitle: string, graphFacts: StructuredFact[]) {
       width: detailWidth,
       height: 52,
     })
-    edges.push({ from: factId, to: detailId, label: fact.sourceRefs.length ? "supports" : "details" })
+    edges.push({ from: factId, to: detailId, label: fact.sourceRefs.length ? "supports" : "details", strength: "secondary" })
 
     if (fact.sourceRefs.length > 0) {
       const sourceId = `source-${index}`
@@ -355,11 +388,270 @@ function buildGraphModel(graphTitle: string, graphFacts: StructuredFact[]) {
         width: sourceWidth,
         height: 34,
       })
-      edges.push({ from: sourceId, to: factId, label: "cites" })
+      edges.push({ from: sourceId, to: factId, label: "cites", strength: "secondary" })
     }
   })
 
+  return { nodes, edges, width, height: 360, centerX }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function buildForceOffsets(graphFacts: StructuredFact[]) {
+  return graphFacts.reduce<Record<string, GraphPoint>>((acc, _fact, index) => {
+    const offsetX = (index % 2 === 0 ? -1 : 1) * (14 + (index % 3) * 8)
+    const offsetY = index % 2 === 0 ? -6 - (index % 3) * 8 : 8 + (index % 3) * 6
+    acc[`fact-${index}`] = { x: offsetX, y: offsetY }
+    acc[`detail-${index}`] = { x: -offsetX * 0.6, y: (index % 2 === 0 ? 10 : -8) + index * 1.5 }
+    if (graphFacts[index]?.sourceRefs.length) {
+      acc[`source-${index}`] = { x: offsetX * 0.4, y: -10 - (index % 2) * 4 }
+    }
+    return acc
+  }, {})
+}
+
+function AnswerGraphFlowNode({ data }: NodeProps<FlowNode<AnswerGraphNodeData>>) {
+  const clickable = data.kind === "source" && data.citation && data.onCitationClick
+  const palette =
+    data.kind === "core"
+      ? {
+          wrapper: "border-slate-900 bg-slate-900 text-white shadow-[0_24px_64px_rgba(15,23,42,0.28)]",
+          label: "text-white",
+          sub: "text-slate-300",
+          detail: "text-slate-200",
+        }
+      : data.kind === "fact"
+        ? {
+            wrapper: "border-amber-300 bg-gradient-to-br from-amber-50 via-white to-orange-50 text-slate-900 shadow-[0_18px_42px_rgba(245,158,11,0.16)]",
+            label: "text-amber-950",
+            sub: "text-amber-700",
+            detail: "text-slate-600",
+          }
+        : data.kind === "source"
+          ? {
+              wrapper: "border-sky-300 bg-gradient-to-br from-sky-50 via-white to-blue-50 text-slate-900 shadow-[0_18px_42px_rgba(59,130,246,0.14)]",
+              label: "text-sky-900",
+              sub: "text-sky-700",
+              detail: "text-slate-600",
+            }
+          : {
+              wrapper: "border-slate-300 bg-white text-slate-900 shadow-[0_18px_42px_rgba(15,23,42,0.08)]",
+              label: "text-slate-900",
+              sub: "text-slate-500",
+              detail: "text-slate-600",
+            }
+
+  return (
+    <>
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-slate-300/70" />
+      <div
+        className={`min-w-[170px] max-w-[220px] rounded-[22px] border px-4 py-3 transition-all duration-200 ${palette.wrapper} ${clickable ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(59,130,246,0.18)]" : ""}`}
+        onClick={clickable ? () => data.onCitationClick?.(data.citation as Citation) : undefined}
+        role={clickable ? "button" : undefined}
+        tabIndex={clickable ? 0 : undefined}
+        onKeyDown={
+          clickable
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  data.onCitationClick?.(data.citation as Citation)
+                }
+              }
+            : undefined
+        }
+      >
+        {data.sublabel && <div className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${palette.sub}`}>{data.sublabel}</div>}
+        <div className={`mt-1 text-sm font-semibold leading-5 ${palette.label}`}>{data.label}</div>
+        {data.detail && <div className={`mt-2 text-xs leading-5 ${palette.detail}`}>{data.detail}</div>}
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-slate-300/70" />
+    </>
+  )
+}
+
+const answerGraphNodeTypes = {
+  answerNode: AnswerGraphFlowNode,
+}
+
+function buildAnswerFlowGraph(
+  graphTitle: string,
+  graphFacts: StructuredFact[],
+  citations: Citation[],
+  onCitationClick: (citation: Citation) => void
+) {
+  const nodes: FlowNode<AnswerGraphNodeData>[] = []
+  const edges: FlowEdge[] = []
+  const rootPosition: XYPosition = { x: 360, y: 24 }
+  const rootId = "core"
+
+  nodes.push({
+    id: rootId,
+    type: "answerNode",
+    position: rootPosition,
+    draggable: false,
+    data: {
+      kind: "core",
+      label: graphTitle.slice(0, 42),
+      sublabel: "Question",
+      detail: "The root question that the answer structure expands from.",
+    },
+  })
+
+  const radius = Math.max(180, 170 + graphFacts.length * 14)
+  const baseX = rootPosition.x + 30
+  const baseY = rootPosition.y + 150
+
+  graphFacts.forEach((fact, index) => {
+    const spread = graphFacts.length === 1 ? 0 : index / Math.max(graphFacts.length - 1, 1)
+    const angle = -1.1 + spread * 2.2
+    const factX = baseX + Math.sin(angle) * radius
+    const factY = baseY + Math.cos(angle) * 42
+    const factId = `fact-${index}`
+    const detailId = `detail-${index}`
+    const detailSnippet =
+      fact.value
+        .replace(/\s+/g, " ")
+        .split(/[锛?銆傦紱;:]/)
+        .map((part) => part.trim())
+        .find(Boolean) || fact.value
+
+    nodes.push({
+      id: factId,
+      type: "answerNode",
+      position: { x: factX, y: factY },
+      data: {
+        kind: "fact",
+        label: fact.label.slice(0, 24),
+        sublabel: "Dimension",
+        detail: `${fact.sourceRefs.length ? `${fact.sourceRefs.length} cited source${fact.sourceRefs.length > 1 ? "s" : ""}` : "No direct citation"} in this branch.`,
+      },
+    })
+    edges.push({
+      id: `edge-core-${factId}`,
+      source: rootId,
+      target: factId,
+      label: "explains",
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#0f172a" },
+      style: { stroke: "#334155", strokeWidth: 2.2 },
+      labelStyle: { fill: "#64748b", fontSize: 10, fontWeight: 700 },
+    })
+
+    nodes.push({
+      id: detailId,
+      type: "answerNode",
+      position: { x: factX + (index % 2 === 0 ? -34 : 34), y: factY + 132 },
+      data: {
+        kind: "detail",
+        label: detailSnippet.slice(0, 36),
+        sublabel: fact.sourceRefs.length ? "Claim + evidence" : "Claim",
+        detail: fact.value.slice(0, 110),
+      },
+    })
+    edges.push({
+      id: `edge-${factId}-${detailId}`,
+      source: factId,
+      target: detailId,
+      label: fact.sourceRefs.length ? "supports" : "details",
+      animated: fact.sourceRefs.length > 0,
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#f59e0b" },
+      style: { stroke: "#f59e0b", strokeWidth: 1.8, strokeDasharray: fact.sourceRefs.length ? undefined : "5 6" },
+      labelStyle: { fill: "#a16207", fontSize: 10, fontWeight: 700 },
+    })
+
+    fact.sourceRefs.forEach((ref, refIndex) => {
+      const refMatch = ref.match(/\[Source (\d+)\]/)
+      const citationIndex = refMatch ? parseInt(refMatch[1], 10) - 1 : -1
+      const citation = citationIndex >= 0 ? citations[citationIndex] : undefined
+      if (!citation) return
+
+      const sourceId = `source-${index}-${refIndex}`
+      nodes.push({
+        id: sourceId,
+        type: "answerNode",
+        position: { x: factX + 128 + refIndex * 12, y: factY - 22 + refIndex * 52 },
+        data: {
+          kind: "source",
+          label: shortFileName(citation.file_name, `Source ${citationIndex + 1}`),
+          sublabel: `Source ${citationIndex + 1}`,
+          detail: `Page ${citation.page_number || "N/A"} · click to inspect`,
+          citation,
+          citationIndex,
+          onCitationClick,
+        },
+      })
+      edges.push({
+        id: `edge-${sourceId}-${factId}`,
+        source: sourceId,
+        target: factId,
+        label: "cites",
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#0ea5e9" },
+        style: { stroke: "#38bdf8", strokeWidth: 1.7, strokeDasharray: "4 6" },
+        labelStyle: { fill: "#0369a1", fontSize: 10, fontWeight: 700 },
+      })
+    })
+  })
+
   return { nodes, edges }
+}
+
+function stageLabelToKey(name: string) {
+  if (name === "Planner") return "planning"
+  if (name === "Vector Researcher" || name === "Keyword Researcher" || name === "Summary Researcher") return "parallel-retrieval"
+  if (name === "Evidence Fusion") return "fusion"
+  if (name === "Graph Researcher") return "graph"
+  if (name === "Critic") return "critic"
+  if (name === "Writer") return "writer"
+  return "other"
+}
+
+function buildTraceStages(trace: AgentTrace[]) {
+  const stageOrder = [
+    { key: "planning", label: "Planning" },
+    { key: "parallel-retrieval", label: "Parallel Retrieval", parallel: true },
+    { key: "fusion", label: "Evidence Fusion" },
+    { key: "graph", label: "Graph Expansion" },
+    { key: "critic", label: "Critique" },
+    { key: "writer", label: "Synthesis" },
+    { key: "other", label: "Other" },
+  ] satisfies Array<{ key: string; label: string; parallel?: boolean }>
+
+  const grouped = new Map<string, AgentTrace[]>()
+  trace.forEach((item) => {
+    const key = stageLabelToKey(item.name)
+    const bucket = grouped.get(key) || []
+    bucket.push(item)
+    grouped.set(key, bucket)
+  })
+
+  return stageOrder
+    .filter((stage) => grouped.has(stage.key))
+    .map((stage) => ({
+      key: stage.key,
+      label: stage.label,
+      parallel: stage.parallel,
+      items: grouped.get(stage.key) || [],
+    })) satisfies TraceStage[]
+}
+
+function getTraceStatusTone(status: string) {
+  if (status === "completed") {
+    return {
+      dot: "bg-emerald-500",
+      pill: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      card: "border-emerald-200/80 bg-white",
+    }
+  }
+  if (status === "running") {
+    return {
+      dot: "animate-pulse bg-amber-500",
+      pill: "border-amber-200 bg-amber-50 text-amber-700",
+      card: "border-amber-200/80 bg-amber-50/40",
+    }
+  }
+  return {
+    dot: "bg-rose-500",
+    pill: "border-rose-200 bg-rose-50 text-rose-700",
+    card: "border-rose-200/80 bg-rose-50/40",
+  }
 }
 
 function getHistoryGroupLabel(createdAt: string) {
@@ -454,18 +746,12 @@ function AssistantStructuredView({
   const structured = useMemo(() => parseStructuredAnswer(content), [content])
   const [viewMode, setViewMode] = useState<"cards" | "table" | "graph" | "raw">("cards")
   const graphTitle = sourceQuery?.trim() || structured.intro || "Answer"
-  const graphFacts = structured.facts.slice(0, 6)
+  const graphFacts = structured.facts.slice(0, 8)
   const tags = useMemo(() => extractAnswerTags(content, sourceQuery, structured.facts), [content, sourceQuery, structured.facts])
-  const graphModel = useMemo(() => buildGraphModel(graphTitle, graphFacts), [graphTitle, graphFacts])
-
-  const [graphOffsets, setGraphOffsets] = useState<Record<string, GraphPoint>>({})
-  const [graphZoom, setGraphZoom] = useState(1)
-  const [draggingNode, setDraggingNode] = useState<{
-    id: string
-    startX: number
-    startY: number
-    original: GraphPoint
-  } | null>(null)
+  const graphFlow = useMemo(
+    () => buildAnswerFlowGraph(graphTitle, graphFacts, citations, onCitationClick),
+    [graphTitle, graphFacts, citations, onCitationClick]
+  )
 
   const graphStats = useMemo(
     () => ({
@@ -475,53 +761,6 @@ function AssistantStructuredView({
     }),
     [graphFacts]
   )
-
-  const positionedNodes = useMemo(
-    () =>
-      graphModel.nodes.map((node) => {
-        const offset = graphOffsets[node.id]
-        return {
-          ...node,
-          x: node.x + (offset?.x || 0),
-          y: node.y + (offset?.y || 0),
-        }
-      }),
-    [graphModel.nodes, graphOffsets]
-  )
-
-  const positionedNodeMap = useMemo(
-    () => Object.fromEntries(positionedNodes.map((node) => [node.id, node])),
-    [positionedNodes]
-  )
-
-  const handleNodePointerDown = (nodeId: string, event: ReactPointerEvent<SVGGElement>) => {
-    const existing = graphOffsets[nodeId] || { x: 0, y: 0 }
-    setDraggingNode({
-      id: nodeId,
-      startX: event.clientX,
-      startY: event.clientY,
-      original: existing,
-    })
-  }
-
-  const handleGraphPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
-    if (!draggingNode) return
-    const deltaX = (event.clientX - draggingNode.startX) / graphZoom
-    const deltaY = (event.clientY - draggingNode.startY) / graphZoom
-    setGraphOffsets((prev) => ({
-      ...prev,
-      [draggingNode.id]: {
-        x: draggingNode.original.x + deltaX,
-        y: draggingNode.original.y + deltaY,
-      },
-    }))
-  }
-
-  const resetGraphView = () => {
-    setGraphOffsets({})
-    setGraphZoom(1)
-    setDraggingNode(null)
-  }
 
   if (!structured.canRenderStructured) {
     return (
@@ -687,7 +926,7 @@ function AssistantStructuredView({
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Knowledge Graph</div>
-              <div className="mt-1 text-sm text-slate-700">Drag nodes and zoom to inspect the answer structure.</div>
+              <div className="mt-1 text-sm text-slate-700">React Flow view of the answer structure. Drag nodes, pan freely, and click source nodes to open evidence.</div>
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">{graphStats.facts} dimensions</span>
@@ -695,96 +934,52 @@ function AssistantStructuredView({
               <span className="rounded-full bg-amber-100 px-3 py-1 text-xs text-amber-700">{graphStats.sourceRefs} citations</span>
             </div>
           </div>
-
-          <div className="mb-3 flex items-center gap-2">
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setGraphZoom((zoom) => Math.min(zoom + 0.1, 1.8))}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setGraphZoom((zoom) => Math.max(zoom - 0.1, 0.7))}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={resetGraphView}>
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-            <span className="text-xs text-slate-500">Zoom {Math.round(graphZoom * 100)}%</span>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_42%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+            <ReactFlowProvider>
+              <div className="h-[430px] w-full">
+                <ReactFlow
+                  nodes={graphFlow.nodes}
+                  edges={graphFlow.edges}
+                  nodeTypes={answerGraphNodeTypes}
+                  fitView
+                  minZoom={0.45}
+                  maxZoom={1.8}
+                  defaultEdgeOptions={{ animated: false }}
+                  proOptions={{ hideAttribution: true }}
+                >
+                  <Background gap={22} size={1} color="#e2e8f0" />
+                  <MiniMap
+                    pannable
+                    zoomable
+                    nodeColor={(node) => {
+                      const kind = (node.data as AnswerGraphNodeData | undefined)?.kind
+                      if (kind === "core") return "#0f172a"
+                      if (kind === "fact") return "#f59e0b"
+                      if (kind === "source") return "#0ea5e9"
+                      return "#94a3b8"
+                    }}
+                    maskColor="rgba(248,250,252,0.68)"
+                    className="!border !border-slate-200 !bg-white"
+                  />
+                  <Controls className="!shadow-none" />
+                </ReactFlow>
+              </div>
+            </ReactFlowProvider>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            <svg
-              viewBox="0 0 440 360"
-              className="h-[360px] w-full touch-none"
-              onPointerMove={handleGraphPointerMove}
-              onPointerUp={() => setDraggingNode(null)}
-              onPointerLeave={() => setDraggingNode(null)}
-            >
-              <rect x="18" y="18" width="404" height="74" rx="18" fill="#f8fafc" />
-              <rect x="18" y="116" width="404" height="82" rx="18" fill="#fffbeb" />
-              <rect x="18" y="226" width="404" height="116" rx="18" fill="#f8fafc" />
-              <text x="30" y="40" fill="#64748b" fontSize="11" fontWeight="700">QUESTION LAYER</text>
-              <text x="30" y="138" fill="#a16207" fontSize="11" fontWeight="700">DIMENSION LAYER</text>
-              <text x="30" y="248" fill="#64748b" fontSize="11" fontWeight="700">DETAIL / EVIDENCE LAYER</text>
-
-              <g transform={`translate(220 180) scale(${graphZoom}) translate(-220 -180)`}>
-                {graphModel.edges.map((edge) => {
-                  const from = positionedNodeMap[edge.from]
-                  const to = positionedNodeMap[edge.to]
-                  if (!from || !to) return null
-
-                  const x1 = from.x
-                  const y1 = from.y + from.height / 2
-                  const x2 = to.x
-                  const y2 = to.y - to.height / 2
-                  const midY = (y1 + y2) / 2
-
-                  return (
-                    <g key={`${edge.from}-${edge.to}`}>
-                      <path d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`} fill="none" stroke="#cbd5e1" strokeWidth="2" />
-                      <text x={(x1 + x2) / 2} y={midY - 6} textAnchor="middle" fill="#94a3b8" fontSize="9" fontWeight="700">
-                        {edge.label}
-                      </text>
-                    </g>
-                  )
-                })}
-
-                {positionedNodes.map((node) => {
-                  const palette =
-                    node.kind === "core"
-                      ? { fill: "#0f172a", stroke: "#0f172a", title: "#ffffff", sub: "#cbd5e1" }
-                      : node.kind === "fact"
-                        ? { fill: "#fff7ed", stroke: "#fb923c", title: "#9a3412", sub: "#c2410c" }
-                        : node.kind === "source"
-                          ? { fill: "#eff6ff", stroke: "#60a5fa", title: "#1d4ed8", sub: "#2563eb" }
-                          : { fill: "#f8fafc", stroke: "#94a3b8", title: "#0f172a", sub: "#64748b" }
-
-                  return (
-                    <g
-                      key={node.id}
-                      onPointerDown={(event) => handleNodePointerDown(node.id, event)}
-                      style={{ cursor: node.id === "core" ? "default" : "grab" }}
-                    >
-                      <rect
-                        x={node.x - node.width / 2}
-                        y={node.y - node.height / 2}
-                        width={node.width}
-                        height={node.height}
-                        rx="16"
-                        fill={palette.fill}
-                        stroke={palette.stroke}
-                        strokeWidth="1.5"
-                      />
-                      <text x={node.x} y={node.y - 4} textAnchor="middle" fill={palette.title} fontSize="11" fontWeight="700">
-                        {node.label.slice(0, 18)}
-                      </text>
-                      {node.sublabel && (
-                        <text x={node.x} y={node.y + 12} textAnchor="middle" fill={palette.sub} fontSize="9">
-                          {node.sublabel.slice(0, 24)}
-                        </text>
-                      )}
-                    </g>
-                  )
-                })}
-              </g>
-            </svg>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Interpretation</div>
+              <p className="text-xs leading-5 text-slate-600">The dark node is the query, amber nodes are answer dimensions, pale nodes are claims, and blue nodes are evidence anchors you can click into.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Layout</div>
+              <p className="text-xs leading-5 text-slate-600">The map uses a curved radial spread so different branches separate naturally instead of collapsing into one vertical stack.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Interaction</div>
+              <p className="text-xs leading-5 text-slate-600">Pan, zoom, drag nodes, use the minimap for orientation, and click source nodes to jump straight into the reference panel.</p>
+            </div>
           </div>
         </div>
       )}
@@ -835,6 +1030,7 @@ export default function AgentPage() {
   const [confirmState, setConfirmState] = useState<ConfirmState>(null)
   const { toast } = useToast()
   const deferredHistorySearch = useDeferredValue(historySearch)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   const fetchRuns = () => {
     api.agent
@@ -867,6 +1063,7 @@ export default function AgentPage() {
   const favoriteRuns = useMemo(() => filteredRuns.filter((run) => run.favorite), [filteredRuns])
   const nonFavoriteRuns = useMemo(() => filteredRuns.filter((run) => !run.favorite), [filteredRuns])
   const timeGroups = useMemo(() => groupRunsByTime(nonFavoriteRuns), [nonFavoriteRuns])
+  const traceStages = useMemo(() => buildTraceStages(trace), [trace])
 
   const handleNewChat = () => {
     setCurrentRunId(null)
@@ -908,6 +1105,13 @@ export default function AgentPage() {
     fetchRuns()
   }, [])
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ block: "end" })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [messages, loading])
+
   const handleSend = async () => {
     if (!input.trim() || loading) return
 
@@ -917,7 +1121,7 @@ export default function AgentPage() {
     setMessages(nextMessages)
     setInput("")
     setLoading(true)
-    setTrace([{ name: "Router", status: "running" }])
+    setTrace([{ name: "Planner", status: "running" }])
 
     try {
       const data = await api.agent.createRun({
@@ -1053,8 +1257,8 @@ export default function AgentPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] gap-6">
-      <div className={`shrink-0 overflow-hidden rounded-lg border bg-card transition-all duration-300 ${isHistoryOpen ? "w-80 opacity-100" : "w-0 border-0 opacity-0"}`}>
+    <div className="flex h-[calc(100vh-7rem)] min-h-0 gap-6">
+      <div className={`min-h-0 shrink-0 overflow-hidden rounded-lg border bg-card transition-all duration-300 ${isHistoryOpen ? "w-80 opacity-100" : "w-0 border-0 opacity-0"}`}>
         <div className="flex h-full flex-col">
           <div className="border-b bg-muted/30 p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
@@ -1083,7 +1287,7 @@ export default function AgentPage() {
             </div>
           </div>
 
-          <ScrollArea className="flex-1 p-2">
+          <ScrollArea className="min-h-0 flex-1 p-2">
             {favoriteRuns.length > 0 && (
               <div className="mb-4">
                 <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Favorites</div>
@@ -1133,7 +1337,7 @@ export default function AgentPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
         <div className="flex items-center justify-between border-b bg-muted/30 p-4">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsHistoryOpen((prev) => !prev)}>
@@ -1169,7 +1373,7 @@ export default function AgentPage() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.04),_transparent_45%),linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,1))] p-4">
+        <ScrollArea className="min-h-0 flex-1 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.04),_transparent_45%),linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,1))] p-4">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center py-20 text-center opacity-70">
               <div className="mb-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1187,9 +1391,9 @@ export default function AgentPage() {
                   <div className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${msg.role === "user" ? "bg-primary text-primary-foreground" : "border border-slate-200 bg-white text-slate-700"}`}>
                     {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
-                  <div className="max-w-[85%] space-y-3">
-                    <Card className={`${msg.role === "user" ? "border-primary/20 bg-primary text-primary-foreground" : "border-slate-200 bg-white/95 shadow-sm"}`}>
-                      <CardContent className="p-4">
+                  <div className="min-w-0 max-w-[85%] space-y-3">
+                    <Card className={`overflow-hidden ${msg.role === "user" ? "border-primary/20 bg-primary text-primary-foreground" : "border-slate-200 bg-white/95 shadow-sm"}`}>
+                      <CardContent className="max-h-[min(68vh,56rem)] overflow-y-auto p-4">
                         {msg.role === "assistant" ? (
                           <AssistantStructuredView
                             content={msg.content}
@@ -1231,11 +1435,12 @@ export default function AgentPage() {
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           )}
         </ScrollArea>
 
-        <div className="border-t bg-muted/30 p-4">
+        <div className="shrink-0 border-t bg-muted/30 p-4">
           <form
             className="flex items-center gap-2"
             onSubmit={(event) => {
@@ -1257,7 +1462,7 @@ export default function AgentPage() {
         </div>
       </div>
 
-      <div className="w-96 shrink-0 overflow-hidden rounded-lg border bg-card">
+      <div className="min-h-0 w-96 shrink-0 overflow-hidden rounded-lg border bg-card">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full w-full flex-col">
           <div className="border-b bg-muted/30 p-2">
             <TabsList className="grid w-full grid-cols-2">
@@ -1267,37 +1472,62 @@ export default function AgentPage() {
           </div>
 
           <TabsContent value="trace" className="m-0 flex flex-1 flex-col overflow-hidden p-0 data-[state=active]:flex">
-            <ScrollArea className="h-full flex-1 p-4">
+            <ScrollArea className="min-h-0 h-full flex-1 p-4">
               {trace.length === 0 ? (
                 <p className="py-10 text-center text-xs italic text-muted-foreground">Wait for agent to start...</p>
               ) : (
-                <div className="space-y-2">
-                  {trace.map((item, index) => (
-                    <div key={`${item.name}-${index}`} className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <div className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.status === "completed" ? "bg-green-500" : item.status === "running" ? "animate-pulse bg-yellow-500" : "bg-red-500"}`} />
-                        {index < trace.length - 1 && <div className="my-1 h-full w-[1px] bg-border" />}
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Execution Timeline</div>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">Parallel retrieval steps are grouped together so you can see which agents worked at the same time.</p>
                       </div>
-                      <div className="flex-1 pb-4">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold">{item.name}</p>
-                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">{item.status}</span>
-                        </div>
-                        {item.thought && (
-                          <div className="mt-2 whitespace-pre-wrap rounded border bg-muted/40 p-2 text-xs leading-relaxed text-muted-foreground">
-                            {item.thought}
-                          </div>
-                        )}
-                      </div>
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600">{trace.length} steps</span>
                     </div>
-                  ))}
+                    <div className="space-y-3">
+                      {traceStages.map((stage, stageIndex) => (
+                        <div key={stage.key} className="relative rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                          {stageIndex < traceStages.length - 1 && <div className="absolute bottom-[-18px] left-6 top-[calc(100%-0.2rem)] w-px bg-slate-200" />}
+                          <div className="mb-3 flex items-center gap-2">
+                            <div className={`h-3 w-3 rounded-full ${stage.items.every((item) => item.status === "completed") ? "bg-emerald-500" : stage.items.some((item) => item.status === "running") ? "animate-pulse bg-amber-500" : "bg-rose-500"}`} />
+                            <p className="text-sm font-semibold text-slate-900">{stage.label}</p>
+                            {stage.parallel && <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-700">Parallel</span>}
+                          </div>
+                          <div className="space-y-2">
+                            {stage.items.map((item, itemIndex) => {
+                              const tone = getTraceStatusTone(item.status)
+                              return (
+                                <div key={`${item.name}-${itemIndex}`} className={`rounded-2xl border p-3 ${tone.card}`}>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      <div className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
+                                      <p className="truncate text-sm font-semibold text-slate-800">{item.name}</p>
+                                    </div>
+                                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${tone.pill}`}>
+                                      {item.status}
+                                    </span>
+                                  </div>
+                                  {item.thought && (
+                                    <div className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50/80 p-2.5 text-xs leading-relaxed text-slate-600">
+                                      {item.thought}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </ScrollArea>
           </TabsContent>
 
           <TabsContent value="reference" className="m-0 flex flex-1 flex-col overflow-hidden p-0 data-[state=active]:flex">
-            <ScrollArea className="h-full flex-1 p-4">
+            <ScrollArea className="min-h-0 h-full flex-1 p-4">
               {!selectedCitation ? (
                 <div className="flex h-full flex-col items-center justify-center py-20 text-center opacity-50">
                   <BookOpen className="mb-2 h-8 w-8" />
