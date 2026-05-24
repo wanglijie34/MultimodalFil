@@ -1,6 +1,6 @@
 "use client"
 
-import { startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
 import {
   Background,
   Check,
@@ -14,6 +14,8 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
   type XYPosition,
 } from "@xyflow/react"
 import {
@@ -752,6 +754,8 @@ function AssistantStructuredView({
     () => buildAnswerFlowGraph(graphTitle, graphFacts, citations, onCitationClick),
     [graphTitle, graphFacts, citations, onCitationClick]
   )
+  const [graphNodes, setGraphNodes, onGraphNodesChange] = useNodesState(graphFlow.nodes)
+  const [graphEdges, setGraphEdges, onGraphEdgesChange] = useEdgesState(graphFlow.edges)
 
   const graphStats = useMemo(
     () => ({
@@ -761,6 +765,11 @@ function AssistantStructuredView({
     }),
     [graphFacts]
   )
+
+  useEffect(() => {
+    setGraphNodes(graphFlow.nodes)
+    setGraphEdges(graphFlow.edges)
+  }, [graphFlow, setGraphEdges, setGraphNodes])
 
   if (!structured.canRenderStructured) {
     return (
@@ -938,9 +947,13 @@ function AssistantStructuredView({
             <ReactFlowProvider>
               <div className="h-[430px] w-full">
                 <ReactFlow
-                  nodes={graphFlow.nodes}
-                  edges={graphFlow.edges}
+                  nodes={graphNodes}
+                  edges={graphEdges}
                   nodeTypes={answerGraphNodeTypes}
+                  nodesDraggable
+                  elementsSelectable
+                  onNodesChange={onGraphNodesChange}
+                  onEdgesChange={onGraphEdgesChange}
                   fitView
                   minZoom={0.45}
                   maxZoom={1.8}
