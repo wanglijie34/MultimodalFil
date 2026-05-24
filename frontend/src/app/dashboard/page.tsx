@@ -25,19 +25,29 @@ export default function DashboardPage() {
   const [statsData, setStatsData] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const fetchStats = async () => {
+    setLoading(true)
+    try {
+      const data = await api.system.getStats()
+      setStatsData(data)
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await api.system.getStats()
-        setStatsData(data)
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats", error)
-      } finally {
-        setLoading(false)
-      }
+    fetchStats()
+
+    const handleStatsRefresh = () => {
+      fetchStats()
     }
 
-    fetchStats()
+    window.addEventListener("insightgraph:stats-refresh", handleStatsRefresh)
+    return () => {
+      window.removeEventListener("insightgraph:stats-refresh", handleStatsRefresh)
+    }
   }, [])
 
   const stats = [

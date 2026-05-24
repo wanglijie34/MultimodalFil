@@ -3,7 +3,7 @@ from sqlmodel import SQLModel
 from app.models.user import User, Workspace
 from app.models.file import File, Folder, Tag, FileTag, DocumentPage, DocumentChunk, FileAsset
 from app.models.graph import Entity, ChunkEntity, EntityRelation
-from app.models.agent import AgentRun, AgentStep, AgentMessage, Citation
+from app.models.agent import AgentRun, AgentStep, AgentMessage, Citation, AgentRunTitle, AgentRunPreference
 from app.models.report import Report
 
 class Base(SQLModel):

@@ -20,6 +20,13 @@ class FileRead(FileBase):
     chunk_count: int
     asset_count: int
     entity_count: int
+    file_category: Optional[str] = None
+    category_label: Optional[str] = None
+    indexing_profile: Optional[str] = None
+    embedding_strategy: Optional[str] = None
+    retrieval_strategy: Optional[str] = None
+    supported_for_ingestion: bool = False
+    parser_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

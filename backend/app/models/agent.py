@@ -22,6 +22,8 @@ class AgentRun(SQLModel, table=True):
     steps: List["AgentStep"] = Relationship(back_populates="run")
     messages: List["AgentMessage"] = Relationship(back_populates="run")
     citations: List["Citation"] = Relationship(back_populates="run")
+    title: Optional["AgentRunTitle"] = Relationship(back_populates="run")
+    preference: Optional["AgentRunPreference"] = Relationship(back_populates="run")
 
 class AgentStep(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -57,3 +59,18 @@ class Citation(SQLModel, table=True):
 
     run: AgentRun = Relationship(back_populates="citations")
     message: Optional[AgentMessage] = Relationship(back_populates="citations")
+
+class AgentRunTitle(SQLModel, table=True):
+    run_id: UUID = Field(foreign_key="agentrun.id", primary_key=True)
+    title: str
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    run: AgentRun = Relationship(back_populates="title")
+
+
+class AgentRunPreference(SQLModel, table=True):
+    run_id: UUID = Field(foreign_key="agentrun.id", primary_key=True)
+    favorite: bool = Field(default=False)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    run: AgentRun = Relationship(back_populates="preference")

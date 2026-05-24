@@ -10,6 +10,7 @@ class AgentState(TypedDict):
     workspace_id: str
     file_id: Optional[str]
     user_query: str
+    conversation_history: List[Dict[str, str]]
     sub_queries: List[str]
     task_type: Optional[str]
     retrieved_chunks: List[Dict[str, Any]]

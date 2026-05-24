@@ -13,6 +13,7 @@ from app.parsers.md_parser import MDParser
 from app.parsers.epub_parser import EPUBParser
 import asyncio
 from app.services.chunking_service import chunking_service
+from app.services.file_profile_service import get_file_profile
 from app.core.websocket import manager
 from loguru import logger
 
@@ -27,12 +28,29 @@ class IngestionService:
             "epub": EPUBParser()
         }
 
-    async def process_file(self, db: AsyncSession, file_id: UUID):
+    async def process_file(self, file_id: UUID, db: Optional[AsyncSession] = None):
+        from app.db.session import AsyncSessionLocal
+
+        if db is not None:
+            await self._process_file_with_session(db, file_id)
+            return
+
+        async with AsyncSessionLocal() as session:
+            await self._process_file_with_session(session, file_id)
+
+    async def _process_file_with_session(self, db: AsyncSession, file_id: UUID):
         # 1. Get file metadata
         from app.services.file_service import file_service
         db_file = await file_service.get_file(db, file_id)
         if not db_file:
             logger.error(f"File {file_id} not found for ingestion")
+            return
+
+        profile = get_file_profile(db_file.file_type, db_file.mime_type)
+        if not profile["supported_for_ingestion"]:
+            db_file.status = "stored"
+            db_file.error_message = "Stored successfully, but semantic indexing is not enabled for this file type yet."
+            await db.commit()
             return
 
         db_file.status = "parsing"
@@ -48,7 +66,7 @@ class IngestionService:
                 tmp_path = tmp.name
 
             # 3. Select parser and parse
-            parser = self.parsers.get(db_file.file_type)
+            parser = self.parsers.get(profile["parser_key"] or db_file.file_type)
             if not parser:
                 raise ValueError(f"No parser for file type: {db_file.file_type}")
 
@@ -68,7 +86,19 @@ class IngestionService:
                 db.add(db_page)
             
             # 5. Chunk
-            chunks = chunking_service.chunk_document(parsed_doc)
+            chunks = chunking_service.chunk_document(
+                parsed_doc,
+                chunk_size=profile["chunk_size"],
+                chunk_overlap=profile["chunk_overlap"],
+                split_mode=profile["split_mode"],
+                overlap_lines=profile["overlap_lines"],
+                extra_meta={
+                    "file_type": db_file.file_type,
+                    "file_category": profile["file_category"],
+                    "indexing_profile": profile["indexing_profile"],
+                    "query_bias": profile["query_bias"],
+                },
+            )
             db.add_all(chunks)
             
             # 6. Embed and Index (Phase 4)
@@ -85,35 +115,38 @@ class IngestionService:
             await vector_store_service.index_chunks(chunks, embeddings)
             
             # 7. RAPTOR: Generate Hierarchical Summaries
-            db_file.status = "summarizing"
-            await db.commit()
-            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "summarizing"})
-            summary_chunks = await self._generate_hierarchical_summaries(db, chunks)
+            summary_chunks = []
+            if profile["enable_summaries"]:
+                db_file.status = "summarizing"
+                await db.commit()
+                await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "summarizing"})
+                summary_chunks = await self._generate_hierarchical_summaries(db, chunks)
             
             # 8. Graph Extraction
-            db_file.status = "graph_extracting"
-            await db.commit()
-            await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "graph_extracting"})
-            
-            from app.services.graph_service import graph_service
-            
-            # Using semaphore to avoid LLM rate limits
-            graph_sem = asyncio.Semaphore(5)
-            async def _extract_chunk(chunk):
-                async with graph_sem:
-                    try:
-                        await graph_service.process_graph_extraction(
-                            db=db,
-                            workspace_id=db_file.workspace_id,
-                            file_id=db_file.id,
-                            chunk_id=chunk.id,
-                            chunk_content=chunk.content
-                        )
-                    except Exception as ge:
-                        logger.error(f"Graph extraction failed for chunk {chunk.id}: {ge}")
+            if profile["enable_graph_extraction"]:
+                db_file.status = "graph_extracting"
+                await db.commit()
+                await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "graph_extracting"})
 
-            graph_chunks = summary_chunks if summary_chunks else chunks
-            await asyncio.gather(*[_extract_chunk(c) for c in graph_chunks])
+                from app.services.graph_service import graph_service
+
+                graph_sem = asyncio.Semaphore(5)
+
+                async def _extract_chunk(chunk):
+                    async with graph_sem:
+                        try:
+                            await graph_service.process_graph_extraction(
+                                db=db,
+                                workspace_id=db_file.workspace_id,
+                                file_id=db_file.id,
+                                chunk_id=chunk.id,
+                                chunk_content=chunk.content
+                            )
+                        except Exception as ge:
+                            logger.error(f"Graph extraction failed for chunk {chunk.id}: {ge}")
+
+                graph_chunks = summary_chunks if summary_chunks else chunks
+                await asyncio.gather(*[_extract_chunk(c) for c in graph_chunks])
             
             # Update counts
             db_file.page_count = len(parsed_doc.pages)
@@ -162,7 +195,11 @@ class IngestionService:
                         page_number=pg,
                         chunk_index=999 + pg,
                         content=summary_text,
-                        meta={"source_page": pg}
+                        meta={
+                            **leaf_chunks[0].meta,
+                            "source_page": pg,
+                            "is_summary": True,
+                        }
                     )
                 except Exception as e:
                     logger.error(f"Failed to generate summary for page {pg}: {e}")
@@ -198,7 +235,11 @@ class IngestionService:
                         page_number=0,
                         chunk_index=9000 + i,
                         content=l2_text,
-                        meta={"type": "macro_summary"}
+                        meta={
+                            **leaf_chunks[0].meta,
+                            "type": "macro_summary",
+                            "is_summary": True,
+                        }
                     )
                     db.add(l2_chunk)
                     l2_chunks.append(l2_chunk)

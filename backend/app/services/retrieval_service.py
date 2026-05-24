@@ -1,14 +1,34 @@
+import re
 from typing import List, Dict, Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.file import DocumentChunk, File
+from sqlalchemy import or_
+from app.models.file import DocumentChunk
 from app.services.embedding_service import embedding_service
+from app.services.file_profile_service import compute_query_bias_boost, describe_query_profile
 from app.services.vector_store_service import vector_store_service
 from app.core.config import settings
 from loguru import logger
 
 class RetrievalService:
+    def _extract_search_terms(self, query: str) -> List[str]:
+        raw_parts = re.split(r"[\s,\uFF0C\u3002\uFF1B;\u3001|/()\[\]{}:\uFF1A\"'`!?\uFF1F]+", query)
+        seen = set()
+        terms = []
+
+        for part in [query.strip(), *raw_parts]:
+            term = part.strip()
+            if len(term) < 2:
+                continue
+            key = term.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            terms.append(term)
+
+        return terms[:8]
+
     async def search(
         self, 
         db: AsyncSession, 
@@ -22,6 +42,8 @@ class RetrievalService:
         
         # 1. Vector Search (Local Context)
         query_vector = await embedding_service.embed_text(query)
+        search_terms = self._extract_search_terms(query)
+        query_profile = describe_query_profile(query)
         
         # If global mode, we might want to target summaries specifically
         # For hybrid/local, we target all chunks
@@ -29,24 +51,26 @@ class RetrievalService:
         
         # 2. Keyword Search (Simple fallback)
         keyword_chunks = []
-        if search_mode in ["hybrid", "local"]:
-            keyword_query = select(DocumentChunk).where(DocumentChunk.content.ilike(f"%{query}%"))
+        if search_mode in ["hybrid", "local"] and search_terms:
+            keyword_query = select(DocumentChunk).where(
+                or_(*[DocumentChunk.content.ilike(f"%{term}%") for term in search_terms])
+            )
             if file_id:
                 keyword_query = keyword_query.where(DocumentChunk.file_id == file_id)
-            keyword_query = keyword_query.limit(top_k)
+            keyword_query = keyword_query.limit(top_k * 4)
             keyword_result = await db.execute(keyword_query)
             keyword_chunks = keyword_result.scalars().all()
         
         # 3. Global Summary Search (RAPTOR/LightRAG inspired)
         summary_chunks = []
-        if search_mode in ["global", "hybrid"]:
+        if search_mode in ["global", "hybrid"] and search_terms:
             summary_query = select(DocumentChunk).where(
-                (DocumentChunk.is_summary == True) & 
-                (DocumentChunk.content.ilike(f"%{query}%"))
+                (DocumentChunk.is_summary == True) &
+                or_(*[DocumentChunk.content.ilike(f"%{term}%") for term in search_terms])
             )
             if file_id:
                 summary_query = summary_query.where(DocumentChunk.file_id == file_id)
-            summary_query = summary_query.limit(3)
+            summary_query = summary_query.limit(max(3, top_k))
             summary_res = await db.execute(summary_query)
             summary_chunks = summary_res.scalars().all()
         
@@ -56,37 +80,50 @@ class RetrievalService:
         
         # Add summary results with high priority if in global mode
         for chunk in summary_chunks:
+            matched_terms = sum(1 for term in search_terms if term.lower() in chunk.content.lower())
             seen_ids.add(str(chunk.id))
+            meta = chunk.meta or {}
             merged_results.append({
                 "chunk_id": str(chunk.id),
                 "content": chunk.content,
                 "file_id": str(chunk.file_id),
                 "page_number": chunk.page_number,
-                "score": 0.9, # High priority for summaries
-                "source_type": "summary"
+                "score": 0.85 + min(matched_terms, 3) * 0.03 + compute_query_bias_boost({**meta, "is_summary": True}, query_profile),
+                "source_type": "summary",
+                "file_category": meta.get("file_category"),
+                "indexing_profile": meta.get("indexing_profile"),
             })
 
         for res in vector_results:
             if res.id not in seen_ids:
                 seen_ids.add(res.id)
+                payload = res.payload or {}
+                bias_boost = compute_query_bias_boost(payload, query_profile)
                 merged_results.append({
                     "chunk_id": res.id,
-                    "content": res.payload["content"],
-                    "file_id": res.payload["file_id"],
-                    "page_number": res.payload.get("page_number"),
-                    "score": res.score,
-                    "source_type": "vector"
+                    "content": payload["content"],
+                    "file_id": payload["file_id"],
+                    "page_number": payload.get("page_number"),
+                    "score": res.score + bias_boost,
+                    "source_type": "vector",
+                    "file_category": payload.get("file_category"),
+                    "indexing_profile": payload.get("indexing_profile"),
                 })
             
         for chunk in keyword_chunks:
             if str(chunk.id) not in seen_ids:
+                matched_terms = sum(1 for term in search_terms if term.lower() in chunk.content.lower())
+                exact_match_boost = 0.1 if query.lower() in chunk.content.lower() else 0.0
+                meta = chunk.meta or {}
                 merged_results.append({
                     "chunk_id": str(chunk.id),
                     "content": chunk.content,
                     "file_id": str(chunk.file_id),
                     "page_number": chunk.page_number,
-                    "score": 0.5,
-                    "source_type": "keyword"
+                    "score": 0.45 + min(matched_terms, 4) * 0.08 + exact_match_boost + compute_query_bias_boost(meta, query_profile),
+                    "source_type": "keyword",
+                    "file_category": meta.get("file_category"),
+                    "indexing_profile": meta.get("indexing_profile"),
                 })
         
         merged_results.sort(key=lambda x: x["score"], reverse=True)

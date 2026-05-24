@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.file_service import file_service
 from app.services.ingestion_service import ingestion_service
+from app.services.file_profile_service import get_file_profile
 from app.schemas.file import FileRead, FileUploadResponse
 from app.core.exceptions import NotFoundException
 
@@ -29,14 +30,19 @@ async def upload_file(
         uploader_id=DEFAULT_USER_ID,
         folder_id=folder_id
     )
-    
-    background_tasks.add_task(ingestion_service.process_file, db, db_file.id)
+
+    profile = get_file_profile(db_file.file_type, db_file.mime_type)
+    if profile["supported_for_ingestion"]:
+        background_tasks.add_task(ingestion_service.process_file, db_file.id)
+        message = "File uploaded successfully and queued for semantic indexing."
+    else:
+        message = "File uploaded successfully. This type is stored for management, but semantic indexing is not enabled yet."
     
     return FileUploadResponse(
         file_id=db_file.id,
         filename=db_file.original_filename,
         status=db_file.status,
-        message="File uploaded successfully."
+        message=message
     )
 
 @router.get("", response_model=List[FileRead])
@@ -45,7 +51,8 @@ async def list_files(
     folder_id: Optional[UUID] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    return await file_service.list_files(db, workspace_id, folder_id)
+    files = await file_service.list_files(db, workspace_id, folder_id)
+    return [file_service.serialize_file(db_file) for db_file in files]
 
 @router.get("/{file_id}", response_model=FileRead)
 async def get_file(
@@ -55,7 +62,7 @@ async def get_file(
     db_file = await file_service.get_file(db, file_id)
     if not db_file:
         raise NotFoundException(f"File with id {file_id} not found")
-    return db_file
+    return file_service.serialize_file(db_file)
 
 @router.delete("/{file_id}")
 async def delete_file(
