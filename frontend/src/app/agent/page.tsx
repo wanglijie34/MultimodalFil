@@ -199,7 +199,16 @@ function parseStructuredAnswer(content: string) {
     return { label: label.trim(), value, sourceRefs } satisfies StructuredFact
   }
 
-  for (const line of lines) {
+  const isLooseHeading = (line: string) =>
+    line.length >= 2 &&
+    line.length <= 14 &&
+    !/[\uFF1A:。！？!?]/.test(line) &&
+    !/\[Source\s+\d+\]/.test(line) &&
+    !/^\d+\./.test(line) &&
+    !/^[-*]/.test(line)
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]
     const richLabelMatch = line.match(/^[-*]\s+\*\*(.+?)\*\*[\uFF1A:]\s*(.+)$/)
     if (richLabelMatch) {
       seenFact = true
@@ -234,6 +243,23 @@ function parseStructuredAnswer(content: string) {
       const fact = toFact(inlineKeyValueMatch[1], inlineKeyValueMatch[2])
       if (fact) facts.push(fact)
       continue
+    }
+
+    if (isLooseHeading(line)) {
+      const paragraphLines: string[] = []
+      let cursor = index + 1
+      while (cursor < lines.length && !isLooseHeading(lines[cursor])) {
+        paragraphLines.push(lines[cursor])
+        cursor += 1
+      }
+      const paragraph = paragraphLines.join(" ").trim()
+      if (paragraph) {
+        seenFact = true
+        const fact = toFact(line, paragraph)
+        if (fact) facts.push(fact)
+        index = cursor - 1
+        continue
+      }
     }
 
     if (!seenFact) {
@@ -482,7 +508,8 @@ function buildAnswerFlowGraph(
 ) {
   const nodes: FlowNode<AnswerGraphNodeData>[] = []
   const edges: FlowEdge[] = []
-  const rootPosition: XYPosition = { x: 360, y: 24 }
+  const graphWidth = Math.max(980, 860 + graphFacts.length * 90)
+  const rootPosition: XYPosition = { x: graphWidth / 2 - 90, y: 24 }
   const rootId = "core"
 
   nodes.push({
@@ -498,15 +525,13 @@ function buildAnswerFlowGraph(
     },
   })
 
-  const radius = Math.max(180, 170 + graphFacts.length * 14)
-  const baseX = rootPosition.x + 30
-  const baseY = rootPosition.y + 150
+  const factSpacing = Math.max(170, Math.floor((graphWidth - 180) / Math.max(graphFacts.length, 2)))
+  const baseX = 90
+  const baseY = rootPosition.y + 168
 
   graphFacts.forEach((fact, index) => {
-    const spread = graphFacts.length === 1 ? 0 : index / Math.max(graphFacts.length - 1, 1)
-    const angle = -1.1 + spread * 2.2
-    const factX = baseX + Math.sin(angle) * radius
-    const factY = baseY + Math.cos(angle) * 42
+    const factX = baseX + index * factSpacing
+    const factY = baseY + (index % 2 === 0 ? 0 : 24)
     const factId = `fact-${index}`
     const detailId = `detail-${index}`
     const detailSnippet =
@@ -540,7 +565,7 @@ function buildAnswerFlowGraph(
     nodes.push({
       id: detailId,
       type: "answerNode",
-      position: { x: factX + (index % 2 === 0 ? -34 : 34), y: factY + 132 },
+      position: { x: factX + (index % 2 === 0 ? -18 : 18), y: factY + 156 },
       data: {
         kind: "detail",
         label: detailSnippet.slice(0, 36),
@@ -569,7 +594,7 @@ function buildAnswerFlowGraph(
       nodes.push({
         id: sourceId,
         type: "answerNode",
-        position: { x: factX + 128 + refIndex * 12, y: factY - 22 + refIndex * 52 },
+        position: { x: factX + 144, y: factY - 18 + refIndex * 68 },
         data: {
           kind: "source",
           label: shortFileName(citation.file_name, `Source ${citationIndex + 1}`),
@@ -756,6 +781,11 @@ function AssistantStructuredView({
   )
   const [graphNodes, setGraphNodes, onGraphNodesChange] = useNodesState(graphFlow.nodes)
   const [graphEdges, setGraphEdges, onGraphEdgesChange] = useEdgesState(graphFlow.edges)
+  const graphSignature = useMemo(
+    () => `${graphTitle}::${graphFacts.map((fact) => `${fact.label}:${fact.value}:${fact.sourceRefs.join(",")}`).join("|")}`,
+    [graphTitle, graphFacts]
+  )
+  const lastGraphSignatureRef = useRef<string>("")
 
   const graphStats = useMemo(
     () => ({
@@ -767,9 +797,11 @@ function AssistantStructuredView({
   )
 
   useEffect(() => {
+    if (lastGraphSignatureRef.current === graphSignature) return
+    lastGraphSignatureRef.current = graphSignature
     setGraphNodes(graphFlow.nodes)
     setGraphEdges(graphFlow.edges)
-  }, [graphFlow, setGraphEdges, setGraphNodes])
+  }, [graphEdges, graphFlow.edges, graphFlow.nodes, graphSignature, setGraphEdges, setGraphNodes])
 
   if (!structured.canRenderStructured) {
     return (
@@ -1086,10 +1118,10 @@ export default function AgentPage() {
     setActiveTab("trace")
   }
 
-  const handleCitationClick = (citation: Citation) => {
+  const handleCitationClick = useCallback((citation: Citation) => {
     setSelectedCitation(citation)
     setActiveTab("reference")
-  }
+  }, [])
 
   const loadRunDetail = async (runId: string) => {
     try {
