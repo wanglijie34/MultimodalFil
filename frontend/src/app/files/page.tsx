@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react"
 import {
   Braces,
   Database,
@@ -20,6 +20,7 @@ import {
 import { api, resolveWebSocketUrl } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useToast } from "@/hooks/use-toast"
 
 type ManagedFile = {
@@ -147,6 +148,8 @@ export default function FilesPage() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [activeCategory, setActiveCategory] = useState("all")
+  const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState<ManagedFile | null>(null)
   const { toast } = useToast()
 
   const loadFiles = useCallback(async (options?: { skipLoading?: boolean }) => {
@@ -155,7 +158,9 @@ export default function FilesPage() {
     }
     try {
       const data = await api.files.list()
-      setFiles(data)
+      startTransition(() => {
+        setFiles(data)
+      })
     } catch (err) {
       console.error(err)
       toast({
@@ -209,6 +214,7 @@ export default function FilesPage() {
       toast({
         title: "Upload queued",
         description: response.message || "File uploaded successfully.",
+        variant: "success",
       })
     } catch (err) {
       console.error(err)
@@ -223,24 +229,34 @@ export default function FilesPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this file and its indexed knowledge?")) return
-
+  const handleDelete = async (file: ManagedFile) => {
+    const previousFiles = files
+    startTransition(() => {
+      setFiles((prev) => prev.filter((item) => item.id !== file.id))
+    })
+    setDeletingFileId(file.id)
     try {
-      await api.files.delete(id)
-      await loadFiles()
+      await api.files.delete(file.id)
+      await loadFiles({ skipLoading: true })
       window.dispatchEvent(new Event("insightgraph:stats-refresh"))
       toast({
         title: "Deleted",
         description: "File and related indexed data removed.",
+        variant: "success",
       })
     } catch (err) {
       console.error(err)
+      startTransition(() => {
+        setFiles(previousFiles)
+      })
       toast({
         title: "Delete failed",
         description: "Unable to remove this file.",
         variant: "destructive",
       })
+    } finally {
+      setDeletingFileId(null)
+      setConfirmDeleteFile(null)
     }
   }
 
@@ -483,8 +499,13 @@ export default function FilesPage() {
                             </div>
 
                             <div className="flex items-start gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(file.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setConfirmDeleteFile(file)}
+                                disabled={deletingFileId === file.id}
+                              >
+                                {deletingFileId === file.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
                               </Button>
                             </div>
                           </div>
@@ -498,6 +519,28 @@ export default function FilesPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteFile !== null}
+        title="Delete this file?"
+        description={
+          confirmDeleteFile
+            ? `This will remove "${confirmDeleteFile.original_filename}" and its indexed chunks, citations, and related graph data. This action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete file"
+        cancelLabel="Keep file"
+        variant="destructive"
+        loading={deletingFileId !== null}
+        onCancel={() => {
+          if (deletingFileId) return
+          setConfirmDeleteFile(null)
+        }}
+        onConfirm={() => {
+          if (!confirmDeleteFile) return
+          void handleDelete(confirmDeleteFile)
+        }}
+      />
     </div>
   )
 }

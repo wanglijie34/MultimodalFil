@@ -1,18 +1,68 @@
-import { useState, useEffect } from "react"
+"use client"
 
-export function useToast() {
-  const [toasts, setToasts] = useState<any[]>([])
+import { useEffect, useState } from "react"
 
-  const toast = ({ title, description, variant }: { title?: string; description?: string; variant?: "default" | "destructive" }) => {
-    // Simple fallback to alert if no actual toast UI exists
-    if (typeof window !== "undefined") {
-      alert(`${title ? title + ": " : ""}${description || ""}`)
-    }
+export type ToastVariant = "default" | "destructive" | "success"
+
+export type ToastItem = {
+  id: string
+  title?: string
+  description?: string
+  variant?: ToastVariant
+}
+
+type ToastInput = Omit<ToastItem, "id">
+
+let toastState: ToastItem[] = []
+const listeners = new Set<(toasts: ToastItem[]) => void>()
+
+function emitToastState() {
+  for (const listener of listeners) {
+    listener(toastState)
+  }
+}
+
+function removeToast(id: string) {
+  toastState = toastState.filter((toast) => toast.id !== id)
+  emitToastState()
+}
+
+function pushToast(input: ToastInput) {
+  const id = crypto.randomUUID()
+  const toast: ToastItem = {
+    id,
+    variant: input.variant || "default",
+    title: input.title,
+    description: input.description,
   }
 
+  toastState = [toast, ...toastState].slice(0, 5)
+  emitToastState()
+
+  window.setTimeout(() => removeToast(id), toast.variant === "destructive" ? 6000 : 3600)
+  return id
+}
+
+export function useToast() {
+  const [toasts, setToasts] = useState<ToastItem[]>(toastState)
+
+  useEffect(() => {
+    listeners.add(setToasts)
+    return () => {
+      listeners.delete(setToasts)
+    }
+  }, [])
+
   return {
-    toast,
     toasts,
-    dismiss: () => {},
+    toast: (input: ToastInput) => pushToast(input),
+    dismiss: (id?: string) => {
+      if (!id) {
+        toastState = []
+        emitToastState()
+        return
+      }
+      removeToast(id)
+    },
   }
 }

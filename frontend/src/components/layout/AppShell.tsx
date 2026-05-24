@@ -2,6 +2,7 @@
 
 import { Sidebar } from "./Sidebar"
 import { UserCircle, Bell } from "lucide-react"
+import { ToastRegion } from "@/components/ui/toast-region"
 
 interface AppShellProps {
   children: React.ReactNode
@@ -10,6 +11,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <ToastRegion />
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="flex h-16 items-center justify-between px-6 border-b bg-card">

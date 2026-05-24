@@ -1,6 +1,6 @@
 "use client"
 
-import { type PointerEvent as ReactPointerEvent, useDeferredValue, useEffect, useMemo, useState } from "react"
+import { startTransition, type PointerEvent as ReactPointerEvent, useDeferredValue, useEffect, useMemo, useState } from "react"
 import {
   BookOpen,
   Bot,
@@ -31,6 +31,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
 
@@ -126,6 +127,17 @@ type HistoryGroup = {
   label: string
   items: AgentRun[]
 }
+
+type ConfirmState =
+  | {
+      kind: "delete-run"
+      runId: string
+      title: string
+    }
+  | {
+      kind: "clear-runs"
+    }
+  | null
 
 const SOURCE_PATTERN = /\[Source\s+\d+\]/g
 const SENTENCE_SPLIT_PATTERN = /(?<=[。！？!?；;])/u
@@ -820,11 +832,19 @@ export default function AgentPage() {
   const [historySearch, setHistorySearch] = useState("")
   const [editingRunId, setEditingRunId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState("")
+  const [confirmState, setConfirmState] = useState<ConfirmState>(null)
   const { toast } = useToast()
   const deferredHistorySearch = useDeferredValue(historySearch)
 
   const fetchRuns = () => {
-    api.agent.listRuns().then(setRuns).catch(console.error)
+    api.agent
+      .listRuns()
+      .then((data) => {
+        startTransition(() => {
+          setRuns(data)
+        })
+      })
+      .catch(console.error)
   }
 
   const groupedFileOptions = useMemo(() => {
@@ -921,31 +941,45 @@ export default function AgentPage() {
       setCurrentRunId(data.run_id)
       setTrace(data.trace_logs || [])
       window.dispatchEvent(new Event("insightgraph:stats-refresh"))
+      toast({ title: "Response ready", description: "The agent finished this turn.", variant: "success" })
     } catch (err) {
       console.error(err)
       setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error." }])
       setTrace([{ name: "Error", status: "failed" }])
+      toast({ title: "Request failed", description: "The agent could not finish this turn.", variant: "destructive" })
     } finally {
       setLoading(false)
       fetchRuns()
     }
   }
 
-  const handleDeleteRun = async (runId: string) => {
-    if (!window.confirm("Delete this chat history?")) return
-
+  const deleteRun = async (runId: string) => {
+    const previousRuns = runs
+    const nextRuns = previousRuns.filter((run) => run.id !== runId)
+    startTransition(() => {
+      setRuns(nextRuns)
+    })
     setBusyRunId(runId)
     try {
       await api.agent.deleteRun(runId)
       setRuns((prev) => prev.filter((run) => run.id !== runId))
       if (currentRunId === runId) handleNewChat()
+      await api.agent.listRuns().then((data) => {
+        startTransition(() => {
+          setRuns(data)
+        })
+      })
       window.dispatchEvent(new Event("insightgraph:stats-refresh"))
-      toast({ title: "Deleted", description: "History entry removed." })
+      toast({ title: "Deleted", description: "History entry removed.", variant: "success" })
     } catch (err) {
       console.error(err)
+      startTransition(() => {
+        setRuns(previousRuns)
+      })
       toast({ title: "Delete failed", description: "Unable to remove this history entry.", variant: "destructive" })
     } finally {
       setBusyRunId(null)
+      setConfirmState(null)
     }
   }
 
@@ -960,7 +994,7 @@ export default function AgentPage() {
       setRuns((prev) => prev.map((run) => (run.id === runId ? { ...run, title: updatedTitle } : run)))
       setEditingRunId(null)
       setEditingTitle("")
-      toast({ title: "Renamed", description: "Chat title updated." })
+      toast({ title: "Renamed", description: "Chat title updated.", variant: "success" })
     } catch (err) {
       console.error(err)
       toast({ title: "Rename failed", description: "Unable to rename this chat.", variant: "destructive" })
@@ -970,34 +1004,51 @@ export default function AgentPage() {
   }
 
   const handleToggleFavorite = async (run: AgentRun) => {
+    const optimisticFavorite = !run.favorite
+    startTransition(() => {
+      setRuns((prev) => prev.map((item) => (item.id === run.id ? { ...item, favorite: optimisticFavorite } : item)))
+    })
     setBusyRunId(run.id)
     try {
-      const response = await api.agent.favoriteRun(run.id, !run.favorite)
+      const response = await api.agent.favoriteRun(run.id, optimisticFavorite)
       setRuns((prev) => prev.map((item) => (item.id === run.id ? { ...item, favorite: response.favorite } : item)))
+      toast({
+        title: response.favorite ? "Pinned to favorites" : "Removed from favorites",
+        description: response.favorite ? "This chat will stay at the top." : "This chat returned to the time groups.",
+        variant: "success",
+      })
     } catch (err) {
       console.error(err)
+      startTransition(() => {
+        setRuns((prev) => prev.map((item) => (item.id === run.id ? { ...item, favorite: !!run.favorite } : item)))
+      })
       toast({ title: "Update failed", description: "Unable to update favorite state.", variant: "destructive" })
     } finally {
       setBusyRunId(null)
     }
   }
 
-  const handleClearRuns = async () => {
-    if (!runs.length) return
-    if (!window.confirm("Clear all chat history?")) return
-
+  const clearRuns = async () => {
+    const previousRuns = runs
+    startTransition(() => {
+      setRuns([])
+    })
     setBusyRunId("all")
     try {
       await api.agent.clearRuns()
       setRuns([])
       handleNewChat()
       window.dispatchEvent(new Event("insightgraph:stats-refresh"))
-      toast({ title: "Cleared", description: "All chat history has been removed." })
+      toast({ title: "Cleared", description: "All chat history has been removed.", variant: "success" })
     } catch (err) {
       console.error(err)
+      startTransition(() => {
+        setRuns(previousRuns)
+      })
       toast({ title: "Clear failed", description: "Unable to clear history.", variant: "destructive" })
     } finally {
       setBusyRunId(null)
+      setConfirmState(null)
     }
   }
 
@@ -1011,7 +1062,13 @@ export default function AgentPage() {
                 <h3 className="text-sm font-semibold">Chat History</h3>
                 <p className="mt-1 text-[11px] text-muted-foreground">Grouped by time, with favorites pinned to the top.</p>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleClearRuns} disabled={!runs.length || busyRunId === "all"}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => setConfirmState({ kind: "clear-runs" })}
+                disabled={!runs.length || busyRunId === "all"}
+              >
                 {busyRunId === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               </Button>
             </div>
@@ -1041,7 +1098,7 @@ export default function AgentPage() {
                     setEditingTitle={setEditingTitle}
                     setEditingRunId={setEditingRunId}
                     onLoad={loadRunDetail}
-                    onDelete={handleDeleteRun}
+                    onDelete={(runId, title) => setConfirmState({ kind: "delete-run", runId, title })}
                     onRename={handleRenameRun}
                     onToggleFavorite={handleToggleFavorite}
                   />
@@ -1063,7 +1120,7 @@ export default function AgentPage() {
                     setEditingTitle={setEditingTitle}
                     setEditingRunId={setEditingRunId}
                     onLoad={loadRunDetail}
-                    onDelete={handleDeleteRun}
+                    onDelete={(runId, title) => setConfirmState({ kind: "delete-run", runId, title })}
                     onRename={handleRenameRun}
                     onToggleFavorite={handleToggleFavorite}
                   />
@@ -1253,6 +1310,36 @@ export default function AgentPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ConfirmDialog
+        open={confirmState !== null}
+        title={
+          confirmState?.kind === "clear-runs"
+            ? "Clear chat history?"
+            : "Delete this conversation?"
+        }
+        description={
+          confirmState?.kind === "clear-runs"
+            ? "This will remove every saved chat run from the current workspace. This action cannot be undone."
+            : `This will remove "${confirmState?.kind === "delete-run" ? confirmState.title : ""}" and its saved citations. This action cannot be undone.`
+        }
+        confirmLabel={confirmState?.kind === "clear-runs" ? "Clear history" : "Delete chat"}
+        cancelLabel="Keep it"
+        variant="destructive"
+        loading={busyRunId !== null}
+        onCancel={() => {
+          if (busyRunId) return
+          setConfirmState(null)
+        }}
+        onConfirm={() => {
+          if (!confirmState) return
+          if (confirmState.kind === "clear-runs") {
+            void clearRuns()
+            return
+          }
+          void deleteRun(confirmState.runId)
+        }}
+      />
     </div>
   )
 }
@@ -1278,7 +1365,7 @@ function HistoryRunCard({
   setEditingTitle: (value: string) => void
   setEditingRunId: (value: string | null) => void
   onLoad: (runId: string) => void
-  onDelete: (runId: string) => void
+  onDelete: (runId: string, title: string) => void
   onRename: (runId: string) => void
   onToggleFavorite: (run: AgentRun) => void
 }) {
@@ -1340,7 +1427,13 @@ function HistoryRunCard({
               >
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-70 hover:opacity-100" onClick={() => onDelete(run.id)} disabled={busyRunId === run.id}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-70 hover:opacity-100"
+                onClick={() => onDelete(run.id, run.title)}
+                disabled={busyRunId === run.id}
+              >
                 {busyRunId === run.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
               </Button>
             </>
