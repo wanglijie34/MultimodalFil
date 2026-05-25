@@ -1,5 +1,6 @@
 "use client"
 
+import { useI18n } from "@/lib/i18n"
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
 import {
   Background,
@@ -174,6 +175,15 @@ type ConfirmState =
   | null
 
 const SOURCE_PATTERN = /\[Source\s*\d+\]/gi
+
+function fixCitations(text: string) {
+  if (!text) return text
+  return text.replace(/\[((?:Source\s*\d+)(?:,\s*(?:Source\s*)?\d+)+)\]/gi, (_, inner) => {
+    return inner.split(/,\s*/).map((s: string) => {
+      return /source/i.test(s) ? `[${s}]` : `[Source ${s}]`
+    }).join("")
+  })
+}
 const SENTENCE_SPLIT_PATTERN = /(?<=[。！？!?；;])/u
 const TOKEN_PATTERN = /[\u4e00-\u9fa5]{2,8}|[A-Za-z][A-Za-z0-9_-]{2,18}/g
 
@@ -972,7 +982,7 @@ function AssistantStructuredView({
         <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4 shadow-sm">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Knowledge Graph</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t("Knowledge Graph")}</div>
               <div className="mt-1 text-sm text-slate-700">React Flow view of the answer structure. Drag nodes, pan freely, and click source nodes to open evidence.</div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1063,6 +1073,8 @@ function AssistantStructuredView({
 }
 
 export default function AgentPage() {
+
+  const { t } = useI18n()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -1137,7 +1149,7 @@ export default function AgentPage() {
         detail.messages.map((message) => ({
           id: message.id,
           role: message.role,
-          content: message.content,
+          content: message.role === "assistant" ? fixCitations(message.content) : message.content,
           citations: message.citations || [],
           sourceQuery: message.role === "assistant" ? detail.query : undefined,
           coverageReport: message.role === "assistant" ? detail.coverage_report : undefined,
@@ -1177,6 +1189,7 @@ export default function AgentPage() {
 
     try {
       const data = await api.agent.createRun({
+        run_id: currentRunId || undefined,
         query: currentInput,
         file_id: selectedFileId !== "all" ? selectedFileId : undefined,
         conversation_messages: messages.map((message) => ({
@@ -1189,7 +1202,7 @@ export default function AgentPage() {
         ...prev,
         {
           role: "assistant",
-          content: data.answer,
+          content: fixCitations(data.answer),
           citations: data.citations || [],
           sourceQuery: currentInput,
           coverageReport: data.coverage_report,
@@ -1398,7 +1411,7 @@ export default function AgentPage() {
             </Button>
             <div>
               <h3 className="flex items-center gap-2 font-semibold">
-                <Bot className="h-4 w-4" /> Agent Chat
+                <Bot className="h-4 w-4" /> {t("Agent Chat")}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">Continue old chats, inspect contextual citations, and switch answer views.</p>
             </div>

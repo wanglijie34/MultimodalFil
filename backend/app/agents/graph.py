@@ -47,6 +47,7 @@ Recent conversation history:
 {history_text or "None"}
 
 Categorize the user's query into one of these task types:
+- entity_attribute_lookup (e.g., "What is Wanli's real name?", "When did Zhang Juzheng die?", "Who is the CEO of OpenAI?")
 - definition_list (e.g., "What are the three major campaigns?", "List the design patterns")
 - entity_profile (e.g., "Who is Zhang Juzheng?", "What is Apple Inc?")
 - timeline_event (e.g., "When did the battle happen?", "History of the Ming dynasty")
@@ -77,13 +78,24 @@ Return EXACTLY valid JSON with this shape:
         research_focus = plan.get("research_focus") or sub_queries[:]
         required_aspects = plan.get("required_aspects", [])
         
-        # Concept Enrichment for collective types
-        if task_type in ["definition_list", "compare"]:
+        # Concept Enrichment for collective types and entity attribute lookups
+        if task_type in ["definition_list", "compare", "entity_attribute_lookup"]:
             concept_info = await concept_service.parse_concept(query)
-            if concept_info.get("members"):
-                required_aspects = concept_info["members"]
-            elif concept_info.get("related_entities"):
-                required_aspects = required_aspects + concept_info["related_entities"]
+            
+            if task_type == "entity_attribute_lookup":
+                # For entity attribute lookup, we use aliases and canonical concepts as aspects
+                # And we set sub_queries to the target attributes if provided, else keep as is.
+                entity_aspects = [concept_info.get("canonical_concept")] + concept_info.get("aliases", [])
+                entity_aspects = [a for a in entity_aspects if a and a != query]
+                if entity_aspects:
+                    required_aspects = required_aspects + entity_aspects
+                if concept_info.get("target_attributes"):
+                    sub_queries = concept_info.get("target_attributes")
+            else:
+                if concept_info.get("members"):
+                    required_aspects = concept_info["members"]
+                elif concept_info.get("related_entities"):
+                    required_aspects = required_aspects + concept_info["related_entities"]
             
             # Ensure unique aspects
             required_aspects = list(dict.fromkeys([a for a in required_aspects if a]))
@@ -298,6 +310,7 @@ Retrieved Context:
 
 Decide whether the team has enough evidence to answer the user well.
 Be flexible about terminology. If the context contains the concrete facts behind an abstract query, it is sufficient.
+Allow for STRONGLY INFERABLE facts from entity resolution. For example, if the query asks for "A's real name" and the text says "B, also known as A...", you may deduce that B is the real name. Do not say evidence is missing if it can be logically inferred from entity aliases.
 
 Return EXACTLY valid JSON:
 {{
@@ -387,6 +400,7 @@ async def writer_node(state: AgentState) -> AgentState:
         "Answer the user's question based ONLY on the provided context.\n"
         "You must structure your answer clearly and fluidly.\n"
         "CRITICAL INSTRUCTION: Do NOT include internal coverage reports, statuses (e.g., 'Status: Missing'), or diagnostics in your output.\n"
+        "Allow for STRONGLY INFERABLE facts from entity resolution. For example, if the query asks for 'A's real name' and the text says 'B, also known as A...', you may deduce that B is the real name and answer directly.\n"
         "If evidence is lacking for some aspects, you may naturally mention 'The provided context does not contain information about X' as a brief sentence.\n"
         "Always cite your sources using [Source X] format.\n"
     )

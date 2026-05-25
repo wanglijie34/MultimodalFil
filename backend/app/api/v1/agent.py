@@ -36,6 +36,7 @@ class ConversationMessageIn(BaseModel):
 
 
 class CreateRunRequest(BaseModel):
+    run_id: Optional[UUID] = None
     query: str
     file_id: Optional[UUID] = None
     workspace_id: UUID = DEFAULT_WORKSPACE_ID
@@ -206,7 +207,7 @@ async def create_run(
     db: AsyncSession = Depends(get_db)
 ):
     initial_state = {
-        "run_id": str(uuid4()),
+        "run_id": str(payload.run_id) if payload.run_id else str(uuid4()),
         "workspace_id": str(payload.workspace_id),
         "file_id": str(payload.file_id) if payload.file_id else None,
         "user_query": payload.query,
@@ -235,15 +236,41 @@ async def create_run(
     raw_citations = final_state.get("citations", [])
     trace_logs = final_state.get("trace_logs", [])
 
-    run = AgentRun(
-        user_id=DEFAULT_USER_ID,
-        workspace_id=payload.workspace_id,
-        query=payload.query,
-        status="completed",
-        result=answer,
-        coverage_report=final_state.get("coverage_report"),
-    )
-    db.add(run)
+    if payload.run_id:
+        # Reuse existing run
+        run_result = await db.execute(select(AgentRun).where(AgentRun.id == payload.run_id))
+        run = run_result.scalar_one_or_none()
+        if run:
+            run.result = answer
+            run.coverage_report = final_state.get("coverage_report")
+            db.add(run)
+        else:
+            # Fallback if run_id not found
+            run = AgentRun(
+                id=payload.run_id,
+                user_id=DEFAULT_USER_ID,
+                workspace_id=payload.workspace_id,
+                query=payload.query,
+                status="completed",
+                result=answer,
+                coverage_report=final_state.get("coverage_report"),
+            )
+            db.add(run)
+            db.add(AgentRunTitle(run_id=run.id, title=payload.query[:80]))
+    else:
+        # Create new run
+        run = AgentRun(
+            id=UUID(initial_state["run_id"]),
+            user_id=DEFAULT_USER_ID,
+            workspace_id=payload.workspace_id,
+            query=payload.query,
+            status="completed",
+            result=answer,
+            coverage_report=final_state.get("coverage_report"),
+        )
+        db.add(run)
+        db.add(AgentRunTitle(run_id=run.id, title=payload.query[:80]))
+
     await db.flush()
 
     user_msg = AgentMessage(run_id=run.id, role="user", content=payload.query)
@@ -252,54 +279,113 @@ async def create_run(
     db.add(assistant_msg)
     await db.flush()
 
-    db.add(AgentRunTitle(run_id=run.id, title=payload.query[:80]))
-
     citation_rows: List[Citation] = []
+    # 1. Collect all candidate file_ids
+    candidate_file_ids = set()
+    if isinstance(raw_citations, dict):
+        for aspect, items in raw_citations.items():
+            for item in items:
+                f_id = item.get("file_id")
+                if f_id and f_id != "Knowledge Graph":
+                    try:
+                        candidate_file_ids.add(UUID(str(f_id)))
+                    except:
+                        pass
+    else:
+        for item in raw_citations:
+            f_id = item.get("file_id")
+            if f_id and f_id != "Knowledge Graph":
+                try:
+                    candidate_file_ids.add(UUID(str(f_id)))
+                except:
+                    pass
+
+    # 2. Filter out invalid file_ids to prevent foreign key errors
+    valid_file_ids = set()
+    if candidate_file_ids:
+        from app.models.file import File
+        valid_files_result = await db.execute(select(File.id).where(File.id.in_(candidate_file_ids)))
+        valid_file_ids = set(valid_files_result.scalars().all())
+
+    # 3. Create Citation rows safely and remap indices
+    mapping = {}
+    global_index = 1
+    saved_index = 1
+
     if isinstance(raw_citations, dict):
         for aspect, items in raw_citations.items():
             for item in items:
                 file_id_value = item.get("file_id")
-                if not file_id_value or file_id_value == "Knowledge Graph":
-                    continue
-                try:
-                    citation_rows.append(
-                        Citation(
-                            run_id=run.id,
-                            message_id=assistant_msg.id,
-                            file_id=UUID(str(file_id_value)),
-                            chunk_id=UUID(str(item["chunk_id"]))
-                            if item.get("chunk_id") and item.get("chunk_id") != "graph-context"
-                            else None,
-                            page_number=item.get("page_number") if isinstance(item.get("page_number"), int) else None,
-                            aspect=aspect,
-                            quote=item.get("content"),
-                            score=float(item.get("score") or 0.0),
-                        )
-                    )
-                except Exception as exc:
-                    logger.warning(f"Skipping citation persistence due to parse error: {exc}")
+                is_saved = False
+                if file_id_value and file_id_value != "Knowledge Graph":
+                    try:
+                        f_uuid = UUID(str(file_id_value))
+                        if f_uuid in valid_file_ids:
+                            is_saved = True
+                            citation_rows.append(
+                                Citation(
+                                    run_id=run.id,
+                                    message_id=assistant_msg.id,
+                                    file_id=f_uuid,
+                                    chunk_id=UUID(str(item["chunk_id"]))
+                                    if item.get("chunk_id") and item.get("chunk_id") != "graph-context"
+                                    else None,
+                                    page_number=item.get("page_number") if isinstance(item.get("page_number"), int) else None,
+                                    aspect=aspect,
+                                    quote=item.get("content"),
+                                    score=float(item.get("score") or 0.0),
+                                )
+                            )
+                    except Exception as exc:
+                        logger.warning(f"Skipping citation persistence due to parse error: {exc}")
+                if is_saved:
+                    mapping[global_index] = saved_index
+                    saved_index += 1
+                global_index += 1
     else:
         for item in raw_citations:
             file_id_value = item.get("file_id")
-            if not file_id_value or file_id_value == "Knowledge Graph":
-                continue
-            try:
-                citation_rows.append(
-                    Citation(
-                        run_id=run.id,
-                        message_id=assistant_msg.id,
-                        file_id=UUID(str(file_id_value)),
-                        chunk_id=UUID(str(item["chunk_id"]))
-                        if item.get("chunk_id") and item.get("chunk_id") != "graph-context"
-                        else None,
-                        page_number=item.get("page_number") if isinstance(item.get("page_number"), int) else None,
-                        aspect="general",
-                        quote=item.get("content"),
-                        score=float(item.get("score") or 0.0),
-                    )
-                )
-            except Exception as exc:
-                logger.warning(f"Skipping citation persistence due to parse error: {exc}")
+            is_saved = False
+            if file_id_value and file_id_value != "Knowledge Graph":
+                try:
+                    f_uuid = UUID(str(file_id_value))
+                    if f_uuid in valid_file_ids:
+                        is_saved = True
+                        citation_rows.append(
+                            Citation(
+                                run_id=run.id,
+                                message_id=assistant_msg.id,
+                                file_id=f_uuid,
+                                chunk_id=UUID(str(item["chunk_id"]))
+                                if item.get("chunk_id") and item.get("chunk_id") != "graph-context"
+                                else None,
+                                page_number=item.get("page_number") if isinstance(item.get("page_number"), int) else None,
+                                aspect="general",
+                                quote=item.get("content"),
+                                score=float(item.get("score") or 0.0),
+                            )
+                        )
+                except Exception as exc:
+                    logger.warning(f"Skipping citation persistence due to parse error: {exc}")
+            if is_saved:
+                mapping[global_index] = saved_index
+                saved_index += 1
+            global_index += 1
+
+    # 4. Rewrite answer text to match saved citations
+    def replace_source(match):
+        idx_str = match.group(1)
+        try:
+            idx = int(idx_str)
+            if idx in mapping:
+                return f"[Source {mapping[idx]}]"
+        except:
+            pass
+        return ""
+    
+    answer = re.sub(r'\[(?:Source\s*)?(\d+)\]', replace_source, answer, flags=re.IGNORECASE)
+    run.result = answer
+    assistant_msg.content = answer
 
     if citation_rows:
         db.add_all(citation_rows)

@@ -111,6 +111,7 @@ export const api = {
   },
   agent: {
     createRun: (payload: {
+      run_id?: string
       query: string
       file_id?: string
       workspace_id?: string

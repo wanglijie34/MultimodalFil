@@ -1,5 +1,6 @@
 "use client"
 
+import { useI18n } from "@/lib/i18n"
 import { useState, useEffect } from "react"
 import { api } from "@/lib/api"
 import { Loader2, FileText, Plus, ExternalLink, Calendar, User } from "lucide-react"
@@ -8,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 
 export default function ReportsPage() {
+
+  const { t } = useI18n()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -49,7 +52,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t("Reports")}</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

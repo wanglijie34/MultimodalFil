@@ -1,5 +1,6 @@
 "use client"
 
+import { useI18n } from "@/lib/i18n"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Search as SearchIcon, Loader2, FileText, ExternalLink } from "lucide-react"
@@ -8,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 export default function SearchPage() {
+
+  const { t } = useI18n()
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -30,7 +33,7 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Search</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t("Search")}</h2>
       </div>
 
       <div className="max-w-3xl mx-auto space-y-8">

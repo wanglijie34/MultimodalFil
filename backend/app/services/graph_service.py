@@ -12,7 +12,10 @@ class GraphService:
     async def extract_entities_from_chunk(self, chunk_content: str) -> Dict[str, List[Dict[str, str]]]:
         prompt = f"""Extract key entities and their relationships from the following text. 
         Return the result EXACTLY as a JSON object with two keys: 'entities' and 'relations'.
-        'entities' is a list of objects with 'name' and 'type'. For 'type', use standard broad categories (e.g., PERSON, ORGANIZATION, LOCATION, CONCEPT, EVENT, PRODUCT, TECHNOLOGY). DO NOT use 'unknown'. If unclear, default to 'CONCEPT'.
+        'entities' is a list of objects with 'name', 'type', 'aliases', and 'attributes'. 
+        For 'type', use standard broad categories (e.g., PERSON, ORGANIZATION, LOCATION, CONCEPT, EVENT, PRODUCT, TECHNOLOGY). DO NOT use 'unknown'. If unclear, default to 'CONCEPT'.
+        'aliases' should be a list of alternative names found in the text.
+        'attributes' should be a key-value dictionary of important properties found (e.g., {{"title": "Emperor", "birth_year": "1563"}}).
         'relations' is a list of objects with 'source', 'target', and 'relation'.
         
         Text: {chunk_content}
@@ -63,9 +66,36 @@ class GraphService:
             db_ent = result.scalar_one_or_none()
             
             if not db_ent:
-                db_ent = Entity(workspace_id=workspace_id, name=name, type=e_type)
+                meta_dict = {}
+                if ent.get("aliases"):
+                    meta_dict["aliases"] = ent.get("aliases")
+                if ent.get("attributes"):
+                    meta_dict["attributes"] = ent.get("attributes")
+                    
+                db_ent = Entity(workspace_id=workspace_id, name=name, type=e_type, meta=meta_dict)
                 db.add(db_ent)
                 await db.flush() # get ID
+            else:
+                updated = False
+                current_meta = db_ent.meta or {}
+                
+                new_aliases = set(current_meta.get("aliases", []))
+                for alias in ent.get("aliases", []):
+                    if alias not in new_aliases:
+                        new_aliases.add(alias)
+                        updated = True
+                
+                new_attrs = current_meta.get("attributes", {})
+                for k, v in ent.get("attributes", {}).items():
+                    if k not in new_attrs or new_attrs[k] != v:
+                        new_attrs[k] = v
+                        updated = True
+                        
+                if updated:
+                    current_meta["aliases"] = list(new_aliases)
+                    current_meta["attributes"] = new_attrs
+                    db_ent.meta = dict(current_meta)
+                    db.add(db_ent)
                 
             entity_id_map[name] = db_ent.id
             
@@ -111,13 +141,23 @@ class GraphService:
             query = """
             MERGE (e:Entity {name: $name})
             SET e.type = $type
+            WITH e
+            CALL apoc.create.setProperties(e, $attributes) YIELD node AS e_with_attrs
+            SET e_with_attrs.aliases = $aliases
             MERGE (c:DocumentChunk {id: $chunk_id})
             SET c.file_id = $file_id
-            MERGE (c)-[:MENTIONS]->(e)
+            MERGE (c)-[:MENTIONS]->(e_with_attrs)
             """
+            
+            str_attributes = {}
+            for k, v in entity.get("attributes", {}).items():
+                str_attributes[str(k)] = str(v)
+                
             neo4j_integration.run_query(query, {
                 "name": entity.get("name"),
                 "type": entity.get("type"),
+                "aliases": entity.get("aliases", []),
+                "attributes": str_attributes,
                 "chunk_id": chunk_id,
                 "file_id": file_id
             })

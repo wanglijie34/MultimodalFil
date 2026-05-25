@@ -1,5 +1,6 @@
 "use client"
 
+import { useI18n } from "@/lib/i18n"
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react"
 import {
   Braces,
@@ -144,6 +145,8 @@ function getStatusInfo(status: string) {
 }
 
 export default function FilesPage() {
+
+  const { t } = useI18n()
   const [files, setFiles] = useState<ManagedFile[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -314,7 +317,7 @@ export default function FilesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_55%,#eef2ff_100%)] p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="max-w-2xl">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Files</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">{t("Files")}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Files are grouped by category, and each category shows how it is parsed, embedded, indexed, and retrieved.
             Text documents, markdown, code, config, and lightweight data files now follow different semantic indexing profiles.

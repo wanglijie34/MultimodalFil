@@ -9,17 +9,19 @@ class ConceptService:
         Parses a query into structural components.
         For example: "万历三大征是什么" -> canonical_concept, aliases, members, related_entities
         """
-        prompt = f"""You are an advanced conceptual analysis engine.
-Analyze the user's query and extract the core concepts, especially if it refers to a collective term, historical event, technical framework, or abstract definition.
+        prompt = f"""You are an advanced conceptual and entity analysis engine.
+Analyze the user's query and extract the core concepts, especially if it refers to a collective term, historical event, technical framework, abstract definition, or a specific entity (person, organization, etc.).
+For entities, perform entity normalization (e.g. resolve "万历" to "明神宗" or "朱翊钧").
 
 Query: "{query}"
 
 Output MUST be EXACTLY valid JSON with the following structure:
 {{
-  "canonical_concept": "The formal name of the core subject (e.g., '万历三大征')",
-  "aliases": ["Alias1", "Alternative Name"],
-  "members": ["Member 1", "Member 2", "Member 3"], // If the concept is a collective term (like "三大征"), list the explicit members (e.g., ["宁夏之役", "朝鲜之役", "播州之役"]). Otherwise empty.
-  "related_entities": ["Entity A", "Entity B"] // Broad related concepts, people, or places
+  "canonical_concept": "The formal, full true name of the core subject (e.g., '明神宗' or '万历三大征')",
+  "aliases": ["Alias1", "Alternative Name", "Common Name"],
+  "members": ["Member 1", "Member 2", "Member 3"], // If collective term, list explicit members
+  "related_entities": ["Entity A", "Entity B"], // Broad related concepts
+  "target_attributes": ["name", "date of birth"] // If the user asks for specific properties (e.g. "真名", "出生年份"), list them here
 }}"""
 
         try:
@@ -31,6 +33,7 @@ Output MUST be EXACTLY valid JSON with the following structure:
                 "aliases": result.get("aliases", []),
                 "members": result.get("members", []),
                 "related_entities": result.get("related_entities", []),
+                "target_attributes": result.get("target_attributes", []),
             }
         except Exception as e:
             logger.error(f"Concept parsing failed: {e}")
@@ -39,6 +42,7 @@ Output MUST be EXACTLY valid JSON with the following structure:
                 "aliases": [],
                 "members": [],
                 "related_entities": [],
+                "target_attributes": [],
             }
 
 concept_service = ConceptService()

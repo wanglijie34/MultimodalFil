@@ -1,5 +1,6 @@
 "use client"
 
+import { useI18n } from "@/lib/i18n"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, MessageSquare, Share2, Activity } from "lucide-react"
@@ -22,6 +23,8 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 export default function DashboardPage() {
+
+  const { t } = useI18n()
   const [statsData, setStatsData] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -60,7 +63,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t("Dashboard")}</h2>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
