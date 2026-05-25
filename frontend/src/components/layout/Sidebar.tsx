@@ -9,7 +9,8 @@ import {
   MessageSquare, 
   Share2, 
   FileBarChart,
-  Settings
+  Settings,
+  Book as BookIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -18,6 +19,7 @@ import { useI18n } from "@/lib/i18n"
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Files", href: "/files", icon: FileText },
+  { name: "Books", href: "/books", icon: BookIcon },
   { name: "Search", href: "/search", icon: Search },
   { name: "Agent Chat", href: "/agent", icon: MessageSquare },
   { name: "Knowledge Graph", href: "/graph", icon: Share2 },

@@ -18,6 +18,11 @@ const enDict: Dictionary = {
   "Language": "Language",
   "Select your preferred language for the interface.": "Select your preferred language for the interface.",
   "Theme": "Theme",
+  "Books": "Books",
+  "Extract Book": "Extract Book",
+  "Extracting...": "Extracting...",
+  "Read": "Read",
+  "Chapters": "Chapters",
 }
 
 const zhDict: Dictionary = {
@@ -32,6 +37,11 @@ const zhDict: Dictionary = {
   "Language": "语言",
   "Select your preferred language for the interface.": "选择您偏好的界面语言。",
   "Theme": "主题",
+  "Books": "图书馆",
+  "Extract Book": "提取图书",
+  "Extracting...": "提取中...",
+  "Read": "阅读",
+  "Chapters": "章节目录",
 }
 
 const dictionaries: Record<Language, Dictionary> = {

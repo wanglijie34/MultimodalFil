@@ -111,7 +111,14 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    from fastapi.staticfiles import StaticFiles
+
     app.include_router(api_router, prefix=settings.API_V1_STR)
+    
+    # Mount files/covers as static
+    covers_dir = Path(__file__).resolve().parents[2] / "files" / "covers"
+    covers_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/covers", StaticFiles(directory=str(covers_dir)), name="covers")
 
 
 
