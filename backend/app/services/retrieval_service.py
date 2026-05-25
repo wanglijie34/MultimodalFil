@@ -1,3 +1,4 @@
+import requests
 import re
 from typing import List, Dict, Any
 from uuid import UUID
@@ -12,6 +13,86 @@ from app.core.config import settings
 from loguru import logger
 
 class RetrievalService:
+
+    async def expand_parent_context(self, db: AsyncSession, hits: List[Dict[str, Any]], window: int = 1) -> List[Dict[str, Any]]:
+        if not hits:
+            return []
+        
+        chunk_ids = [UUID(h["chunk_id"]) for h in hits if h.get("source_type") != "summary"]
+        if not chunk_ids:
+            return hits
+            
+        result = await db.execute(select(DocumentChunk).where(DocumentChunk.id.in_(chunk_ids)))
+        original_chunks = result.scalars().all()
+        
+        expanded_chunks = set()
+        expanded_dicts = []
+        
+        # Keep original summaries
+        for h in hits:
+            if h.get("source_type") == "summary":
+                expanded_dicts.append(h)
+                expanded_chunks.add(str(h["chunk_id"]))
+                
+        for chunk in original_chunks:
+            if str(chunk.id) not in expanded_chunks:
+                expanded_chunks.add(str(chunk.id))
+                meta = chunk.meta or {}
+                expanded_dicts.append({
+                    "chunk_id": str(chunk.id),
+                    "content": chunk.content,
+                    "file_id": str(chunk.file_id),
+                    "page_number": chunk.page_number,
+                    "score": next((h["score"] for h in hits if h["chunk_id"] == str(chunk.id)), 0),
+                    "source_type": "original",
+                    "file_category": meta.get("file_category"),
+                    "indexing_profile": meta.get("indexing_profile"),
+                })
+            
+            # Fetch adjacent chunks
+            if chunk.chunk_index is not None:
+                adj_query = select(DocumentChunk).where(
+                    (DocumentChunk.file_id == chunk.file_id) & 
+                    (DocumentChunk.chunk_index >= chunk.chunk_index - window) &
+                    (DocumentChunk.chunk_index <= chunk.chunk_index + window)
+                )
+                adj_res = await db.execute(adj_query)
+                for adj_chunk in adj_res.scalars().all():
+                    if str(adj_chunk.id) not in expanded_chunks:
+                        expanded_chunks.add(str(adj_chunk.id))
+                        meta = adj_chunk.meta or {}
+                        expanded_dicts.append({
+                            "chunk_id": str(adj_chunk.id),
+                            "content": adj_chunk.content,
+                            "file_id": str(adj_chunk.file_id),
+                            "page_number": adj_chunk.page_number,
+                            "score": 0.5, # Lower score for expanded context
+                            "source_type": "expanded",
+                            "file_category": meta.get("file_category"),
+                            "indexing_profile": meta.get("indexing_profile"),
+                        })
+                        
+            # Fetch parent summary
+            if chunk.parent_id:
+                parent_query = select(DocumentChunk).where(DocumentChunk.id == chunk.parent_id)
+                parent_res = await db.execute(parent_query)
+                parent_chunk = parent_res.scalar_one_or_none()
+                if parent_chunk and str(parent_chunk.id) not in expanded_chunks:
+                    expanded_chunks.add(str(parent_chunk.id))
+                    meta = parent_chunk.meta or {}
+                    expanded_dicts.append({
+                        "chunk_id": str(parent_chunk.id),
+                        "content": "Parent Summary: " + parent_chunk.content,
+                        "file_id": str(parent_chunk.file_id),
+                        "page_number": parent_chunk.page_number,
+                        "score": 0.6,
+                        "source_type": "parent_summary",
+                        "file_category": meta.get("file_category"),
+                        "indexing_profile": meta.get("indexing_profile"),
+                    })
+        
+        return expanded_dicts
+
     def _extract_search_terms(self, query: str) -> List[str]:
         raw_parts = re.split(r"[\s,\uFF0C\u3002\uFF1B;\u3001|/()\[\]{}:\uFF1A\"'`!?\uFF1F]+", query)
         seen = set()
@@ -156,8 +237,40 @@ class RetrievalService:
 
         if settings.DASHSCOPE_API_KEY and top_results:
             try:
-                logger.info(f"Reranking {len(top_results)} results with qwen3-rerank")
-                pass
+                # Use qwen3-rerank or gte-rerank depending on availability
+                logger.info(f"Reranking {len(top_results)} results with DashScope reranker")
+                
+                url = "https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank"
+                headers = {
+                    "Authorization": f"Bearer {settings.DASHSCOPE_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": "qwen3-rerank",
+                    "input": {
+                        "query": query,
+                        "documents": [res["content"][:2000] for res in top_results]
+                    }
+                }
+                
+                response = requests.post(url, headers=headers, json=payload, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if "output" in data and "results" in data["output"]:
+                        rerank_scores = data["output"]["results"]
+                        
+                        # Apply scores
+                        for item in rerank_scores:
+                            idx = item["index"]
+                            score = item["relevance_score"]
+                            top_results[idx]["score"] = score
+                            
+                        # Resort based on new score
+                        top_results.sort(key=lambda x: x["score"], reverse=True)
+                        merged_results = top_results
+                else:
+                    logger.error(f"DashScope reranker error: {response.text}")
+                    
             except Exception as e:
                 logger.error(f"Reranking failed: {e}")
 

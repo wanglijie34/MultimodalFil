@@ -3,7 +3,6 @@
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
 import {
   Background,
-  Check,
   Controls,
   type Edge as FlowEdge,
   Handle,
@@ -21,6 +20,7 @@ import {
 import {
   BookOpen,
   Bot,
+  Check,
   FileText,
   History,
   Loader2,
@@ -54,6 +54,7 @@ type Citation = {
   file_name?: string
   chunk_id?: string | null
   page_number?: number | string | null
+  aspect?: string
   content: string
   quote?: string
   score?: number
@@ -69,6 +70,7 @@ type ChatMessage = {
   content: string
   citations?: Citation[]
   sourceQuery?: string
+  coverageReport?: Record<string, string>
 }
 
 type AgentRun = {
@@ -87,6 +89,7 @@ type AgentRunDetail = {
   result: string
   created_at: string
   favorite?: boolean
+  coverage_report?: Record<string, string>
   messages: Array<{
     id: string
     role: "user" | "assistant"
@@ -170,7 +173,7 @@ type ConfirmState =
     }
   | null
 
-const SOURCE_PATTERN = /\[Source\s+\d+\]/g
+const SOURCE_PATTERN = /\[Source\s*\d+\]/gi
 const SENTENCE_SPLIT_PATTERN = /(?<=[。！？!?；;])/u
 const TOKEN_PATTERN = /[\u4e00-\u9fa5]{2,8}|[A-Za-z][A-Za-z0-9_-]{2,18}/g
 
@@ -190,6 +193,7 @@ function parseStructuredAnswer(content: string) {
   const facts: StructuredFact[] = []
   const introLines: string[] = []
   const outroLines: string[] = []
+  const auditLines: string[] = []
   let seenFact = false
 
   const toFact = (label: string, rawValue: string) => {
@@ -203,7 +207,7 @@ function parseStructuredAnswer(content: string) {
     line.length >= 2 &&
     line.length <= 14 &&
     !/[\uFF1A:。！？!?]/.test(line) &&
-    !/\[Source\s+\d+\]/.test(line) &&
+    !/\[Source\s*\d+\]/i.test(line) &&
     !/^\d+\./.test(line) &&
     !/^[-*]/.test(line)
 
@@ -307,9 +311,9 @@ function renderInlineCitations(
 ) {
   if (!text) return null
 
-  const parts = text.split(/(\[Source \d+\])/g)
+  const parts = text.split(/(\[Source\s*\d+\])/gi)
   return parts.map((part, idx) => {
-    const match = part.match(/\[Source (\d+)\]/)
+    const match = part.match(/\[Source\s*(\d+)\]/i)
     if (!match) return <span key={idx}>{part}</span>
 
     const sourceIndex = parseInt(match[1], 10) - 1
@@ -585,7 +589,7 @@ function buildAnswerFlowGraph(
     })
 
     fact.sourceRefs.forEach((ref, refIndex) => {
-      const refMatch = ref.match(/\[Source (\d+)\]/)
+      const refMatch = ref.match(/\[Source\s*(\d+)\]/i)
       const citationIndex = refMatch ? parseInt(refMatch[1], 10) - 1 : -1
       const citation = citationIndex >= 0 ? citations[citationIndex] : undefined
       if (!citation) return
@@ -763,11 +767,13 @@ function AssistantStructuredView({
   content,
   citations,
   sourceQuery,
+  coverageReport,
   onCitationClick,
 }: {
   content: string
   citations: Citation[]
   sourceQuery?: string
+  coverageReport?: Record<string, string>
   onCitationClick: (citation: Citation) => void
 }) {
   const structured = useMemo(() => parseStructuredAnswer(content), [content])
@@ -928,7 +934,7 @@ function AssistantStructuredView({
                       <div className="flex flex-wrap gap-2">
                         {fact.sourceRefs.length > 0 ? (
                           fact.sourceRefs.map((ref, refIdx) => {
-                            const refMatch = ref.match(/\[Source (\d+)\]/)
+                            const refMatch = ref.match(/\[Source\s*(\d+)\]/i)
                             const citation = refMatch ? citations[parseInt(refMatch[1], 10) - 1] : undefined
                             if (!citation) {
                               return (
@@ -1134,6 +1140,7 @@ export default function AgentPage() {
           content: message.content,
           citations: message.citations || [],
           sourceQuery: message.role === "assistant" ? detail.query : undefined,
+          coverageReport: message.role === "assistant" ? detail.coverage_report : undefined,
         }))
       )
       setTrace([])
@@ -1185,6 +1192,7 @@ export default function AgentPage() {
           content: data.answer,
           citations: data.citations || [],
           sourceQuery: currentInput,
+          coverageReport: data.coverage_report,
         },
       ])
       setCurrentRunId(data.run_id)
@@ -1444,6 +1452,7 @@ export default function AgentPage() {
                             content={msg.content}
                             citations={msg.citations || []}
                             sourceQuery={msg.sourceQuery}
+                            coverageReport={msg.coverageReport}
                             onCitationClick={handleCitationClick}
                           />
                         ) : (

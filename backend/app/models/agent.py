@@ -6,6 +6,7 @@ from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 if TYPE_CHECKING:
     from app.models.user import User, Workspace
 
+
 class AgentRun(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id")
@@ -13,6 +14,7 @@ class AgentRun(SQLModel, table=True):
     query: str
     status: str = Field(default="pending")
     result: Optional[str] = None
+    coverage_report: Optional[Dict[str, Any]] = Field(default=None, sa_type=JSON)
     token_usage: int = Field(default=0)
     latency: float = Field(default=0.0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -47,6 +49,7 @@ class AgentMessage(SQLModel, table=True):
     run: AgentRun = Relationship(back_populates="messages")
     citations: List["Citation"] = Relationship(back_populates="message")
 
+
 class Citation(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     run_id: UUID = Field(foreign_key="agentrun.id")
@@ -54,6 +57,7 @@ class Citation(SQLModel, table=True):
     file_id: UUID = Field(foreign_key="file.id")
     chunk_id: Optional[UUID] = Field(default=None, foreign_key="documentchunk.id")
     page_number: Optional[int] = None
+    aspect: Optional[str] = None
     quote: Optional[str] = None
     score: float = Field(default=0.0)
 
