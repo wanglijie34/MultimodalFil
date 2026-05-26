@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 
 export type ToastVariant = "default" | "destructive" | "success"
 
@@ -53,16 +53,19 @@ export function useToast() {
     }
   }, [])
 
+  const toast = useCallback((input: ToastInput) => pushToast(input), [])
+  const dismiss = useCallback((id?: string) => {
+    if (!id) {
+      toastState = []
+      emitToastState()
+      return
+    }
+    removeToast(id)
+  }, [])
+
   return {
     toasts,
-    toast: (input: ToastInput) => pushToast(input),
-    dismiss: (id?: string) => {
-      if (!id) {
-        toastState = []
-        emitToastState()
-        return
-      }
-      removeToast(id)
-    },
+    toast,
+    dismiss,
   }
 }

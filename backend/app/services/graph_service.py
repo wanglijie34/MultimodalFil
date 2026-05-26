@@ -141,12 +141,11 @@ class GraphService:
             query = """
             MERGE (e:Entity {name: $name})
             SET e.type = $type
-            WITH e
-            CALL apoc.create.setProperties(e, $attributes) YIELD node AS e_with_attrs
-            SET e_with_attrs.aliases = $aliases
+            SET e += $attributes
+            SET e.aliases = $aliases
             MERGE (c:DocumentChunk {id: $chunk_id})
             SET c.file_id = $file_id
-            MERGE (c)-[:MENTIONS]->(e_with_attrs)
+            MERGE (c)-[:MENTIONS]->(e)
             """
             
             str_attributes = {}

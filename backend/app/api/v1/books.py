@@ -1,21 +1,26 @@
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.future import select
 
 from app.db.session import get_db
 from app.models.book import Book, Chapter
 from app.services.book_extractor import book_extractor
+from app.services.chapter_summarizer import chapter_summarizer
 
 router = APIRouter()
 
 @router.post("/extract/{file_id}", response_model=dict)
-async def extract_book(file_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def extract_book(file_id: uuid.UUID, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     """Extract a book from an uploaded EPUB file."""
     book = await book_extractor.extract_book_from_file(db, file_id)
     if not book:
         raise HTTPException(status_code=400, detail="Failed to extract book. Check if the file is a valid EPUB.")
+        
+    # Trigger background summarization
+    background_tasks.add_task(chapter_summarizer.summarize_book_chapters, book.id)
+    
     return {"message": "Book extracted successfully", "book_id": book.id}
 
 @router.get("", response_model=List[dict])
@@ -35,6 +40,8 @@ async def list_books(db: AsyncSession = Depends(get_db)):
         } for b in books
     ]
 
+from sqlalchemy.orm import selectinload
+
 @router.get("/{book_id}", response_model=dict)
 async def get_book(book_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Get book details and chapter list (without full text)."""
@@ -42,7 +49,12 @@ async def get_book(book_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
         
-    result = await db.execute(select(Chapter).where(Chapter.book_id == book_id).order_by(Chapter.order_index))
+    result = await db.execute(
+        select(Chapter)
+        .where(Chapter.book_id == book_id)
+        .options(selectinload(Chapter.chapter_summary))
+        .order_by(Chapter.order_index)
+    )
     chapters = result.scalars().all()
     
     return {
@@ -57,7 +69,13 @@ async def get_book(book_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
                 "id": c.id,
                 "title": c.title,
                 "level": c.level,
-                "order_index": c.order_index
+                "order_index": c.order_index,
+                "summary": {
+                    "summary": c.chapter_summary.summary,
+                    "bullets": c.chapter_summary.bullets,
+                    "tags": c.chapter_summary.tags,
+                    "keywords": c.chapter_summary.keywords
+                } if c.chapter_summary else None
             } for c in chapters
         ]
     }

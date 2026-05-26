@@ -185,6 +185,30 @@ class FileService:
             except Exception as e:
                 logger.error(f"Failed to cleanup Neo4j graph for file {file_id}: {e}")
             
+            # Delete associated books safely
+            from app.models.book import Book, Chapter, ChapterSummary
+            try:
+                result = await db.execute(select(Book).where(Book.source_file_id == file_id))
+                books = result.scalars().all()
+                for b in books:
+                    # 1. Fetch chapters
+                    chap_result = await db.execute(select(Chapter).where(Chapter.book_id == b.id))
+                    chapters = chap_result.scalars().all()
+                    for c in chapters:
+                        # Delete ChapterSummary
+                        await db.execute(delete(ChapterSummary).where(ChapterSummary.chapter_id == c.id))
+                    
+                    from app.models.book import ReadingProgress
+                    # Delete ReadingProgress
+                    await db.execute(delete(ReadingProgress).where(ReadingProgress.book_id == b.id))
+                    
+                    # Delete Chapters
+                    await db.execute(delete(Chapter).where(Chapter.book_id == b.id))
+                    # Delete Book
+                    await db.execute(delete(Book).where(Book.id == b.id))
+            except Exception as e:
+                logger.error(f"Failed to delete books for file {file_id}: {e}")
+                
             # Delete from DB
             await db.delete(db_file)
 

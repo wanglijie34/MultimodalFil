@@ -135,7 +135,20 @@ export default function BookReaderPage() {
   // Function to highlight search terms and format citations
   const renderContent = () => {
     let rawText = chapter?.content_text || ""
-    if (!rawText) return <p className="text-muted-foreground italic">No text content available.</p>
+    if (!rawText.trim()) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4">
+          <FileText className="h-12 w-12 opacity-20" />
+          <p className="text-lg">This section contains no text.</p>
+          <p className="text-sm max-w-sm text-center">In EPUB files, this usually means it is a structural divider (like a Part or Section header) rather than a readable chapter.</p>
+          {nextChapter && (
+            <Link href={`/books/${book.id}/read/${nextChapter.id}`} className="mt-4">
+              <Button variant="outline">Continue to Next Chapter</Button>
+            </Link>
+          )}
+        </div>
+      )
+    }
     
     // Fix literal \n that might be stored in the database
     rawText = rawText.replace(/\\n/g, '\n')

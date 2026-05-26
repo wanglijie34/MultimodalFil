@@ -37,6 +37,10 @@ class Chapter(SQLModel, table=True):
     
     content_text: str = Field(default="")
     book: Book = Relationship(back_populates="chapters")
+    chapter_summary: Optional["ChapterSummary"] = Relationship(
+        back_populates="chapter",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False}
+    )
 
 class ReadingProgress(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="user.id", primary_key=True)
@@ -45,3 +49,15 @@ class ReadingProgress(SQLModel, table=True):
     
     scroll_offset: float = Field(default=0.0)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ChapterSummary(SQLModel, table=True):
+    chapter_id: UUID = Field(foreign_key="chapter.id", primary_key=True)
+    
+    summary: str
+    bullets: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    tags: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    keywords: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    chapter: "Chapter" = Relationship(back_populates="chapter_summary")
