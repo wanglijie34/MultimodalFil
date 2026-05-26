@@ -123,7 +123,7 @@ class BookExtractorService:
                     text = ""
                     if doc_item:
                         soup = BeautifulSoup(doc_item.get_body_content(), 'html.parser')
-                        text = soup.get_text(separator='\\n', strip=True)
+                        text = soup.get_text(separator='\n', strip=True)
                     
                     chapters.append(Chapter(
                         book_id=book_id,
@@ -173,7 +173,7 @@ class BookExtractorService:
             order_idx = 0
             for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
                 soup = BeautifulSoup(item.get_body_content(), 'html.parser')
-                text = soup.get_text(separator='\\n', strip=True)
+                text = soup.get_text(separator='\n', strip=True)
                 
                 if not text:
                     continue

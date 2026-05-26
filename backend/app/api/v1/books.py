@@ -62,6 +62,64 @@ async def get_book(book_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
         ]
     }
 
+from pydantic import BaseModel
+from datetime import datetime
+
+class ProgressUpdate(BaseModel):
+    chapter_id: uuid.UUID
+    scroll_offset: float
+
+@router.put("/{book_id}/progress")
+async def update_progress(book_id: uuid.UUID, progress: ProgressUpdate, db: AsyncSession = Depends(get_db)):
+    """Update reading progress for a book."""
+    from app.models.book import ReadingProgress
+    # For now, hardcode user ID until auth is fully integrated
+    user_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
+    
+    stmt = select(ReadingProgress).where(
+        ReadingProgress.user_id == user_id, 
+        ReadingProgress.book_id == book_id
+    )
+    result = await db.execute(stmt)
+    db_progress = result.scalar_one_or_none()
+    
+    if db_progress:
+        db_progress.chapter_id = progress.chapter_id
+        db_progress.scroll_offset = progress.scroll_offset
+        db_progress.updated_at = datetime.utcnow()
+    else:
+        db_progress = ReadingProgress(
+            user_id=user_id,
+            book_id=book_id,
+            chapter_id=progress.chapter_id,
+            scroll_offset=progress.scroll_offset
+        )
+        db.add(db_progress)
+        
+    await db.commit()
+    return {"message": "Progress updated"}
+
+@router.get("/{book_id}/progress")
+async def get_progress(book_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Get reading progress for a book."""
+    from app.models.book import ReadingProgress
+    user_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
+    
+    stmt = select(ReadingProgress).where(
+        ReadingProgress.user_id == user_id, 
+        ReadingProgress.book_id == book_id
+    )
+    result = await db.execute(stmt)
+    db_progress = result.scalar_one_or_none()
+    
+    if not db_progress:
+        return None
+        
+    return {
+        "chapter_id": db_progress.chapter_id,
+        "scroll_offset": db_progress.scroll_offset
+    }
+
 @router.get("/{book_id}/chapters/{chapter_id}", response_model=dict)
 async def get_chapter(book_id: uuid.UUID, chapter_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Get full text for a specific chapter."""

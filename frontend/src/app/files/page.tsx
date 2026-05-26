@@ -324,7 +324,7 @@ export default function FilesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={loadFiles} disabled={loading}>
+          <Button variant="outline" size="icon" onClick={() => loadFiles()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
           <Button disabled={uploading} onClick={() => document.getElementById("file-upload")?.click()}>

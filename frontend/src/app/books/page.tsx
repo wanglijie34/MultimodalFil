@@ -33,7 +33,7 @@ export default function BooksPage() {
     try {
       const [booksRes, filesRes] = await Promise.all([
         fetch('http://localhost:8000/api/v1/books').then(res => res.json()),
-        api.files.list("00000000-0000-0000-0000-000000000000") // Default workspace
+        api.files.list()
       ])
       
       setBooks(booksRes)

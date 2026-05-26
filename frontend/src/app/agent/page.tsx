@@ -786,6 +786,7 @@ function AssistantStructuredView({
   coverageReport?: Record<string, string>
   onCitationClick: (citation: Citation) => void
 }) {
+  const { t } = useI18n()
   const structured = useMemo(() => parseStructuredAnswer(content), [content])
   const [viewMode, setViewMode] = useState<"cards" | "table" | "graph" | "raw">("cards")
   const graphTitle = sourceQuery?.trim() || structured.intro || "Answer"

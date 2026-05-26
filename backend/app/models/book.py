@@ -36,5 +36,12 @@ class Chapter(SQLModel, table=True):
     anchor: Optional[str] = None
     
     content_text: str = Field(default="")
-    
     book: Book = Relationship(back_populates="chapters")
+
+class ReadingProgress(SQLModel, table=True):
+    user_id: UUID = Field(foreign_key="user.id", primary_key=True)
+    book_id: UUID = Field(foreign_key="book.id", primary_key=True)
+    chapter_id: UUID = Field(foreign_key="chapter.id")
+    
+    scroll_offset: float = Field(default=0.0)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
