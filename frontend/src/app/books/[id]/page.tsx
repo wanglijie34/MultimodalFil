@@ -35,7 +35,29 @@ interface BookDetails {
 
 function ChapterCard({ chapter, bookId }: { chapter: Chapter, bookId: string }) {
   const [expanded, setExpanded] = useState(false)
+  const [isSummarizing, setIsSummarizing] = useState(false)
   const hasSummary = !!chapter.summary
+
+  const handleSummarize = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsSummarizing(true)
+    try {
+      await fetch(`http://localhost:8000/api/v1/books/${bookId}/chapters/${chapter.id}/summarize`, {
+        method: 'POST'
+      })
+      // The parent component's polling will pick up the summary and unset isSummarizing when it arrives
+    } catch (err) {
+      console.error(err)
+      setIsSummarizing(false)
+    }
+  }
+
+  // Effect to stop loading state when summary arrives via polling
+  useEffect(() => {
+    if (hasSummary) {
+      setIsSummarizing(false)
+    }
+  }, [hasSummary])
 
   return (
     <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden flex flex-col transition-all mb-3" style={{ marginLeft: `${Math.max(0, chapter.level - 1) * 1.5}rem` }}>
@@ -52,8 +74,14 @@ function ChapterCard({ chapter, bookId }: { chapter: Chapter, bookId: string }) 
           </div>
           {hasSummary && chapter.summary ? (
             <p className="text-sm text-slate-600 mt-1.5 line-clamp-2 leading-relaxed pr-4">{chapter.summary.summary}</p>
+          ) : isSummarizing ? (
+             <p className="text-xs text-slate-400 mt-2 italic flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin"/> Summarizing chapter...</p>
           ) : (
-             <p className="text-xs text-slate-400 mt-1 italic flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin"/> Summarizing chapter in background...</p>
+             <div className="mt-2">
+               <Button variant="outline" size="sm" className="h-7 text-xs bg-slate-50 hover:bg-slate-100 text-slate-600" onClick={handleSummarize}>
+                 Generate AI Summary
+               </Button>
+             </div>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0 mt-1">

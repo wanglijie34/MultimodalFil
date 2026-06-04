@@ -11,17 +11,54 @@ from app.services.chapter_summarizer import chapter_summarizer
 
 router = APIRouter()
 
+from sqlalchemy import delete
+
 @router.post("/extract/{file_id}", response_model=dict)
-async def extract_book(file_id: uuid.UUID, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
+async def extract_book(file_id: uuid.UUID, background_tasks: BackgroundTasks, force: bool = False, db: AsyncSession = Depends(get_db)):
     """Extract a book from an uploaded EPUB file."""
+    if force:
+        from app.models.book import ReadingProgress
+        stmt = select(Book).where(Book.source_file_id == file_id)
+        existing = (await db.execute(stmt)).scalars().first()
+        if existing:
+            await db.execute(delete(ReadingProgress).where(ReadingProgress.book_id == existing.id))
+            await db.delete(existing)
+            await db.commit()
+            
     book = await book_extractor.extract_book_from_file(db, file_id)
     if not book:
         raise HTTPException(status_code=400, detail="Failed to extract book. Check if the file is a valid EPUB.")
-        
-    # Trigger background summarization
-    background_tasks.add_task(chapter_summarizer.summarize_book_chapters, book.id)
-    
     return {"message": "Book extracted successfully", "book_id": book.id}
+
+@router.post("/{book_id}/chapters/{chapter_id}/summarize")
+async def summarize_chapter_endpoint(book_id: uuid.UUID, chapter_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Manually summarize a specific chapter."""
+    from app.models.book import ChapterSummary
+    
+    chapter = await db.get(Chapter, chapter_id)
+    if not chapter or chapter.book_id != book_id:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+        
+    existing = await db.get(ChapterSummary, chapter_id)
+    if existing:
+        return {"message": "Summary already exists"}
+        
+    # Skip if text is too short to be meaningful
+    text = chapter.content_text.strip()
+    if len(text) < 200:
+        short_summary = ChapterSummary(
+            chapter_id=chapter.id,
+            summary="Chapter is too short for an AI summary.",
+            bullets=[],
+            tags=["Short Chapter"],
+            keywords=[]
+        )
+        db.add(short_summary)
+        await db.commit()
+        return {"message": "Chapter is too short"}
+        
+    await chapter_summarizer._summarize_chapter(db, chapter)
+    return {"message": "Chapter summarized successfully"}
 
 @router.get("", response_model=List[dict])
 async def list_books(db: AsyncSession = Depends(get_db)):
@@ -30,12 +67,13 @@ async def list_books(db: AsyncSession = Depends(get_db)):
     books = result.scalars().all()
     return [
         {
-            "id": b.id,
+            "id": str(b.id),
             "title": b.title,
             "author": b.author,
             "language": b.language,
             "description": b.description,
             "cover_path": b.cover_path,
+            "source_file_id": str(b.source_file_id) if b.source_file_id else None,
             "created_at": b.created_at
         } for b in books
     ]

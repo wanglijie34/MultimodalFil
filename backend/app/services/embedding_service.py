@@ -71,58 +71,72 @@ class EmbeddingService:
         if not texts:
             return []
             
-        # Batch size (e.g., 100 chunks per API call to avoid rate limit)
+        # DashScope restricts batch size to 10 max
         batch_size = 100
-        all_embeddings = []
+        if self.provider == "dashscope" or (self.provider == "deepseek" and settings.DASHSCOPE_API_KEY):
+            batch_size = 10
+            
+        batches = [texts[i:i+batch_size] for i in range(0, len(texts), batch_size)]
+        total_batches = len(batches)
         
-        for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i+batch_size]
-            
-            if self.provider == "dashscope" or (self.provider == "deepseek" and settings.DASHSCOPE_API_KEY):
-                try:
-                    from openai import AsyncOpenAI
-                    client = AsyncOpenAI(api_key=settings.DASHSCOPE_API_KEY, base_url=settings.DASHSCOPE_BASE_URL)
-                    response = await client.embeddings.create(model="text-embedding-v4", input=batch_texts, dimensions=self.vector_size)
-                    embeddings = [item.embedding for item in response.data]
-                    all_embeddings.extend(embeddings)
-                    await asyncio.sleep(0.5)
-                    continue
-                except Exception as e:
-                    logger.error(f"DashScope batch embedding failed: {e}")
-                    
-            elif self.provider == "gemini" and settings.GOOGLE_API_KEY:
-                try:
-                    import google.generativeai as genai
-                    genai.configure(api_key=settings.GOOGLE_API_KEY)
-                    result = await asyncio.to_thread(
-                        genai.embed_content,
-                        model="models/text-embedding-004",
-                        content=batch_texts,
-                        task_type="retrieval_document"
-                    )
-                    # result['embedding'] will be a list of lists if content is a list of strings
-                    all_embeddings.extend(result["embedding"])
-                    await asyncio.sleep(1.5)
-                    continue
-                except Exception as e:
-                    logger.error(f"Gemini batch embedding failed: {e}")
-                    
-            elif self.provider == "openai" and settings.OPENAI_API_KEY:
-                try:
-                    from openai import AsyncOpenAI
-                    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-                    response = await client.embeddings.create(input=batch_texts, model="text-embedding-3-small")
-                    embeddings = [item.embedding for item in response.data]
-                    all_embeddings.extend(embeddings)
-                    await asyncio.sleep(0.5)
-                    continue
-                except Exception as e:
-                    logger.error(f"OpenAI batch embedding failed: {e}")
+        logger.info(f"Embedding {len(texts)} texts in {total_batches} batches using {self.provider}")
+        
+        all_embeddings = [None] * total_batches
+        sem = asyncio.Semaphore(5)  # Limit concurrent requests
+        
+        async def process_batch(index: int, batch_texts: List[str]):
+            async with sem:
+                if index % 10 == 0 or index == total_batches - 1:
+                    logger.info(f"Processing embedding batch {index + 1}/{total_batches}...")
+                
+                if self.provider == "dashscope" or (self.provider == "deepseek" and settings.DASHSCOPE_API_KEY):
+                    try:
+                        from openai import AsyncOpenAI
+                        client = AsyncOpenAI(api_key=settings.DASHSCOPE_API_KEY, base_url=settings.DASHSCOPE_BASE_URL)
+                        response = await client.embeddings.create(model="text-embedding-v4", input=batch_texts, dimensions=self.vector_size)
+                        all_embeddings[index] = [item.embedding for item in response.data]
+                        return
+                    except Exception as e:
+                        logger.error(f"DashScope batch embedding failed for batch {index}: {e}")
+                        
+                elif self.provider == "gemini" and settings.GOOGLE_API_KEY:
+                    try:
+                        import google.generativeai as genai
+                        genai.configure(api_key=settings.GOOGLE_API_KEY)
+                        result = await asyncio.to_thread(
+                            genai.embed_content,
+                            model="models/text-embedding-004",
+                            content=batch_texts,
+                            task_type="retrieval_document"
+                        )
+                        all_embeddings[index] = result["embedding"]
+                        await asyncio.sleep(1.0)
+                        return
+                    except Exception as e:
+                        logger.error(f"Gemini batch embedding failed for batch {index}: {e}")
+                        
+                elif self.provider == "openai" and settings.OPENAI_API_KEY:
+                    try:
+                        from openai import AsyncOpenAI
+                        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+                        response = await client.embeddings.create(input=batch_texts, model="text-embedding-3-small")
+                        all_embeddings[index] = [item.embedding for item in response.data]
+                        return
+                    except Exception as e:
+                        logger.error(f"OpenAI batch embedding failed for batch {index}: {e}")
 
-            # Fallback
-            logger.warning(f"Using fake embedding for batch fallback")
-            all_embeddings.extend([self._fake_embedding(t) for t in batch_texts])
-            
-        return all_embeddings
+                # Fallback
+                if index % 10 == 0:
+                    logger.warning(f"Using fake embedding for batch fallback (batch {index+1})")
+                all_embeddings[index] = await asyncio.to_thread(
+                    lambda: [self._fake_embedding(t) for t in batch_texts]
+                )
+
+        # Run all batches concurrently within semaphore limits
+        tasks = [process_batch(i, batch) for i, batch in enumerate(batches)]
+        await asyncio.gather(*tasks)
+        
+        # Flatten the list of lists
+        return [emb for batch_res in all_embeddings for emb in batch_res]
 
 embedding_service = EmbeddingService()

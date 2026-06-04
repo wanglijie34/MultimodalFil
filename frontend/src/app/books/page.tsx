@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n"
 import { api } from "@/lib/api"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Book as BookIcon, Loader2 } from "lucide-react"
+import { Book as BookIcon, Loader2, RefreshCw } from "lucide-react"
 import Link from "next/link"
 
 interface Book {
@@ -14,6 +14,7 @@ interface Book {
   author: string | null
   language: string | null
   cover_path: string | null
+  source_file_id: string | null
 }
 
 interface FileItem {
@@ -63,6 +64,20 @@ export default function BooksPage() {
     }
   }
 
+  const handleReExtract = async (fileId: string) => {
+    setExtractingId(fileId)
+    try {
+      await fetch(`http://localhost:8000/api/v1/books/extract/${fileId}?force=true`, {
+        method: 'POST'
+      })
+      await fetchData()
+    } catch (error) {
+      console.error("Re-extract failed:", error)
+    } finally {
+      setExtractingId(null)
+    }
+  }
+
   if (loading) {
     return <div className="p-8 flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
@@ -97,18 +112,29 @@ export default function BooksPage() {
                 <CardTitle className="line-clamp-2 text-lg">{book.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">{book.author || "Unknown Author"}</p>
               </CardHeader>
-              <CardFooter className="p-4 pt-0">
-                <Link href={`/books/${book.id}`} className="w-full">
+              <CardFooter className="p-4 pt-0 flex gap-2">
+                <Link href={`/books/${book.id}`} className="flex-1">
                   <Button variant="default" className="w-full">{t("Read")}</Button>
                 </Link>
+                {book.source_file_id && (
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => handleReExtract(book.source_file_id!)}
+                    disabled={extractingId === book.source_file_id}
+                    title="Re-extract Book"
+                  >
+                    {extractingId === book.source_file_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}
           
           {/* Unextracted EPUB files */}
           {files.map((file) => {
-            // Very naive check if it's extracted: title match
-            const isExtracted = books.some(b => b.title === file.original_filename || b.title.includes(file.original_filename.replace('.epub', '')))
+            // Check if this specific file ID is already extracted to a book
+            const isExtracted = books.some(b => b.source_file_id === file.id)
             if (isExtracted) return null
             
             return (

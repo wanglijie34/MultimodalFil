@@ -75,9 +75,11 @@ class LLMService:
             return "\n".join(parts)
         return str(content or "")
 
-    async def chat(self, messages: List[Dict[str, str]], stream: bool = False) -> str:
+    async def chat(self, messages: List[Dict[str, str]], stream: bool = False, json_mode: bool = False) -> str:
         try:
             model = self._get_model()
+            if model and json_mode and hasattr(model, "bind"):
+                model = model.bind(response_format={"type": "json_object"})
         except Exception as e:
             logger.error(f"Failed to initialize LangChain model for provider {self.provider}: {e}")
             model = None

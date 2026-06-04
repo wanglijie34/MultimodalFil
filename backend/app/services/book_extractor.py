@@ -28,9 +28,10 @@ class BookExtractorService:
 
         # Check if already extracted
         existing = await db.execute(select(Book).where(Book.source_file_id == file_id))
-        if existing.scalar_one_or_none():
+        db_book = existing.scalars().first()
+        if db_book:
             logger.info(f"Book for file {file_id} already exists.")
-            return existing.scalar_one_or_none()
+            return db_book
 
         from app.integrations.minio_client import minio_client
         import tempfile
@@ -110,90 +111,154 @@ class BookExtractorService:
         return None
 
     def _extract_chapters(self, book: epub.EpubBook, book_id: uuid.UUID) -> List[Chapter]:
-        chapters: List[Chapter] = []
-        order_idx = 0
+        """
+        Extract chapters by walking the TOC tree for structure (titles, hierarchy)
+        and the spine for content (body text).
         
-        # Helper to recursively parse TOC
-        def parse_toc(items, level=1):
-            nonlocal order_idx
+        Strategy:
+        1. Flatten the TOC tree into an ordered list of entries with (title, level, href).
+           Only keep "chapter-level" entries (篇 and 章), skip sub-section 【小节】 titles.
+        2. Build a content map: base_href -> body text (from spine).
+        3. Walk the ordered TOC list, attach content from spine, produce chapters.
+        4. Pick up any spine documents NOT covered by TOC entries.
+        """
+        from collections import OrderedDict
+        
+        # --- Step 1: Flatten the TOC tree into an ordered entry list ---
+        toc_entries: list = []  # [{'title', 'level', 'href', 'base_href'}, ...]
+        
+        def flatten_toc(items, level=1):
             for item in items:
                 if isinstance(item, epub.Link):
-                    # It's a link to a document
-                    doc_item = book.get_item_with_href(item.href)
-                    text = ""
-                    if doc_item:
-                        soup = BeautifulSoup(doc_item.get_body_content(), 'html.parser')
-                        text = soup.get_text(separator='\n', strip=True)
-                    
-                    chapters.append(Chapter(
-                        book_id=book_id,
-                        title=item.title or f"Chapter {order_idx+1}",
-                        level=level,
-                        order_index=order_idx,
-                        src_href=item.href,
-                        content_text=text
-                    ))
-                    order_idx += 1
+                    href = item.href or ''
+                    base = href.split('#')[0]
+                    toc_entries.append({
+                        'title': item.title, 'level': level,
+                        'href': href, 'base_href': base
+                    })
                 elif isinstance(item, tuple):
-                    # Section with sub-items
                     section, sub_items = item
-                    if isinstance(section, epub.Section):
-                        chapters.append(Chapter(
-                            book_id=book_id,
-                            title=section.title,
-                            level=level,
-                            order_index=order_idx,
-                            src_href=section.href,
-                            content_text="" # usually sections just group
-                        ))
-                        order_idx += 1
-                    parse_toc(sub_items, level + 1)
+                    if isinstance(section, (epub.Section, epub.Link)):
+                        href = section.href or ''
+                        base = href.split('#')[0]
+                        toc_entries.append({
+                            'title': section.title, 'level': level,
+                            'href': href, 'base_href': base
+                        })
+                    # Recurse into children
+                    flatten_toc(sub_items, level + 1)
                 elif isinstance(item, epub.Section):
+                    href = item.href or ''
+                    base = href.split('#')[0]
+                    toc_entries.append({
+                        'title': item.title, 'level': level,
+                        'href': href, 'base_href': base
+                    })
+        
+        if book.toc:
+            flatten_toc(book.toc)
+        
+        # --- Step 2: Determine the max depth to use for chapters ---
+        # We want "篇" (level 1) and "章" (level 2) as separate chapters,
+        # but NOT deeper sub-sections (level 3+ like 【xxx】).
+        # Determine max_chapter_level: if there are 3+ distinct levels, cap at 2.
+        all_levels = set(e['level'] for e in toc_entries)
+        max_chapter_level = 2 if len(all_levels) >= 3 else max(all_levels) if all_levels else 1
+        
+        # Filter to only chapter-level entries
+        chapter_entries = [e for e in toc_entries if e['level'] <= max_chapter_level]
+        
+        # --- Step 3: Build spine list and content ---
+        spine_items: list = []  # [{'base_href': str, 'text': str}, ...]
+        seen_bases: set = set()
+        for item_id, _ in book.spine:
+            item = book.get_item_with_id(item_id)
+            if not item or item.get_type() != ebooklib.ITEM_DOCUMENT:
+                continue
+            href = item.get_name()
+            base = href.split('#')[0]
+            if base in seen_bases:
+                continue
+            seen_bases.add(base)
+            soup = BeautifulSoup(item.get_body_content(), 'html.parser')
+            text = soup.get_text(separator='\n', strip=True)
+            if text.strip():
+                spine_items.append({'base_href': base, 'text': text})
+        
+        # --- Step 4: Build base_href -> list of chapter entries mapping ---
+        from collections import defaultdict
+        href_to_entries: dict = defaultdict(list)
+        for e in chapter_entries:
+            href_to_entries[e['base_href']].append(e)
+        
+        # --- Step 5: Walk spine with queue logic to handle Calibre offset bugs ---
+        # When multiple TOC entries point to the same file, but subsequent files have NO TOC entries,
+        # it's a known EPUB bug. We use a pending queue to align them correctly.
+        chapters: List[Chapter] = []
+        pending_entries = []
+        active_chapter = None
+        previous_text = ""
+        order_idx = 0
+        
+        for spine_item in spine_items:
+            base = spine_item['base_href']
+            text = spine_item['text']
+            entries = href_to_entries.get(base, [])
+            
+            if entries:
+                # We hit a new TOC-referenced file. 
+                # Any remaining pending entries didn't get their own file, so they 
+                # share the previous file's text.
+                for p in pending_entries:
                     chapters.append(Chapter(
                         book_id=book_id,
-                        title=item.title,
-                        level=level,
+                        title=p['title'] or f"Section {order_idx+1}",
+                        level=p['level'],
                         order_index=order_idx,
-                        src_href=item.href,
-                        content_text=""
+                        src_href=p['href'],
+                        # Make shallow headers empty to serve as structural dividers
+                        content_text="" if p['level'] < max_chapter_level else previous_text
                     ))
                     order_idx += 1
-
-        # Attempt to parse standard TOC
-        if book.toc:
-            parse_toc(book.toc)
-        
-        # Filter out empty chapters or see if we need a fallback
-        valid_chapters = [c for c in chapters if c.content_text.strip()]
-        
-        if not valid_chapters:
-            # Fallback: TOC was empty or useless, just iterate all documents
-            logger.info("TOC incomplete or missing, falling back to raw document extraction.")
-            chapters = []
-            order_idx = 0
-            for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
-                soup = BeautifulSoup(item.get_body_content(), 'html.parser')
-                text = soup.get_text(separator='\n', strip=True)
                 
-                if not text:
-                    continue
-                    
-                # Try to find an h1 or h2 for title
-                title = f"Part {order_idx+1}"
-                h = soup.find(['h1', 'h2', 'h3'])
-                if h and h.get_text(strip=True):
-                    title = h.get_text(strip=True)[:100]
-                    
-                chapters.append(Chapter(
+                pending_entries = entries.copy()
+                
+            if pending_entries:
+                # Consume one pending entry for this spine file
+                e = pending_entries.pop(0)
+                # If it's a high-level header AND it's not the only entry for this file,
+                # we could make it empty. But for simplicity and safety, we just give it the text.
+                # If the text is just a 4-char title, it's effectively empty anyway.
+                new_chap = Chapter(
                     book_id=book_id,
-                    title=title,
-                    level=1,
+                    title=e['title'] or f"Section {order_idx+1}",
+                    level=e['level'],
                     order_index=order_idx,
-                    src_href=item.file_name,
+                    src_href=e['href'],
                     content_text=text
-                ))
+                )
+                chapters.append(new_chap)
+                active_chapter = new_chap
                 order_idx += 1
-                
+            else:
+                # Orphaned file and no pending entries -> append to active chapter
+                if active_chapter:
+                    active_chapter.content_text += "\n\n" + text
+            
+            previous_text = text
+            
+        # Final flush of any trailing pending entries
+        for p in pending_entries:
+            chapters.append(Chapter(
+                book_id=book_id,
+                title=p['title'] or f"Section {order_idx+1}",
+                level=p['level'],
+                order_index=order_idx,
+                src_href=p['href'],
+                content_text="" if p['level'] < max_chapter_level else previous_text
+            ))
+            order_idx += 1
+        
         return chapters
 
 book_extractor = BookExtractorService()

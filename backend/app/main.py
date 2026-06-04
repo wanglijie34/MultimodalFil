@@ -149,16 +149,11 @@ def _run_with_safe_reload():
         return
 
     reload_excludes = [
-        str(repo_root / "frontend"),
-        str(repo_root / "files"),
-        str(repo_root / "docs"),
-        str(repo_root / "paper"),
-        str(repo_root / "infrastructure"),
-        str(repo_root / ".git"),
-        str(repo_root / ".next"),
-        str(repo_root / "node_modules"),
         "*/__pycache__/*",
         "*.pyc",
+        "*.pyo",
+        ".git",
+        "node_modules",
     ]
 
     try:

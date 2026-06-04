@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, Menu, Search, BookOpen } from "lucide-react"
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, Menu, Search, BookOpen, FileText, LocateFixed, ChevronsUpDown } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,7 +43,96 @@ export default function BookReaderPage() {
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+
+  const toggleCollapse = (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCollapsedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAllCollapse = useCallback(() => {
+    if (!book || !book.chapters) return
+    if (collapsedIds.size > 0) {
+      setCollapsedIds(new Set())
+    } else {
+      const allParentIds = book.chapters.filter((c, i) => {
+        const next = book.chapters[i + 1]
+        return next && next.level > c.level
+      }).map(c => c.id)
+      setCollapsedIds(new Set(allParentIds))
+    }
+  }, [book, collapsedIds])
+
+  const visibleChapters = useMemo(() => {
+    if (!book || !book.chapters) return []
+    const result: (ChapterSummary & { hasChildren: boolean })[] = []
+    let skipLevel = Infinity
+    for (let i = 0; i < book.chapters.length; i++) {
+      const c = book.chapters[i]
+      const next = book.chapters[i + 1]
+      const hasChildren = !!next && next.level > c.level
+      
+      if (c.level <= skipLevel) {
+        skipLevel = Infinity
+        result.push({ ...c, hasChildren })
+        if (collapsedIds.has(c.id)) {
+          skipLevel = c.level
+        }
+      }
+    }
+    return result
+  }, [book, collapsedIds])
+
+  const locateCurrentChapter = useCallback(() => {
+    if (!book || !book.chapters || !chapterId) return
+    const targetIndex = book.chapters.findIndex(c => c.id === chapterId)
+    if (targetIndex === -1) return
+
+    const parentsToExpand = new Set<string>()
+    let currentLevel = book.chapters[targetIndex].level
+
+    for (let i = targetIndex - 1; i >= 0; i--) {
+      const c = book.chapters[i]
+      if (c.level < currentLevel) {
+        parentsToExpand.add(c.id)
+        currentLevel = c.level
+      }
+    }
+
+    if (parentsToExpand.size > 0) {
+      setCollapsedIds(prev => {
+        const next = new Set(prev)
+        let changed = false
+        parentsToExpand.forEach(id => {
+          if (next.has(id)) {
+            next.delete(id)
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }
+
+    setTimeout(() => {
+      const activeEl = document.getElementById(`toc-item-${chapterId}`)
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }, [book, chapterId])
+
+  useEffect(() => {
+    if (book && chapterId) {
+      locateCurrentChapter()
+    }
+  }, [book, chapterId, locateCurrentChapter])
+
   // Refs
   const contentRef = useRef<HTMLDivElement>(null)
   const saveProgressTimeout = useRef<NodeJS.Timeout | null>(null)
@@ -185,13 +274,17 @@ export default function BookReaderPage() {
     )
   }
 
+  // Calculate progress
+  const totalChapters = book?.chapters.length ?? 0
+  const progressPercentage = totalChapters > 0 ? Math.round(((currentIndex + 1) / totalChapters) * 100) : 0
+
   return (
     <div className="flex h-full bg-slate-50 relative overflow-hidden">
       {/* Left Pane: TOC Sidebar */}
       <div 
         className={`absolute lg:relative inset-y-0 left-0 bg-white border-r w-72 z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
           <Link href={`/books/${bookId}`} className="text-sm text-muted-foreground hover:text-foreground flex items-center">
             <ArrowLeft className="mr-2 h-4 w-4" /> Library
           </Link>
@@ -199,15 +292,44 @@ export default function BookReaderPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
-        <div className="overflow-y-auto h-[calc(100%-60px)] p-2 pb-20">
-          <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t("Chapters")}</div>
-          {book.chapters.map(c => (
+        <div className="px-5 py-3 border-b text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between bg-slate-50/50 sticky top-[61px] z-10">
+          <span>{t("Chapters")}</span>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={toggleAllCollapse}
+              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
+              title={collapsedIds.size > 0 ? "Expand All" : "Collapse All"}
+            >
+              <ChevronsUpDown className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={locateCurrentChapter}
+              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
+              title="Locate Current Chapter"
+            >
+              <LocateFixed className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div className="overflow-y-auto h-[calc(100%-105px)] p-2 pb-20">
+          {visibleChapters.map(c => (
             <Link key={c.id} href={`/books/${bookId}/read/${c.id}`} onClick={() => setSidebarOpen(false)}>
               <div 
-                className={`px-3 py-2 text-sm rounded-md mb-1 cursor-pointer transition-colors ${c.id === chapterId ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
+                id={`toc-item-${c.id}`}
+                className={`px-3 py-2 text-sm rounded-md mb-1 cursor-pointer transition-colors flex items-center gap-1 ${c.id === chapterId ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
                 style={{ paddingLeft: `${Math.max(0.5, c.level * 0.75)}rem` }}
               >
-                {c.title}
+                {c.hasChildren ? (
+                  <div 
+                    className="p-0.5 hover:bg-slate-200 hover:text-slate-900 rounded shrink-0 transition-colors" 
+                    onClick={(e) => toggleCollapse(e, c.id)}
+                  >
+                    {collapsedIds.has(c.id) ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </div>
+                ) : (
+                  <div className="w-[18px] shrink-0" />
+                )}
+                <span className="truncate">{c.title}</span>
               </div>
             </Link>
           ))}
@@ -230,8 +352,13 @@ export default function BookReaderPage() {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex-1 flex items-center justify-between max-w-3xl mx-auto">
-            <div className="text-sm font-medium text-slate-700 line-clamp-1 flex-1">{chapter.title}</div>
-            <div className="relative w-64 hidden sm:block">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="text-sm font-medium text-slate-700 line-clamp-1">{chapter.title}</div>
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 hidden sm:inline-flex">
+                {progressPercentage}%
+              </span>
+            </div>
+            <div className="relative w-64 hidden sm:block ml-4">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
               <Input 
                 type="text" 

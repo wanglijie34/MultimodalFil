@@ -18,17 +18,30 @@ class GraphService:
         'attributes' should be a key-value dictionary of important properties found (e.g., {{"title": "Emperor", "birth_year": "1563"}}).
         'relations' is a list of objects with 'source', 'target', and 'relation'.
         
+        CRITICAL RULES:
+        1. Your output MUST be perfectly valid JSON.
+        2. DO NOT include trailing commas.
+        3. ALWAYS escape double quotes inside string values (e.g. "The \\"Great\\" War").
+        4. If a string contains newlines, escape them as \\n.
+        
         Text: {chunk_content}
         JSON:"""
         
         try:
-            response = await llm_service.chat([{"role": "user", "content": prompt}])
+            response = await llm_service.chat([{"role": "user", "content": prompt}], json_mode=True)
             if "```json" in response:
                 response = response.split("```json")[1].split("```")[0]
             elif "```" in response:
                 response = response.split("```")[1].split("```")[0]
             
-            data = json.loads(response.strip())
+            try:
+                data = json.loads(response.strip())
+            except json.JSONDecodeError:
+                # Attempt to fix trailing commas
+                import re
+                response_clean = re.sub(r',\s*([\]}])', r'\1', response)
+                data = json.loads(response_clean.strip())
+                
             return {
                 "entities": data.get("entities", []),
                 "relations": data.get("relations", [])
@@ -63,7 +76,7 @@ class GraphService:
             # Find or create Entity
             stmt = select(Entity).where(Entity.workspace_id == workspace_id, Entity.name == name)
             result = await db.execute(stmt)
-            db_ent = result.scalar_one_or_none()
+            db_ent = result.scalars().first()
             
             if not db_ent:
                 meta_dict = {}

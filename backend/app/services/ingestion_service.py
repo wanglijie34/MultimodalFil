@@ -135,13 +135,15 @@ class IngestionService:
                 async def _extract_chunk(chunk):
                     async with graph_sem:
                         try:
-                            await graph_service.process_graph_extraction(
-                                db=db,
-                                workspace_id=db_file.workspace_id,
-                                file_id=db_file.id,
-                                chunk_id=chunk.id,
-                                chunk_content=chunk.content
-                            )
+                            from app.db.session import AsyncSessionLocal
+                            async with AsyncSessionLocal() as task_db:
+                                await graph_service.process_graph_extraction(
+                                    db=task_db,
+                                    workspace_id=db_file.workspace_id,
+                                    file_id=db_file.id,
+                                    chunk_id=chunk.id,
+                                    chunk_content=chunk.content
+                                )
                         except Exception as ge:
                             logger.error(f"Graph extraction failed for chunk {chunk.id}: {ge}")
 

@@ -4,6 +4,7 @@ from qdrant_client.http import models
 from app.integrations.qdrant_client import qdrant_integration
 from app.models.file import DocumentChunk
 from loguru import logger
+import asyncio
 
 class VectorStoreService:
     async def index_chunks(self, chunks: List[DocumentChunk], embeddings: List[List[float]]):
@@ -25,7 +26,7 @@ class VectorStoreService:
         batch_size = 500
         for i in range(0, len(points), batch_size):
             batch = points[i:i+batch_size]
-            qdrant_integration.upsert_chunks(batch)
+            await asyncio.to_thread(qdrant_integration.upsert_chunks, batch)
         logger.info(f"Indexed {len(points)} chunks into Qdrant in {len(range(0, len(points), batch_size))} batches")
 
     async def search(self, vector: List[float], workspace_id: UUID = None, top_k: int = 10, file_id: UUID = None):
