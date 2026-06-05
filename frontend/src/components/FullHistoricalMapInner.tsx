@@ -195,7 +195,13 @@ export default function FullHistoricalMapInner() {
           <NavigationControl position="bottom-right" />
 
           {/* Render Extra Factions Subdivisions */}
-          <Source id="extra-factions" type="geojson" data="/data/extra_factions.geojson">
+          <Source 
+            id="extra-factions" 
+            type="geojson" 
+            data="/data/extra_factions.geojson"
+            tolerance={2.5}
+            maxzoom={9}
+          >
             <Layer
               id="extra-factions-fill"
               type="fill"
@@ -256,7 +262,14 @@ export default function FullHistoricalMapInner() {
           </Source>
 
           {/* Render Ming Prefectures (Always visible to form the solid Ming shape) */}
-          <Source id="ming-prefectures" type="geojson" data="/data/ming_prefectures_1628.geojson">
+          <Source 
+            id="ming-prefectures" 
+            type="geojson" 
+            data="/data/ming_prefectures_1628.geojson" 
+            generateId={true}
+            tolerance={2.5}
+            maxzoom={9}
+          >
             <Layer
               id="ming-prefectures-fill"
               type="fill"
@@ -499,13 +512,33 @@ export default function FullHistoricalMapInner() {
                         <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>赋税重地</span><span className={clickInfo.name.length % 2 === 0 ? "text-green-400" : "text-yellow-400"}>{clickInfo.name.length % 2 === 0 ? "是" : "否"}</span></div>
                       </>
                     )}
-                    {clickInfo.type === 'prefecture' && (
-                      <>
-                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>知府</span><span>{['李', '王', '张', '刘', '陈', '赵'][clickInfo.name.length % 6]}某</span></div>
-                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>在籍人口</span><span>{10 + (clickInfo.name.length * 13 % 50)} 万户</span></div>
-                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>存粮状态</span><span className={clickInfo.name.length % 3 === 0 ? "text-red-400 font-bold" : "text-green-400"}>{clickInfo.name.length % 3 === 0 ? "严重告急" : "尚可维持"}</span></div>
-                      </>
-                    )}
+                    {clickInfo.type === 'prefecture' && (() => {
+                      const { getPrefectureData } = require('@/lib/ming-historical-data');
+                      const data = getPrefectureData(clickInfo.name, clickInfo.lat, clickInfo.lng);
+                      return (
+                        <>
+                          <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1">
+                            <span>主官</span>
+                            <span>{clickInfo.name.endsWith('司') ? '指挥使' : (clickInfo.name.endsWith('州') ? '知州' : '知府')}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1">
+                            <span>在籍户口</span>
+                            <span>{data.population.toLocaleString()} 户</span>
+                          </div>
+                          <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1">
+                            <span>秋粮夏税</span>
+                            <span>{data.tax.toLocaleString()} 石</span>
+                          </div>
+                          <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1">
+                            <span>存粮状态</span>
+                            <span className={data.grain === '颗粒无收' ? 'text-red-500 font-bold' : data.grain.includes('告急') ? 'text-orange-400' : 'text-green-400'}>{data.grain}</span>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-[#d49a6a]/20 text-xs text-[#b3a392] italic leading-relaxed">
+                            "{data.agriculture}"
+                          </div>
+                        </>
+                      );
+                    })()}
                     {clickInfo.type === 'tribe' && (
                       <>
                         <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>部落首领</span><span>{['莽古尔泰', '阿敏', '代善', '多尔衮', '豪格'][clickInfo.name.length % 5]}</span></div>
