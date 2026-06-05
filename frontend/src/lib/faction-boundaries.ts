@@ -54,7 +54,7 @@ export const factionBoundaries = {
       type: 'Feature',
       properties: {
         id: 'northern-yuan',
-        name: '北元 / 鞑靼',
+        name: '鞑靼',
         color: '#5c4033', // Dark brown/earth
         center: [113.0, 46.0]
       },
@@ -117,7 +117,7 @@ export const factionBoundaries = {
         id: 'chagatai',
         name: '东察合台汗国',
         color: '#2d5c3f', // Dark green
-        center: [82.0, 40.0]
+        center: [85.0, 38.5]
       },
       geometry: {
         type: 'Polygon',
@@ -166,6 +166,19 @@ export const factionBoundaries = {
           [124.0, 42.0]  // Back to start
         ]]
       }
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'tubo',
+        name: '吐蕃诸部',
+        color: '#7a5230', // Tibetan bronze/earth
+        center: [92.0, 31.0] // Centered between Tibet and Qinghai/Sichuan
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[90.0, 30.0], [94.0, 30.0], [94.0, 32.0], [90.0, 32.0], [90.0, 30.0]]] // Dummy polygon
+      }
     }
   ]
 };
@@ -195,7 +208,7 @@ export const mingProvinces = {
     { type: 'Feature', properties: { name: '山西' }, geometry: { type: 'Point', coordinates: [112.5, 37.8] } },
     { type: 'Feature', properties: { name: '河南' }, geometry: { type: 'Point', coordinates: [113.6, 34.2] } },
     { type: 'Feature', properties: { name: '陕西' }, geometry: { type: 'Point', coordinates: [108.9, 34.3] } },
-    { type: 'Feature', properties: { name: '四川' }, geometry: { type: 'Point', coordinates: [101.5, 31.0] } },
+    { type: 'Feature', properties: { name: '四川' }, geometry: { type: 'Point', coordinates: [104.5, 30.5] } },
     { type: 'Feature', properties: { name: '湖广' }, geometry: { type: 'Point', coordinates: [112.3, 28.5] } },
     { type: 'Feature', properties: { name: '浙江' }, geometry: { type: 'Point', coordinates: [120.1, 29.2] } },
     { type: 'Feature', properties: { name: '江西' }, geometry: { type: 'Point', coordinates: [115.9, 27.6] } },
@@ -204,8 +217,6 @@ export const mingProvinces = {
     { type: 'Feature', properties: { name: '广西' }, geometry: { type: 'Point', coordinates: [108.8, 23.8] } },
     { type: 'Feature', properties: { name: '云南' }, geometry: { type: 'Point', coordinates: [101.7, 25.0] } },
     { type: 'Feature', properties: { name: '贵州' }, geometry: { type: 'Point', coordinates: [106.7, 26.8] } },
-    { type: 'Feature', properties: { name: '辽东都司' }, geometry: { type: 'Point', coordinates: [123.0, 41.5] } },
-    { type: 'Feature', properties: { name: '乌斯藏都司' }, geometry: { type: 'Point', coordinates: [91.1, 29.6] } },
-    { type: 'Feature', properties: { name: '朵甘都司' }, geometry: { type: 'Point', coordinates: [97.1, 31.0] } }
+    { type: 'Feature', properties: { name: '辽东都司' }, geometry: { type: 'Point', coordinates: [123.0, 41.5] } }
   ]
 };

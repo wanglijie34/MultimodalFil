@@ -12,6 +12,7 @@
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@radix-ui/react-slot": "^1.2.4",
+    "@turf/turf": "^7.3.5",
     "@xyflow/react": "^12.10.2",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",

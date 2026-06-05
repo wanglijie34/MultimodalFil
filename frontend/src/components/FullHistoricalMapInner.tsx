@@ -9,22 +9,18 @@ import { X, MapPin, Shield, Swords, Home, Mountain, Waves, Building2 } from 'luc
 import { cn } from '@/lib/utils';
 import GameOverlay from './game/GameOverlay';
 import { GameState } from '@/lib/gameApi';
+import { GAME_ASSETS } from '@/lib/gameAssets';
 
 export default function FullHistoricalMapInner() {
   const [activeLocation, setActiveLocation] = useState<MapLocation | null>(null);
   const [currentZoom, setCurrentZoom] = useState(4.5);
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [activeView, setActiveView] = useState<'standard' | 'famine' | 'stability' | 'threat'>('standard');
+  const [activeView, setActiveView] = useState<'standard' | 'famine' | 'stability' | 'tax' | 'military'>('standard');
   const isMacroView = currentZoom < 4.5;
   
   const mapStyle = useMemo(() => ({
     version: 8,
     sources: {
-      'satellite': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256
-      },
       'terrain-source': {
         type: 'raster-dem',
         tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
@@ -35,11 +31,11 @@ export default function FullHistoricalMapInner() {
     },
     layers: [
       {
-        id: 'satellite-layer',
-        type: 'raster',
-        source: 'satellite',
-        minzoom: 0,
-        maxzoom: 22
+        id: 'background',
+        type: 'background',
+        paint: {
+          'background-color': '#1a2228' // Deep ink/teal water
+        }
       }
     ],
     terrain: {
@@ -86,10 +82,9 @@ export default function FullHistoricalMapInner() {
         else if (loc.type === 'event') { color = '#d94a18'; radius = 7; }
         else if (loc.type === 'mountain') { color = 'transparent'; radius = 0; }
         else if (loc.type === 'river') { color = 'transparent'; radius = 0; }
-        
-        let text_color = '#ffcc99';
-        if (loc.type === 'mountain') text_color = '#d4c7b8';
-        if (loc.type === 'river') text_color = '#99ccff';
+        let text_color = '#3b2f24'; // Ink black/brown
+        if (loc.type === 'mountain') text_color = '#5c4b3a';
+        if (loc.type === 'river') text_color = '#2d4b5a';
         
         return {
           type: 'Feature',
@@ -123,12 +118,8 @@ export default function FullHistoricalMapInner() {
   };
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-black">
-      {/* 
-        We apply a global CSS filter here to tint the realistic satellite imagery 
-        into a yellowish/warm "sepia" tone to feel like an ancient map/sandbox.
-      */}
-      <div className="absolute inset-0 [&_.maplibregl-canvas]:sepia-[0.4] [&_.maplibregl-canvas]:hue-rotate-[-10deg] [&_.maplibregl-canvas]:contrast-[1.2] [&_.maplibregl-canvas]:brightness-[0.9]">
+    <div className="w-full h-full relative overflow-hidden bg-[#11171a]">
+      <div className="absolute inset-0 [&_.maplibregl-canvas]:contrast-[1.1] [&_.maplibregl-canvas]:brightness-[0.95]">
         <Map
           initialViewState={{
             longitude: 112,
@@ -140,7 +131,6 @@ export default function FullHistoricalMapInner() {
           maxBounds={[[70, 0], [150, 55]]} // Restrict to China, Mongolia, SE Asia, Japan
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           mapStyle={mapStyle as any}
-          interactiveLayerIds={[]}
           // enable physical 3D terrain
           terrain={{ source: 'terrain-source', exaggeration: 1.5 }}
           maxPitch={85}
@@ -169,29 +159,65 @@ export default function FullHistoricalMapInner() {
           <FullscreenControl position="top-right" />
           <NavigationControl position="bottom-right" />
 
-          {/* Render Faction Boundaries (Polygons) */}
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <Source id="factions" type="geojson" data={factionBoundaries as any}>
-            <Layer 
-              id="faction-fills"
+          {/* Render Extra Factions Subdivisions */}
+          <Source id="extra-factions" type="geojson" data="/data/extra_factions.geojson">
+            <Layer
+              id="extra-factions-fill"
               type="fill"
-              filter={['!=', ['get', 'id'], 'ming']}
               paint={{
-                'fill-color': ['get', 'color'],
-                'fill-opacity': 0.15 // Soft fade
+                'fill-color': ['match', ['get', 'faction'],
+                  '后金', '#6a2a2a', // Deep blood/crimson for Jurchen
+                  '北元 / 鞑靼', '#4a3b2c', // Dark earth
+                  '瓦剌', '#3b2f4c', // Dark purple-ish
+                  '东察合台汗国', '#2d4c3f', // Dark green
+                  '吐蕃诸部', '#7a5230', // Tibetan bronze/earth
+                  // Default for Dusi/Ming borders
+                  activeView === 'famine' ? '#cc3300' :
+                  activeView === 'stability' ? '#3366cc' :
+                  activeView === 'military' ? '#ff9900' :
+                  activeView === 'tax' ? '#996633' : '#c6a982'
+                ],
+                'fill-opacity': ['match', ['get', 'faction'],
+                  ['辽东都司'], // Only Liaodong gets parchment look now
+                  isMacroView 
+                    ? (activeView !== 'standard' ? 0.5 : 1) 
+                    : (activeView !== 'standard' ? 0.3 : 1),
+                  // Default opacity for foreign factions
+                  isMacroView 
+                    ? (activeView !== 'standard' ? 0.3 : 1) 
+                    : (activeView !== 'standard' ? 0.2 : 1)
+                ]
               }}
             />
-            <Layer 
-              id="faction-lines"
+            <Layer
+              id="extra-factions-line"
               type="line"
-              filter={['!=', ['get', 'id'], 'ming']}
               paint={{
-                'line-color': ['get', 'color'],
-                'line-width': 25,
-                'line-opacity': 0.4,
-                'line-blur': 15 // Heavy blur for sphere of influence effect
+                'line-color': '#5c4531',
+                'line-width': isMacroView ? 0.5 : 1,
+                'line-opacity': isMacroView ? 0.2 : 0.4,
+                'line-dasharray': [2, 2]
               }}
             />
+            {!isMacroView && (
+              <Layer
+                id="extra-factions-labels"
+                type="symbol"
+                layout={{
+                  'text-field': ['get', 'name'],
+                  'text-size': 11,
+                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+                  'text-letter-spacing': 0.1,
+                  'text-anchor': 'center'
+                }}
+                paint={{
+                  'text-color': '#4a3b2c',
+                  'text-halo-color': 'rgba(215, 196, 161, 0.6)',
+                  'text-halo-width': 1.5,
+                  'text-opacity': 0.6
+                }}
+              />
+            )}
           </Source>
 
           {/* Render Ming Prefectures (Always visible to form the solid Ming shape) */}
@@ -202,21 +228,22 @@ export default function FullHistoricalMapInner() {
               paint={{
                 'fill-color': activeView === 'famine' ? '#cc3300' :
                               activeView === 'stability' ? '#3366cc' :
-                              activeView === 'threat' ? '#ff9900' :
-                              '#a32727',
+                              activeView === 'military' ? '#ff9900' :
+                              activeView === 'tax' ? '#996633' :
+                              '#c6a982', // Base parchment color for Ming
                 'fill-opacity': isMacroView 
-                  ? (activeView !== 'standard' ? 0.3 : 0.15) 
-                  : (activeView !== 'standard' ? 0.15 : 0.03)
+                  ? (activeView !== 'standard' ? 0.5 : 1) 
+                  : (activeView !== 'standard' ? 0.3 : 1)
               }}
             />
             <Layer
               id="ming-prefectures-line"
               type="line"
               paint={{
-                'line-color': '#d49a6a',
-                'line-width': 1,
-                'line-opacity': isMacroView ? 0.1 : 0.25,
-                'line-dasharray': [2, 2]
+                'line-color': '#5c4531',
+                'line-width': isMacroView ? 1 : 2,
+                'line-opacity': isMacroView ? 0.3 : 0.6,
+                'line-dasharray': [3, 2]
               }}
             />
             {!isMacroView && (
@@ -225,20 +252,22 @@ export default function FullHistoricalMapInner() {
                 type="symbol"
                 layout={{
                   'text-field': ['get', 'name'],
-                  'text-size': 13,
+                  'text-size': 12,
                   'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-                  'text-letter-spacing': 0.2,
+                  'text-letter-spacing': 0.1,
                   'text-anchor': 'center'
                 }}
                 paint={{
-                  'text-color': '#d4b392',
-                  'text-halo-color': 'rgba(40, 20, 10, 0.8)',
-                  'text-halo-width': 1.5,
-                  'text-opacity': 0.9
+                  'text-color': '#3b2f24',
+                  'text-halo-color': 'rgba(215, 196, 161, 0.8)',
+                  'text-halo-width': 2,
+                  'text-opacity': 0.7
                 }}
               />
             )}
           </Source>
+
+
 
 
           {/* Render Macro Faction Names (Only in macro view) */}
@@ -251,16 +280,16 @@ export default function FullHistoricalMapInner() {
                   type="symbol"
                   layout={{
                     'text-field': ['get', 'name'],
-                    'text-size': 48,
+                    'text-size': 32,
                     'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-                    'text-letter-spacing': 0.2,
+                    'text-letter-spacing': 0.3,
                     'text-anchor': 'center'
                   }}
                   paint={{
                     'text-color': ['get', 'color'],
-                    'text-halo-color': '#000000',
-                    'text-halo-width': 2,
-                    'text-opacity': 0.8
+                    'text-halo-color': 'rgba(26, 34, 40, 0.9)',
+                    'text-halo-width': 3,
+                    'text-opacity': 0.9
                   }}
                 />
               </Source>
@@ -277,16 +306,16 @@ export default function FullHistoricalMapInner() {
                   type="symbol"
                   layout={{
                     'text-field': ['get', 'name'],
-                    'text-size': 26,
+                    'text-size': 20,
                     'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-                    'text-letter-spacing': 0.3,
+                    'text-letter-spacing': 0.2,
                     'text-anchor': 'center'
                   }}
                   paint={{
-                    'text-color': '#a32727',
-                    'text-halo-color': 'rgba(255, 204, 153, 0.7)',
-                    'text-halo-width': 2,
-                    'text-opacity': 0.7
+                    'text-color': '#8b2323',
+                    'text-halo-color': 'rgba(215, 196, 161, 0.8)',
+                    'text-halo-width': 3,
+                    'text-opacity': 0.8
                   }}
                 />
               </Source>
@@ -335,20 +364,36 @@ export default function FullHistoricalMapInner() {
                 type="symbol"
                 layout={{
                   'text-field': ['get', 'name'],
-                  'text-size': 14,
+                  'text-size': 13,
                   'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
                   'text-offset': [0, -1.2],
-                  'text-anchor': 'bottom'
+                  'text-anchor': 'bottom',
+                  'text-letter-spacing': 0.1
                 }}
                 paint={{
                   'text-color': ['get', 'text_color'],
-                  'text-halo-color': 'rgba(0,0,0,0.8)',
+                  'text-halo-color': 'rgba(215, 196, 161, 0.85)',
                   'text-halo-width': 2
                 }}
               />
             </Source>
           )}
         </Map>
+      </div>
+
+      {/* Dynamic Atmospheric Overlays */}
+      <div className="absolute inset-0 pointer-events-none z-[20] transition-opacity duration-1000 mix-blend-multiply">
+        {/* Famine: Reddish harsh heat */}
+        <div className={cn("absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_10%,_rgba(204,51,0,0.4)_100%)] transition-opacity duration-1000", activeView === 'famine' ? "opacity-100" : "opacity-0")} />
+        
+        {/* Stability: Cold blue gloom */}
+        <div className={cn("absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_10%,_rgba(51,102,204,0.4)_100%)] transition-opacity duration-1000", activeView === 'stability' ? "opacity-100" : "opacity-0")} />
+        
+        {/* Military: Orange/Yellow tension */}
+        <div className={cn("absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_10%,_rgba(204,102,0,0.4)_100%)] transition-opacity duration-1000", activeView === 'military' ? "opacity-100" : "opacity-0")} />
+        
+        {/* Tax: Brownish decay */}
+        <div className={cn("absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_10%,_rgba(153,102,51,0.4)_100%)] transition-opacity duration-1000", activeView === 'tax' ? "opacity-100" : "opacity-0")} />
       </div>
 
       {/* Slide-over Detail Panel */}

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 from loguru import logger
 from app.services.llm_service import llm_service
@@ -90,7 +91,7 @@ class GameService:
         except Exception as e:
             logger.error(f"Failed to parse LLM simulation: {e}\nResponse: {response}")
             # Fallback
-            new_state = state.copy(update={"year": state.year + 1, "turn": state.turn + 1})
+            new_state = state.model_copy(update={"year": state.year + 1, "turn": state.turn + 1})
             return SimulationResult(
                 new_state=new_state,
                 narrative="天灾人祸交织，圣意难达基层，百官敷衍了事，局势未见明显改观。",
