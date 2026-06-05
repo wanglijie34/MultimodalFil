@@ -1,0 +1,72 @@
+[
+  {
+    "faction_id": "donglin",
+    "name": "东林党",
+    "influence": 55,
+    "loyalty": 48,
+    "hostility": 35,
+    "policy_preferences": {
+      "anti_eunuch": 0.9,
+      "tax_increase": -0.5,
+      "relief": 0.6,
+      "military_spending": 0.2,
+      "centralization": 0.3
+    }
+  },
+  {
+    "faction_id": "eunuch",
+    "name": "阉党",
+    "influence": 70,
+    "loyalty": 35,
+    "hostility": 45,
+    "policy_preferences": {
+      "anti_eunuch": -1.0,
+      "tax_increase": 0.3,
+      "relief": -0.1,
+      "military_spending": 0.2,
+      "centralization": 0.8
+    }
+  },
+  {
+    "faction_id": "frontier_army",
+    "name": "边军集团",
+    "influence": 45,
+    "loyalty": 50,
+    "hostility": 30,
+    "policy_preferences": {
+      "anti_eunuch": 0.1,
+      "tax_increase": 0.3,
+      "relief": -0.2,
+      "military_spending": 1.0,
+      "centralization": 0.2
+    }
+  },
+  {
+    "faction_id": "revenue_bureaucrats",
+    "name": "户部财政官僚",
+    "influence": 50,
+    "loyalty": 45,
+    "hostility": 25,
+    "policy_preferences": {
+      "anti_eunuch": 0.2,
+      "tax_increase": 0.8,
+      "relief": -0.3,
+      "military_spending": -0.4,
+      "centralization": 0.4
+    }
+  },
+  {
+    "faction_id": "local_gentry",
+    "name": "地方士绅",
+    "influence": 65,
+    "loyalty": 40,
+    "hostility": 35,
+    "policy_preferences": {
+      "anti_eunuch": 0.4,
+      "tax_increase": -0.8,
+      "relief": 0.2,
+      "military_spending": -0.2,
+      "centralization": -0.6
+    }
+  }
+]

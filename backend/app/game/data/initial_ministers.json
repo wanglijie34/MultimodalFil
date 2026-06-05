@@ -1,0 +1,178 @@
+[
+  {
+    "minister_id": "wei_zhongxian",
+    "name": "魏忠贤",
+    "role": "司礼监秉笔太监",
+    "faction": "eunuch",
+    "status": "active",
+    "loyalty_to_emperor": 30,
+    "personal_power": 85,
+    "competence": 55,
+    "corruption": 90,
+    "risk_tolerance": 70,
+    "personality": ["阴鸷", "权力欲强", "擅长控制官僚"],
+    "policy_bias": {
+      "anti_eunuch": -1.0,
+      "tax_increase": 0.4,
+      "military_spending": 0.2,
+      "relief": -0.2,
+      "purge": 0.8,
+      "centralization": 0.9
+    },
+    "speaking_style": "威胁式、恭顺表面、强调朝廷控制"
+  },
+  {
+    "minister_id": "yuan_chonghuan",
+    "name": "袁崇焕",
+    "role": "辽东将领",
+    "faction": "frontier_army",
+    "status": "active",
+    "loyalty_to_emperor": 65,
+    "personal_power": 55,
+    "competence": 82,
+    "corruption": 25,
+    "risk_tolerance": 75,
+    "personality": ["强硬", "自信", "重视边防"],
+    "policy_bias": {
+      "anti_eunuch": 0.1,
+      "tax_increase": 0.3,
+      "military_spending": 1.0,
+      "relief": -0.2,
+      "purge": 0.1,
+      "centralization": 0.3
+    },
+    "speaking_style": "直接、军事化、强调辽东不可失"
+  },
+  {
+    "minister_id": "sun_chengzong",
+    "name": "孙承宗",
+    "role": "老臣 / 边防战略家",
+    "faction": "donglin",
+    "status": "active",
+    "loyalty_to_emperor": 70,
+    "personal_power": 50,
+    "competence": 88,
+    "corruption": 15,
+    "risk_tolerance": 50,
+    "personality": ["稳健", "老成", "重视制度"],
+    "policy_bias": {
+      "anti_eunuch": 0.6,
+      "tax_increase": 0.1,
+      "military_spending": 0.8,
+      "relief": 0.3,
+      "purge": -0.2,
+      "centralization": 0.5
+    },
+    "speaking_style": "沉稳、长远、重视制度成本"
+  },
+  {
+    "minister_id": "wen_tiren",
+    "name": "温体仁",
+    "role": "文官",
+    "faction": "revenue_bureaucrats",
+    "status": "active",
+    "loyalty_to_emperor": 55,
+    "personal_power": 45,
+    "competence": 68,
+    "corruption": 45,
+    "risk_tolerance": 60,
+    "personality": ["圆滑", "权谋", "善于迎合"],
+    "policy_bias": {
+      "anti_eunuch": 0.2,
+      "tax_increase": 0.5,
+      "military_spending": -0.1,
+      "relief": -0.1,
+      "purge": 0.4,
+      "centralization": 0.6
+    },
+    "speaking_style": "谨慎、官样文章、善于推责"
+  },
+  {
+    "minister_id": "qian_qianyi",
+    "name": "钱谦益",
+    "role": "东林文臣",
+    "faction": "donglin",
+    "status": "active",
+    "loyalty_to_emperor": 50,
+    "personal_power": 45,
+    "competence": 65,
+    "corruption": 30,
+    "risk_tolerance": 35,
+    "personality": ["清议", "重名节", "党争倾向"],
+    "policy_bias": {
+      "anti_eunuch": 0.9,
+      "tax_increase": -0.4,
+      "military_spending": 0.1,
+      "relief": 0.5,
+      "purge": 0.5,
+      "centralization": 0.1
+    },
+    "speaking_style": "道德化、引用礼制、强调清流"
+  },
+  {
+    "minister_id": "li_biao",
+    "name": "李标",
+    "role": "内阁大臣",
+    "faction": "donglin",
+    "status": "active",
+    "loyalty_to_emperor": 60,
+    "personal_power": 40,
+    "competence": 70,
+    "corruption": 25,
+    "risk_tolerance": 40,
+    "personality": ["谨慎", "温和", "重视朝局稳定"],
+    "policy_bias": {
+      "anti_eunuch": 0.6,
+      "tax_increase": -0.1,
+      "military_spending": 0.2,
+      "relief": 0.4,
+      "purge": -0.1,
+      "centralization": 0.3
+    },
+    "speaking_style": "中庸、委婉、强调不可过急"
+  },
+  {
+    "minister_id": "bi_ziyan",
+    "name": "毕自严",
+    "role": "户部官员",
+    "faction": "revenue_bureaucrats",
+    "status": "active",
+    "loyalty_to_emperor": 58,
+    "personal_power": 42,
+    "competence": 80,
+    "corruption": 20,
+    "risk_tolerance": 45,
+    "personality": ["务实", "财政理性", "重视收支"],
+    "policy_bias": {
+      "anti_eunuch": 0.2,
+      "tax_increase": 0.7,
+      "military_spending": -0.2,
+      "relief": -0.2,
+      "purge": 0.0,
+      "centralization": 0.5
+    },
+    "speaking_style": "数字化、现实主义、强调国库承受力"
+  },
+  {
+    "minister_id": "wang_chengen",
+    "name": "王承恩",
+    "role": "内侍",
+    "faction": "eunuch",
+    "status": "active",
+    "loyalty_to_emperor": 90,
+    "personal_power": 25,
+    "competence": 55,
+    "corruption": 20,
+    "risk_tolerance": 45,
+    "personality": ["忠诚", "谨慎", "近侍视角"],
+    "policy_bias": {
+      "anti_eunuch": 0.1,
+      "tax_increase": 0.1,
+      "military_spending": 0.1,
+      "relief": 0.3,
+      "purge": -0.2,
+      "centralization": 0.4
+    },
+    "speaking_style": "恭谨、忧惧、提醒皇帝人心"
+  }
+]

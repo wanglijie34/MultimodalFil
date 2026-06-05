@@ -1,25 +1,17 @@
 # -*- coding: utf-8 -*-
-from pydantic import BaseModel
-from typing import List, Optional
-
-class GameState(BaseModel):
-    year: int = 1627
-    turn: int = 1
-    treasury: int = 20  # out of 100
-    stability: int = 30  # out of 100
-    famine: int = 80     # out of 100 (high is bad)
-    threat: int = 70     # out of 100 (high is bad, e.g., Houjin threat)
-    events: List[str] = ["陕西大旱，饥民遍野", "后金在辽东虎视眈眈", "阉党魏忠贤权倾朝野，国库空虚"]
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional
 
 class AdviseRequest(BaseModel):
-    state: GameState
-    minister: str
+    minister_ids: List[str]
 
 class EdictRequest(BaseModel):
-    state: GameState
-    edict: str
+    edict_text: str
 
 class SimulationResult(BaseModel):
-    new_state: GameState
-    narrative: str
-    impact_summary: List[str]
+    parsed_policy: List[Dict[str, Any]] = Field(default_factory=list)
+    calculated_effects: List[Dict[str, Any]] = Field(default_factory=list)
+    triggered_events: List[Dict[str, Any]] = Field(default_factory=list)
+    narrative: Dict[str, Any] = Field(default_factory=dict)
+    new_world_state: Dict[str, Any] = Field(default_factory=dict)
+

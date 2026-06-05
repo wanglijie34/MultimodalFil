@@ -1,22 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GameState, SimulationResult, startGame, advise, simulateEdict } from '@/lib/gameApi';
-import { ScrollText, X, AlertTriangle, Coins, Users, Flame, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CircleDollarSign, Wheat, Tent, Swords, Shield, Heart, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { GameState, SimulationResult, simulateEdict } from '@/lib/gameApi';
 import { GAME_ASSETS } from '@/lib/gameAssets';
 
 interface GameOverlayProps {
-  onStateChange: (state: GameState | null) => void;
+  gameState: GameState;
+  onStateChange: (newState: GameState) => void;
   onViewChange: (view: 'standard' | 'famine' | 'stability' | 'tax' | 'military') => void;
 }
 
-const MINISTERS = [
-  { id: 'wei_zhongxian', name: '魏忠贤', title: '司礼监秉笔太监', color: 'text-purple-900', imgPlaceholder: '魏' },
-  { id: 'yuan_chonghuan', name: '袁崇焕', title: '蓟辽督师', color: 'text-blue-900', imgPlaceholder: '袁' },
-  { id: 'xu_guangqi', name: '徐光启', title: '内阁大学士', color: 'text-green-900', imgPlaceholder: '徐' },
-  { id: 'hong_chengchou', name: '洪承畴', title: '三边总督', color: 'text-red-900', imgPlaceholder: '洪' }
-];
+function formatNumber(val: number, unit: string = '') {
+  if (val >= 10000) {
+    const w = val / 10000;
+    const str = parseFloat(w.toFixed(2)).toString();
+    return `${str}万${unit}`;
+  }
+  return `${val}${unit}`;
+}
 
 const FALLBACK_STATE: GameState = {
   year: 1627,
@@ -28,17 +31,31 @@ const FALLBACK_STATE: GameState = {
   events: ["陕西大旱，饥民遍野", "后金在辽东虎视眈眈", "阉党魏忠贤权倾朝野，国库空虚"]
 };
 
-export default function GameOverlay({ onStateChange, onViewChange }: GameOverlayProps) {
-  const [gameState, setGameState] = useState<GameState>(FALLBACK_STATE);
-  const [loading, setLoading] = useState(false);
+function getChongzhenDate(turn: number) {
+  const startMonth = 10;
+  const passedMonths = Math.max(0, turn - 1);
+  const currentMonth = ((startMonth - 1 + passedMonths) % 12) + 1;
+  const currentYear = 1 + Math.floor((startMonth - 1 + passedMonths) / 12);
   
-  const [showMinister, setShowMinister] = useState(false);
-  const [selectedMinister, setSelectedMinister] = useState(MINISTERS[0].id);
-  const [adviceText, setAdviceText] = useState('');
+  const chineseNumbers = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
+  
+  const yearStr = currentYear === 1 ? '元' : (chineseNumbers[currentYear] || currentYear.toString());
+  const monthStr = chineseNumbers[currentMonth];
+  
+  return {
+    reignTitle: `崇祯${yearStr}年`,
+    monthTitle: `${monthStr}月`
+  };
+}
+
+export default function GameOverlay({ gameState: propsGameState, onStateChange, onViewChange }: GameOverlayProps) {
+  const [gameState, setGameState] = useState<GameState>(propsGameState || FALLBACK_STATE);
+  const [loading, setLoading] = useState(false);
   
   const [showEdict, setShowEdict] = useState(false);
   const [edictText, setEdictText] = useState('');
   const [edictCategory, setEdictCategory] = useState<'军'|'政'|'外'|'他'>('政');
+  const [isStamping, setIsStamping] = useState(false);
   
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
   const [activeView, setActiveView] = useState<'standard' | 'famine' | 'stability' | 'tax' | 'military'>('standard');
@@ -46,31 +63,17 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
 
   useEffect(() => {
-    startGame().then(state => {
-      const validState = (state && typeof state.year === 'number' && !isNaN(state.year)) ? state : FALLBACK_STATE;
-      setGameState(validState);
-      onStateChange(validState);
-    }).catch(() => {
-      setGameState(FALLBACK_STATE);
-      onStateChange(FALLBACK_STATE);
-    });
-  }, []);
-
-  const handleAskAdvice = async () => {
-    setLoading(true);
-    setAdviceText('臣正在思虑...');
-    try {
-      const res = await advise(gameState, selectedMinister);
-      setAdviceText(res.advice);
-    } catch (e) {
-      setAdviceText('微臣惶恐，未能进言。');
-    }
-    setLoading(false);
-  };
+    if (propsGameState) setGameState(propsGameState);
+  }, [propsGameState]);
 
   const handleSimulate = async () => {
     if (!edictText.trim()) return;
     setLoading(true);
+    setIsStamping(true);
+    
+    // Wait for the stamping animation to finish
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     try {
       const res = await simulateEdict(gameState, `【${edictCategory}】` + edictText);
       setSimResult(res);
@@ -79,6 +82,7 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
       onStateChange(newState);
       setShowEdict(false);
       setEdictText('');
+      setIsStamping(false);
     } catch (e) {
       console.error(e);
     }
@@ -90,56 +94,67 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
     onViewChange(view);
   };
 
-  const displayYear = gameState?.year ? (gameState.year - 1627) : 0;
-  const reignTitle = displayYear === 0 ? "天启七年" : `崇祯${displayYear}年`;
+  const { reignTitle, monthTitle } = getChongzhenDate(gameState?.turn || 1);
 
   return (
     <div className="absolute inset-0 pointer-events-none z-[300] font-serif">
       {/* Global Vignette and Paper Texture Overlay */}
       <div className="absolute inset-0 pointer-events-none z-[1] shadow-[inset_0_0_200px_rgba(10,7,5,0.9)] mix-blend-multiply bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjxwYXRoIGQ9Ik0wIDBMNCA0Wk00IDBMMCA0WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-50" />
       
-      {/* Top Resource Bar */}
-      <div className="absolute top-0 left-0 right-0 h-28 flex items-start pt-6 px-12 justify-between pointer-events-auto bg-gradient-to-b from-[#0a0705]/90 via-[#0a0705]/60 to-transparent">
-        <div className="flex items-center gap-6">
-          <div className="text-[#e4cfa1] flex flex-col justify-center drop-shadow-lg">
-            <span className="text-3xl font-bold tracking-[0.2em]">{reignTitle}</span>
-            <span className="text-sm opacity-60 tracking-wider mt-1 font-sans">公元 {gameState?.year || 1627}</span>
-          </div>
-        </div>
+      {/* Top Resource Bar (Updated to horizontal dark bar design) */}
+      <div className="absolute top-0 left-0 right-0 h-[56px] pointer-events-auto bg-[#0a0705] border-t-[3px] border-b-[3px] border-[#3a2818] flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.9)] relative z-50">
+        <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjxwYXRoIGQ9Ik0wIDBMNCA0Wk00IDBMMCA0WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] mix-blend-screen pointer-events-none" />
+        <div className="absolute inset-0 border-t border-b border-[#cca366]/20 pointer-events-none" />
         
-        <div className="flex items-center gap-10 bg-[#1a110b]/90 px-10 py-4 rounded-sm border border-[#c09a53]/40 shadow-[0_4px_20px_rgba(0,0,0,0.6)] backdrop-blur-md relative">
-          <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
-          <TopStat icon={<Coins className="w-6 h-6" />} label="国库" value={gameState.treasury} />
-          <div className="w-[1px] h-8 bg-[#c09a53]/20" />
-          <TopStat icon={<Users className="w-6 h-6" />} label="民心" value={gameState.stability} />
-          <div className="w-[1px] h-8 bg-[#c09a53]/20" />
-          <TopStat icon={<Flame className="w-6 h-6" />} label="灾情" value={gameState.famine} inverse />
-          <div className="w-[1px] h-8 bg-[#c09a53]/20" />
-          <TopStat icon={<AlertTriangle className="w-6 h-6" />} label="外患" value={gameState.threat} inverse />
+        <div className="flex items-center gap-10 relative z-10 px-8 w-full max-w-[1200px] justify-between">
+          <TopStat icon={<CircleDollarSign className="w-8 h-8" strokeWidth={1.5} />} label="国库" valueStr={formatNumber(gameState.treasury, '两')} />
+          <TopStat icon={<Wheat className="w-8 h-8" strokeWidth={1.5} />} label="粮草" valueStr={formatNumber(gameState.grain || 2880000, '石')} />
+          <TopStat icon={<Tent className="w-8 h-8" strokeWidth={1.5} />} label="兵力" valueStr={formatNumber(gameState.troops || 576000, '')} />
+          <TopStat icon={<Swords className="w-8 h-8" strokeWidth={1.5} />} label="军备" valueStr={formatNumber(gameState.supplies || 90700, '')} />
+          <TopStat icon={<Shield className="w-8 h-8" strokeWidth={1.5} />} label="威望" valueStr={String(gameState.prestige || 10)} />
+          <TopStat icon={<Heart className="w-8 h-8" strokeWidth={1.5} />} label="民心" valueStr={String(gameState.stability || 45)} />
         </div>
       </div>
 
       {/* Right Mode Panel */}
-      <div 
-        className={cn(
-          "absolute top-36 right-0 transition-transform duration-500 pointer-events-auto flex items-start z-50",
-          isRightCollapsed ? "translate-x-[calc(100%-2rem)]" : "translate-x-0"
-        )}
-      >
-        <button 
-          onClick={() => setIsRightCollapsed(!isRightCollapsed)}
-          className="absolute left-1 top-4 bg-[#1a110b]/95 border-y border-l border-[#c09a53]/60 p-1.5 text-[#c09a53] shadow-lg rounded-l-md hover:bg-[#c09a53]/20 hover:text-[#e4cfa1] transition-colors z-20"
+      <div className="absolute top-36 right-8 pointer-events-auto flex flex-col items-end z-50">
+        <div 
+          className={cn(
+            "transition-all duration-500 origin-right",
+            isRightCollapsed ? "opacity-0 scale-95 pointer-events-none absolute right-0" : "opacity-100 scale-100 relative"
+          )}
         >
-          {isRightCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </button>
-        <div className="w-48 p-4 flex flex-col gap-2 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl rounded-l-sm relative mr-8">
-          <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
-          <ViewBtn label="标准版图" active={activeView === 'standard'} onClick={() => handleViewChange('standard')} />
-          <ViewBtn label="灾情示警" active={activeView === 'famine'} onClick={() => handleViewChange('famine')} />
-          <ViewBtn label="民心向背" active={activeView === 'stability'} onClick={() => handleViewChange('stability')} />
-          <ViewBtn label="税负徭役" active={activeView === 'tax'} onClick={() => handleViewChange('tax')} />
-          <ViewBtn label="边防军备" active={activeView === 'military'} onClick={() => handleViewChange('military')} />
+          <div className="w-48 p-4 flex flex-col gap-2 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl rounded-sm relative">
+            <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+            <button 
+              onClick={() => setIsRightCollapsed(true)}
+              className="absolute -left-3 top-4 bg-[#1a110b] border border-[#c09a53]/60 p-1 text-[#c09a53] shadow-lg rounded-full hover:bg-[#c09a53]/20 hover:text-[#e4cfa1] transition-colors z-20"
+            >
+              <ChevronRight size={14} />
+            </button>
+            <ViewBtn label="标准版图" active={activeView === 'standard'} onClick={() => handleViewChange('standard')} />
+            <ViewBtn label="灾情示警" active={activeView === 'famine'} onClick={() => handleViewChange('famine')} />
+            <ViewBtn label="民心向背" active={activeView === 'stability'} onClick={() => handleViewChange('stability')} />
+            <ViewBtn label="税负徭役" active={activeView === 'tax'} onClick={() => handleViewChange('tax')} />
+            <ViewBtn label="边防军备" active={activeView === 'military'} onClick={() => handleViewChange('military')} />
+          </div>
         </div>
+
+        {/* The ancient circular button when collapsed */}
+        <button
+          onClick={() => setIsRightCollapsed(false)}
+          className={cn(
+            "w-16 h-16 rounded-full bg-[#1a110b]/95 border-2 border-[#c09a53]/60 shadow-[0_0_15px_rgba(192,154,83,0.3)] flex items-center justify-center transition-all duration-500 text-[#e4cfa1] hover:bg-[#c09a53]/20 hover:scale-110 group",
+            isRightCollapsed ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-50 pointer-events-none absolute right-0"
+          )}
+        >
+          <div className="absolute inset-1 border border-[#c09a53]/30 rounded-full pointer-events-none group-hover:border-[#c09a53]/60 transition-colors" />
+          <div className="absolute inset-2 border border-dashed border-[#c09a53]/20 rounded-full pointer-events-none animate-[spin_20s_linear_infinite]" />
+          <span className="font-bold text-[17px] font-serif leading-tight drop-shadow-md flex flex-col items-center justify-center">
+            <span>视</span>
+            <span>图</span>
+          </span>
+        </button>
       </div>
 
       {/* Left Panels */}
@@ -150,47 +165,7 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
         )}
       >
         <div className="w-[340px] flex flex-col gap-6 ml-8">
-          <div className="relative p-6 min-h-[160px] bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl rounded-sm overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(192,154,83,0.05),_transparent_70%)] pointer-events-none" />
-            <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
-            <div className="absolute left-1 top-1 w-6 h-6 border-t border-l border-[#c09a53]/40 pointer-events-none" />
-            <div className="absolute right-1 bottom-1 w-6 h-6 border-b border-r border-[#c09a53]/40 pointer-events-none" />
-            
-            <h3 className="text-xl font-bold text-[#e4cfa1] tracking-widest mb-4 border-b border-[#c09a53]/30 pb-3 flex items-center gap-2 drop-shadow-md">
-              <span className="w-1.5 h-4 bg-[#c09a53] inline-block shadow-[0_0_5px_#c09a53]" />
-              天下形势
-            </h3>
-            <p className="text-[15px] text-[#d4b392] leading-relaxed tracking-wide relative z-10">
-              {displayYear === 0 ? "先帝大行，阉党乱政，四海困穷，建州女真于关外虎视眈眈。朕当如何力挽狂澜？" : `天下大势风起云涌。当前威望尚可，然国事维艰，${gameState.events[0] || '百废待兴'}。`}
-            </p>
-          </div>
-
-          <div className="relative p-6 min-h-[280px] bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl rounded-sm overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(192,154,83,0.05),_transparent_70%)] pointer-events-none" />
-            <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
-            <div className="absolute left-1 top-1 w-6 h-6 border-t border-l border-[#c09a53]/40 pointer-events-none" />
-            <div className="absolute right-1 bottom-1 w-6 h-6 border-b border-r border-[#c09a53]/40 pointer-events-none" />
-            
-            <h3 className="text-xl font-bold text-[#e4cfa1] tracking-widest mb-4 border-b border-[#c09a53]/30 pb-3 flex items-center gap-2 drop-shadow-md">
-              <span className="w-1.5 h-4 bg-[#c09a53] inline-block shadow-[0_0_5px_#c09a53]" />
-              要务急报
-            </h3>
-            <ul className="space-y-4 relative z-10">
-              {(gameState.events || []).map((ev, i) => (
-                <li key={i} className="text-[15px] text-[#d4b392] leading-relaxed flex items-start gap-3 tracking-wide">
-                  <span className="text-[#c09a53] font-bold mt-0.5 opacity-80 drop-shadow-[0_0_2px_#c09a53]">◈</span> 
-                  <span>{ev}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <button 
-            onClick={() => setShowMinister(true)} 
-            className="relative overflow-hidden bg-[#1a110b]/95 text-[#e4cfa1] px-6 py-4 text-[15px] hover:bg-[#c09a53]/20 transition-all shadow-2xl border border-[#c09a53]/50 font-bold tracking-[0.2em] text-center group"
-          >
-            <div className="absolute inset-1 border border-[#c09a53]/20 pointer-events-none group-hover:border-[#c09a53]/50 transition-colors" />
-            召集廷议
-          </button>
+          {/* Removed 天下形势, 要务急报, and 召集廷议 */}
         </div>
         <button 
           onClick={() => setIsLeftCollapsed(!isLeftCollapsed)}
@@ -202,73 +177,14 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
 
       {/* Right Bottom Edict Button */}
       <div className="absolute bottom-12 right-12 pointer-events-auto flex items-center justify-center">
-        <div className="absolute w-36 h-36 bg-[#c09a53]/10 rounded-full animate-ping pointer-events-none opacity-50" />
-        <div className="absolute w-32 h-32 border border-[#c09a53]/30 rounded-full animate-[spin_10s_linear_infinite] pointer-events-none" />
-        <div className="absolute w-28 h-28 border border-[#c09a53]/40 rounded-full animate-[spin_15s_linear_infinite_reverse] pointer-events-none" />
         <button 
           onClick={() => setShowEdict(true)}
-          className="w-24 h-24 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(192,154,83,0.4)] active:scale-95 flex items-center justify-center text-transparent shadow-2xl relative group"
+          className="w-24 h-24 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(192,154,83,0.4)] active:scale-95 flex items-center justify-center text-transparent shadow-2xl relative group bg-transparent border-0"
           style={{ backgroundImage: `url(${GAME_ASSETS.ui.buttons.edictMainButton})`, backgroundSize: '100% 100%' }}
         >
-          <div className="absolute inset-0 rounded-full bg-black/40 group-hover:bg-transparent transition-colors duration-300" />
           <span className="absolute inset-0 flex items-center justify-center text-[22px] font-bold text-[#e4cfa1] tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] opacity-0 group-hover:opacity-100 bg-[#8b2323]/80 rounded-full transition-all duration-300 scale-90 group-hover:scale-100 border-2 border-[#c09a53]/50">拟旨</span>
         </button>
       </div>
-
-      {/* Minister Modal */}
-      {showMinister && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-auto z-[400]">
-          <div 
-            className="w-[900px] h-[600px] relative flex p-12 pr-16 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-            style={{ backgroundImage: `url(${GAME_ASSETS.ui.panels.modalBackground})`, backgroundSize: '100% 100%' }}
-          >
-            {/* Left Portrait Column */}
-            <div className="w-1/3 flex flex-col items-center pt-8 border-r border-[#cca366]/30 pr-6">
-              <div className="w-40 h-56 border border-[#3d2b1f] mb-6 bg-[#e8debe] flex items-center justify-center shadow-lg relative">
-                 <span className="text-6xl text-[#3d2b1f] opacity-80">{MINISTERS.find(m => m.id === selectedMinister)?.imgPlaceholder}</span>
-              </div>
-              <h2 className="text-2xl font-bold text-[#3d2b1f] mb-2">{MINISTERS.find(m => m.id === selectedMinister)?.name}</h2>
-              <span className="text-[#8b2323] font-bold text-sm px-3 py-1 border border-[#8b2323]">{MINISTERS.find(m => m.id === selectedMinister)?.title}</span>
-            </div>
-            
-            {/* Right Dialogue Column */}
-            <div className="w-2/3 pl-10 flex flex-col">
-              <div className="flex justify-between items-start mb-6">
-                 <h2 className="text-2xl font-bold text-[#3d2b1f] tracking-wider">廷议录</h2>
-                 <button onClick={() => setShowMinister(false)} className="text-[#3d2b1f] hover:text-[#8b2323] transition-colors"><X className="w-8 h-8" /></button>
-              </div>
-
-              <div className="flex gap-2 mb-6 pb-2">
-                {MINISTERS.map(m => (
-                  <button 
-                    key={m.id}
-                    onClick={() => { setSelectedMinister(m.id); setAdviceText(''); }}
-                    className={cn("px-4 py-2 text-sm transition-colors border", selectedMinister === m.id ? "bg-[#3d2b1f] text-[#f4ebd0] border-[#3d2b1f]" : "text-[#3d2b1f] border-[#cca366]/50 hover:bg-[#e8debe]")}
-                  >
-                    {m.name}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex-1 bg-transparent p-4 min-h-[200px] mb-6 overflow-y-auto relative text-lg leading-relaxed text-[#3d2b1f]">
-                {adviceText ? (
-                  <p className="font-medium whitespace-pre-wrap">{adviceText}</p>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-[#8a7f72] italic">请点击下方“赐言”以询问对策...</div>
-                )}
-              </div>
-
-              <button 
-                onClick={handleAskAdvice}
-                disabled={loading}
-                className="w-full bg-[#2a1d15] hover:bg-[#3d2b1f] text-[#cca366] py-3 text-lg font-bold transition-colors disabled:opacity-50 shadow-md tracking-widest border border-[#cca366]/30"
-              >
-                {loading ? '沉吟中...' : '赐言'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Edict Modal */}
       {showEdict && (
@@ -298,7 +214,7 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
               </div>
               
               {/* Right Side: Input */}
-              <div className="w-4/5 flex flex-col pr-4 pb-4">
+              <div className="w-4/5 flex flex-col pr-4 pb-4 relative">
                 <p className="text-[#8a7f72] mb-3 italic">请输入{edictCategory}事诏书内容...</p>
                 <textarea
                   value={edictText}
@@ -307,7 +223,17 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
                   placeholder={`朕知天下艰难，今特下明诏，凡涉${edictCategory}务者，皆依此令...`}
                 />
 
-                <div className="mt-8 flex justify-end">
+                {/* Stamp Animation Overlay */}
+                <div 
+                  className={cn(
+                    "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center z-50 transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+                    isStamping ? "opacity-90 scale-[0.6] rotate-[-5deg]" : "opacity-0 scale-[2] rotate-[30deg]"
+                  )}
+                >
+                  <img src="/assets/ui/ornaments/奉天之宝.png" alt="奉天之宝" className="w-[300px] h-[300px] drop-shadow-[0_0_20px_rgba(193,44,44,0.6)]" />
+                </div>
+
+                <div className="mt-8 flex justify-end relative z-50">
                   <button 
                     onClick={handleSimulate}
                     disabled={loading || !edictText.trim()}
@@ -329,7 +255,7 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
             className="w-[800px] min-h-[500px] relative p-16 shadow-[0_0_50px_rgba(139,35,35,0.4)] flex flex-col"
             style={{ backgroundImage: `url(${GAME_ASSETS.ui.panels.modalBackground})`, backgroundSize: '100% 100%' }}
           >
-            <h2 className="text-4xl font-bold text-center text-[#3d2b1f] mb-8 tracking-[0.3em]">{reignTitle} · 史官纪事</h2>
+            <h2 className="text-4xl font-bold text-center text-[#3d2b1f] mb-8 tracking-[0.3em]">{reignTitle}{monthTitle} · 史官纪事</h2>
             
             <div className="mb-8 p-6 bg-transparent border border-[#cca366]/50 relative">
               <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#8b2323]"></div>
@@ -362,39 +288,15 @@ export default function GameOverlay({ onStateChange, onViewChange }: GameOverlay
   );
 }
 
-function TopStat({ icon, label, value, inverse = false }: { icon: React.ReactNode, label: string, value: number, inverse?: boolean }) {
-  const isDanger = inverse ? value > 70 : value < 30;
-  const isWarning = inverse ? (value > 50 && value <= 70) : (value >= 30 && value < 50);
-  
-  let barColor = "bg-[#c09a53]"; // normal gold
-  let textColor = "text-[#e4cfa1]";
-  let iconColor = "text-[#c09a53]";
-
-  if (isDanger) {
-    barColor = "bg-[#d32f2f] shadow-[0_0_10px_rgba(211,47,47,0.8)]"; // dark red
-    textColor = "text-[#ff6666] animate-pulse";
-    iconColor = "text-[#ff6666] animate-pulse drop-shadow-[0_0_5px_rgba(255,102,102,0.8)]";
-  } else if (isWarning) {
-    barColor = "bg-[#d49a6a]"; // orange/warning
-    textColor = "text-[#ffcc99]";
-    iconColor = "text-[#d49a6a]";
-  }
-
+function TopStat({ icon, label, valueStr }: { icon: React.ReactNode, label: string, valueStr: string }) {
   return (
-    <div className="flex items-center gap-4 relative z-10 group">
-      <div className={cn("flex items-center gap-1.5 font-bold tracking-widest transition-colors", iconColor)}>
-        {icon} <span className="text-[15px]">{label}</span>
+    <div className="flex items-center gap-3 relative z-10 group cursor-default">
+      <div className="text-[#a38a6a] flex-shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+        {icon}
       </div>
-      <div className="flex items-center gap-3">
-        <div className="w-32 h-2.5 bg-[#0a0705] rounded-sm overflow-hidden border border-[#c09a53]/20 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-          <div 
-            className={cn("h-full transition-all duration-1000 relative", barColor)} 
-            style={{ width: `${value}%` }}
-          >
-            <div className="absolute right-0 top-0 bottom-0 w-4 bg-white/20 mix-blend-overlay" />
-          </div>
-        </div>
-        <span className={cn("text-lg w-8 font-bold font-sans", textColor)}>{value}</span>
+      <div className="flex flex-col justify-center">
+        <span className="text-[14px] text-[#8a7a60] font-bold tracking-widest leading-none mb-1 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">{label}</span>
+        <span className="text-[17px] text-[#e8debe] font-serif tracking-wider leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{valueStr}</span>
       </div>
     </div>
   );

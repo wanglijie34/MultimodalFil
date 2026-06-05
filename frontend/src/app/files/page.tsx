@@ -97,51 +97,68 @@ function getCategoryIcon(category?: string | null) {
 function getCategoryTint(category?: string | null) {
   switch (category) {
     case "document":
-      return "bg-sky-50 text-sky-700 border-sky-200"
+      return "bg-[#2a1d15] text-[#cca366] border-[#c09a53]/40"
     case "presentation":
-      return "bg-amber-50 text-amber-700 border-amber-200"
+      return "bg-[#2a1d15] text-[#d49a6a] border-[#d49a6a]/40"
     case "spreadsheet":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200"
+      return "bg-[#2a1d15] text-[#e4cfa1] border-[#e4cfa1]/40"
     case "source_code":
-      return "bg-slate-100 text-slate-700 border-slate-200"
+      return "bg-[#2a1d15] text-[#a38a6a] border-[#a38a6a]/40"
     case "structured_data":
-      return "bg-violet-50 text-violet-700 border-violet-200"
+      return "bg-[#2a1d15] text-[#c09a53] border-[#c09a53]/40"
     case "image":
-      return "bg-pink-50 text-pink-700 border-pink-200"
+      return "bg-[#2a1d15] text-[#ffcc99] border-[#ffcc99]/40"
     case "audio":
-      return "bg-orange-50 text-orange-700 border-orange-200"
+      return "bg-[#2a1d15] text-[#d49a6a] border-[#d49a6a]/40"
     case "video":
-      return "bg-rose-50 text-rose-700 border-rose-200"
+      return "bg-[#2a1d15] text-[#ff6666] border-[#ff6666]/40"
     case "archive":
-      return "bg-stone-100 text-stone-700 border-stone-200"
+      return "bg-[#2a1d15] text-[#cca366] border-[#cca366]/40"
     default:
-      return "bg-muted text-muted-foreground border-border"
+      return "bg-[#1a110b] text-[#a38a6a] border-[#c09a53]/20"
   }
 }
 
 function getStatusInfo(status: string) {
   switch (status) {
     case "stored":
-      return { percent: 100, label: "Stored only", color: "bg-slate-400" }
+      return { percent: 100, label: "已入库", color: "bg-[#a38a6a]" }
     case "uploaded":
-      return { percent: 10, label: "Uploaded", color: "bg-blue-500" }
+      return { percent: 10, label: "已交翰林院", color: "bg-[#c09a53]" }
     case "parsing":
-      return { percent: 25, label: "Parsing document", color: "bg-blue-500" }
+      return { percent: 25, label: "解析卷宗", color: "bg-[#c09a53]" }
     case "chunking":
-      return { percent: 45, label: "Chunking text", color: "bg-indigo-500" }
+      return { percent: 45, label: "分拆章节", color: "bg-[#d49a6a]" }
     case "embedding":
-      return { percent: 65, label: "Generating embeddings", color: "bg-fuchsia-500" }
+      return { percent: 65, label: "凝练真意", color: "bg-[#d49a6a]" }
     case "summarizing":
-      return { percent: 80, label: "Building summary index", color: "bg-violet-500" }
+      return { percent: 80, label: "编纂大纲", color: "bg-[#e4cfa1]" }
     case "graph_extracting":
-      return { percent: 92, label: "Extracting knowledge graph", color: "bg-pink-500" }
+      return { percent: 92, label: "抽丝剥茧", color: "bg-[#e4cfa1]" }
     case "indexed":
-      return { percent: 100, label: "Indexed", color: "bg-green-500" }
+      return { percent: 100, label: "可供查阅", color: "bg-[#8b2323]" }
     case "failed":
-      return { percent: 100, label: "Failed", color: "bg-red-500" }
+      return { percent: 100, label: "损毁", color: "bg-[#d32f2f]" }
     default:
-      return { percent: 0, label: status, color: "bg-gray-500" }
+      return { percent: 0, label: status, color: "bg-[#a38a6a]" }
   }
+}
+
+function getCategoryChineseName(label?: string | null) {
+  if (!label) return "杂编"
+  const map: Record<string, string> = {
+    "Text & Document": "案牍文书",
+    "Presentation": "廷议奏报",
+    "Spreadsheet & Data": "户部账册",
+    "Source Code": "工部机枢",
+    "Structured Data & Config": "阵法图录",
+    "Image": "天下图录",
+    "Audio": "大明雅音",
+    "Video": "留影",
+    "Archive": "封藏",
+    "Other": "杂编",
+  }
+  return map[label] || label
 }
 
 export default function FilesPage() {
@@ -215,15 +232,15 @@ export default function FilesPage() {
       const response = await api.files.upload(formData)
       await loadFiles()
       toast({
-        title: "Upload queued",
-        description: response.message || "File uploaded successfully.",
+        title: "已交翰林院",
+        description: response.message || "相关案牍已送交翰林院编修。",
         variant: "success",
       })
     } catch (err) {
       console.error(err)
       toast({
-        title: "Upload failed",
-        description: "Unable to upload this file.",
+        title: "移交失败",
+        description: "翰林院拒收此案牍。",
         variant: "destructive",
       })
     } finally {
@@ -243,8 +260,8 @@ export default function FilesPage() {
       await loadFiles({ skipLoading: true })
       window.dispatchEvent(new Event("insightgraph:stats-refresh"))
       toast({
-        title: "Deleted",
-        description: "File and related indexed data removed.",
+        title: "已焚毁",
+        description: "此卷宗已被彻底销毁。",
         variant: "success",
       })
     } catch (err) {
@@ -253,8 +270,8 @@ export default function FilesPage() {
         setFiles(previousFiles)
       })
       toast({
-        title: "Delete failed",
-        description: "Unable to remove this file.",
+        title: "焚毁失败",
+        description: "无法销毁此卷宗。",
         variant: "destructive",
       })
     } finally {
@@ -269,7 +286,7 @@ export default function FilesPage() {
       const key = file.file_category || "other"
       const current = bucket.get(key) || {
         key,
-        label: file.category_label || "Other",
+        label: getCategoryChineseName(file.category_label),
         count: 0,
         indexed: 0,
         searchable: 0,
@@ -297,7 +314,7 @@ export default function FilesPage() {
     filteredFiles.forEach((file) => {
       const key = file.file_category || "other"
       const group = groups.get(key) || {
-        label: file.category_label || "Other",
+        label: getCategoryChineseName(file.category_label),
         items: [],
       }
       group.items.push(file)
@@ -315,21 +332,21 @@ export default function FilesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_55%,#eef2ff_100%)] p-6 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="max-w-2xl">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">{t("Files")}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Files are grouped by category, and each category shows how it is parsed, embedded, indexed, and retrieved.
-            Text documents, markdown, code, config, and lightweight data files now follow different semantic indexing profiles.
+      <div className="flex flex-col gap-4 rounded-sm border border-[#c09a53]/40 bg-[#1a110b]/95 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.6)] md:flex-row md:items-center md:justify-between relative">
+        <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+        <div className="max-w-2xl relative z-10">
+          <h2 className="text-3xl font-bold tracking-[0.2em] text-[#e4cfa1]">内阁卷宗</h2>
+          <p className="mt-2 text-[15px] leading-relaxed tracking-wide text-[#a38a6a]">
+            卷宗按类别归档，陛下可查阅各类公文是如何被拆解、收录与检视的。奏折、账册、刑名、邸报等将遵从大明不同的入库礼制。
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={() => loadFiles()} disabled={loading}>
+        <div className="flex gap-4 relative z-10">
+          <Button variant="outline" size="icon" onClick={() => loadFiles()} disabled={loading} className="bg-[#2a1d15] border-[#c09a53]/50 text-[#c09a53] hover:bg-[#c09a53]/20 hover:text-[#e4cfa1]">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
-          <Button disabled={uploading} onClick={() => document.getElementById("file-upload")?.click()}>
+          <Button disabled={uploading} onClick={() => document.getElementById("file-upload")?.click()} className="bg-[#8b2323] text-[#f4ebd0] border border-[#3d2b1f] hover:bg-[#6a1b1b] tracking-widest font-bold">
             {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-            Upload File
+            翰林院编修
           </Button>
           <input id="file-upload" type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
         </div>
@@ -338,55 +355,57 @@ export default function FilesPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           {
-            label: "Total files",
+            label: "卷宗总数",
             value: files.length,
-            caption: "All uploaded files, across every category.",
+            caption: "藏经阁中收录的所有折子。",
           },
           {
-            label: "Search-ready",
+            label: "可供查阅",
             value: files.filter((file) => file.supported_for_ingestion).length,
-            caption: "Files that can go through semantic embedding and retrieval.",
+            caption: "已被史官分类，可供陛下随时审阅的卷宗。",
           },
           {
-            label: "Indexed now",
+            label: "已然入库",
             value: files.filter((file) => file.status === "indexed").length,
-            caption: "Files already finished chunking, embedding, and indexing.",
+            caption: "经过分拆提炼，已整理完毕的文书。",
           },
           {
-            label: "Metadata only",
+            label: "仅留名录",
             value: files.filter((file) => !file.supported_for_ingestion).length,
-            caption: "Stored safely, waiting for a future modality-specific extractor.",
+            caption: "暂时封存库中，待日后启封。",
           },
         ].map((item) => (
-          <Card key={item.label} className="border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</div>
-              <div className="mt-3 text-3xl font-semibold text-slate-900">{item.value}</div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{item.caption}</p>
+          <Card key={item.label} className="border-[#c09a53]/30 bg-[#1a110b]/90 shadow-lg rounded-sm relative">
+            <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+            <CardContent className="p-5 relative z-10">
+              <div className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#c09a53]">{item.label}</div>
+              <div className="mt-3 text-3xl font-bold text-[#e4cfa1]">{item.value}</div>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#a38a6a]">{item.caption}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="border-slate-200 shadow-sm">
-        <CardContent className="space-y-4 p-5">
+      <Card className="border-[#c09a53]/30 bg-[#1a110b]/90 shadow-lg rounded-sm relative">
+        <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+        <CardContent className="space-y-4 p-5 relative z-10">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setActiveCategory("all")}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeCategory === "all" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              className={`rounded-sm px-4 py-2 text-sm font-bold tracking-widest transition-colors border ${
+                activeCategory === "all" ? "bg-[#c09a53]/20 text-[#e4cfa1] border-[#c09a53]" : "bg-[#2a1d15] text-[#a38a6a] border-[#c09a53]/30 hover:bg-[#c09a53]/10"
               }`}
             >
-              All categories
+              全部案牍
             </button>
             {summaries.map((summary) => (
               <button
                 key={summary.key}
                 type="button"
                 onClick={() => setActiveCategory(summary.key)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  activeCategory === summary.key ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                className={`rounded-sm px-4 py-2 text-sm font-bold tracking-widest transition-colors border ${
+                  activeCategory === summary.key ? "bg-[#c09a53]/20 text-[#e4cfa1] border-[#c09a53]" : "bg-[#2a1d15] text-[#a38a6a] border-[#c09a53]/30 hover:bg-[#c09a53]/10"
                 }`}
               >
                 {summary.label} · {summary.count}
@@ -398,15 +417,15 @@ export default function FilesPage() {
             {summaries.map((summary) => {
               const Icon = getCategoryIcon(summary.key)
               return (
-                <div key={summary.key} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div key={summary.key} className="rounded-sm border border-[#c09a53]/30 bg-[#2a1d15]/50 p-4 relative">
                   <div className="flex items-start gap-3">
-                    <div className={`rounded-2xl border p-2 ${getCategoryTint(summary.key)}`}>
+                    <div className={`rounded-sm border p-2 ${getCategoryTint(summary.key)}`}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-slate-900">{summary.label}</div>
-                      <div className="mt-1 text-xs leading-5 text-slate-500">
-                        {summary.count} files · {summary.searchable} search-ready · {summary.indexed} indexed
+                      <div className="text-[15px] font-bold text-[#e4cfa1] tracking-wider">{summary.label}</div>
+                      <div className="mt-1 text-[13px] leading-5 text-[#a38a6a]">
+                        {summary.count} 卷 · {summary.searchable} 卷可阅 · {summary.indexed} 卷在库
                       </div>
                     </div>
                   </div>
@@ -419,13 +438,14 @@ export default function FilesPage() {
 
       {loading ? (
         <div className="flex justify-center p-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#c09a53]" />
         </div>
       ) : files.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-lg font-medium text-slate-900">No files yet</p>
-            <p className="text-sm text-slate-500">Upload your first document, code file, config, or dataset to start indexing.</p>
+        <div className="rounded-sm border border-dashed border-[#c09a53]/50 bg-[#1a110b]/80 p-12 text-center relative">
+          <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+          <div className="flex flex-col items-center gap-2 relative z-10">
+            <p className="text-xl font-bold tracking-widest text-[#e4cfa1]">案牍库空虚</p>
+            <p className="text-sm tracking-wide text-[#a38a6a]">请移交您的第一份文书或舆图，交由翰林院编修入库。</p>
           </div>
         </div>
       ) : (
@@ -435,12 +455,12 @@ export default function FilesPage() {
             return (
               <section key={group.key} className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className={`rounded-2xl border p-2 ${getCategoryTint(group.key)}`}>
+                  <div className={`rounded-sm border p-2 ${getCategoryTint(group.key)}`}>
                     <GroupIcon className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{group.label}</h3>
-                    <p className="text-sm text-slate-500">{group.items.length} files in this category</p>
+                    <h3 className="text-xl font-bold tracking-widest text-[#e4cfa1]">{group.label}</h3>
+                    <p className="text-[13px] text-[#a38a6a] mt-1">此门类共 {group.items.length} 卷</p>
                   </div>
                 </div>
 
@@ -449,53 +469,54 @@ export default function FilesPage() {
                     const info = getStatusInfo(file.status)
                     const Icon = getCategoryIcon(file.file_category)
                     return (
-                      <Card key={file.id} className="overflow-hidden border-slate-200 shadow-sm">
-                        <CardContent className="p-0">
+                      <Card key={file.id} className="overflow-hidden border-[#c09a53]/30 bg-[#1a110b]/80 shadow-lg rounded-sm relative">
+                        <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+                        <CardContent className="p-0 relative z-10">
                           <div className="flex flex-col gap-5 p-5 xl:flex-row xl:items-start xl:justify-between">
                             <div className="flex min-w-0 flex-1 gap-4">
-                              <div className={`rounded-2xl border p-3 ${getCategoryTint(file.file_category)}`}>
+                              <div className={`rounded-sm border p-3 ${getCategoryTint(file.file_category)}`}>
                                 <Icon className="h-5 w-5" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <p className="truncate text-base font-semibold text-slate-900">{file.original_filename}</p>
-                                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getCategoryTint(file.file_category)}`}>
-                                    {(file.file_type || "unknown").toUpperCase()}
+                                  <p className="truncate text-lg font-bold text-[#e4cfa1]">{file.original_filename}</p>
+                                  <span className={`rounded-sm border px-2.5 py-1 text-[11px] font-bold ${getCategoryTint(file.file_category)}`}>
+                                    {(file.file_type || "未知").toUpperCase()}
                                   </span>
-                                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                                    {file.status === "indexed" ? "Search-ready" : info.label}
+                                  <span className="rounded-sm bg-[#2a1d15] border border-[#c09a53]/30 px-2.5 py-1 text-[11px] font-bold text-[#c09a53]">
+                                    {file.status === "indexed" ? "可供查阅" : info.label}
                                   </span>
                                 </div>
 
-                                <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                                  <span>{formatFileSize(file.file_size)}</span>
-                                  <span>{file.page_count} pages</span>
-                                  <span>{file.chunk_count} chunks</span>
-                                  <span>{file.parser_name || "No parser"}</span>
+                                <div className="mt-3 flex flex-wrap gap-4 text-[13px] text-[#a38a6a]">
+                                  <span>大小：{formatFileSize(file.file_size)}</span>
+                                  <span>册数：{file.page_count} 册</span>
+                                  <span>折数：{file.chunk_count} 折</span>
+                                  <span>史官：{file.parser_name || "无"}</span>
                                 </div>
 
-                                <div className="mt-4 w-full max-w-sm overflow-hidden rounded-full bg-slate-100">
+                                <div className="mt-4 w-full max-w-sm overflow-hidden rounded-sm bg-[#0a0705] border border-[#c09a53]/20">
                                   <div className={`h-1.5 transition-all duration-500 ${info.color}`} style={{ width: `${info.percent}%` }} />
                                 </div>
 
-                                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Index Profile</div>
-                                    <div className="mt-2 text-sm font-medium text-slate-800">{file.indexing_profile || "metadata_only"}</div>
+                                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                                  <div className="rounded-sm border border-[#c09a53]/30 bg-[#2a1d15]/50 p-3">
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#c09a53]">查阅规制</div>
+                                    <div className="mt-2 text-[13px] font-medium text-[#e4cfa1]">{file.indexing_profile || "仅留名录"}</div>
                                   </div>
-                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Embedding</div>
-                                    <div className="mt-2 text-sm leading-6 text-slate-700">{file.embedding_strategy}</div>
+                                  <div className="rounded-sm border border-[#c09a53]/30 bg-[#2a1d15]/50 p-3">
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#c09a53]">拆解之法</div>
+                                    <div className="mt-2 text-[13px] leading-6 text-[#e4cfa1]">{file.embedding_strategy}</div>
                                   </div>
-                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Retrieval</div>
-                                    <div className="mt-2 text-sm leading-6 text-slate-700">{file.retrieval_strategy}</div>
+                                  <div className="rounded-sm border border-[#c09a53]/30 bg-[#2a1d15]/50 p-3">
+                                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#c09a53]">检视之法</div>
+                                    <div className="mt-2 text-[13px] leading-6 text-[#e4cfa1]">{file.retrieval_strategy}</div>
                                   </div>
                                 </div>
 
                                 {file.error_message && (
-                                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                                    {file.error_message}
+                                  <div className="mt-4 rounded-sm border border-[#8b2323]/50 bg-[#8b2323]/20 px-4 py-3 text-[13px] text-[#f4ebd0] tracking-wide">
+                                    有司报：{file.error_message}
                                   </div>
                                 )}
                               </div>
@@ -525,14 +546,14 @@ export default function FilesPage() {
 
       <ConfirmDialog
         open={confirmDeleteFile !== null}
-        title="Delete this file?"
+        title="准奏焚毁此卷宗？"
         description={
           confirmDeleteFile
-            ? `This will remove "${confirmDeleteFile.original_filename}" and its indexed chunks, citations, and related graph data. This action cannot be undone.`
+            ? `此举将彻底抹除《${confirmDeleteFile.original_filename}》及其所有卷帙、案牍引用与关联经纬，且永无反悔之机。`
             : ""
         }
-        confirmLabel="Delete file"
-        cancelLabel="Keep file"
+        confirmLabel="即刻焚毁"
+        cancelLabel="留中不发"
         variant="destructive"
         loading={deletingFileId !== null}
         onCancel={() => {

@@ -456,37 +456,37 @@ function AnswerGraphFlowNode({ data }: NodeProps<FlowNode<AnswerGraphNodeData>>)
   const palette =
     data.kind === "core"
       ? {
-          wrapper: "border-slate-900 bg-slate-900 text-white shadow-[0_24px_64px_rgba(15,23,42,0.28)]",
-          label: "text-white",
-          sub: "text-slate-300",
-          detail: "text-slate-200",
+          wrapper: "border-[#c09a53] bg-[#2a1d15] text-[#e4cfa1] shadow-[0_4px_20px_rgba(0,0,0,0.8)]",
+          label: "text-[#e4cfa1]",
+          sub: "text-[#c09a53]",
+          detail: "text-[#a38a6a]",
         }
       : data.kind === "fact"
         ? {
-            wrapper: "border-amber-300 bg-gradient-to-br from-amber-50 via-white to-orange-50 text-slate-900 shadow-[0_18px_42px_rgba(245,158,11,0.16)]",
-            label: "text-amber-950",
-            sub: "text-amber-700",
-            detail: "text-slate-600",
+            wrapper: "border-[#d49a6a]/60 bg-[#1a110b] text-[#d49a6a] shadow-[0_4px_16px_rgba(0,0,0,0.6)]",
+            label: "text-[#d49a6a]",
+            sub: "text-[#8b2323]",
+            detail: "text-[#a38a6a]",
           }
         : data.kind === "source"
           ? {
-              wrapper: "border-sky-300 bg-gradient-to-br from-sky-50 via-white to-blue-50 text-slate-900 shadow-[0_18px_42px_rgba(59,130,246,0.14)]",
-              label: "text-sky-900",
-              sub: "text-sky-700",
-              detail: "text-slate-600",
+              wrapper: "border-[#6a9fb5]/50 bg-[#16232e] text-[#6a9fb5] shadow-[0_4px_16px_rgba(0,0,0,0.5)]",
+              label: "text-[#6a9fb5]",
+              sub: "text-[#4a7a8c]",
+              detail: "text-[#83a5b3]",
             }
           : {
-              wrapper: "border-slate-300 bg-white text-slate-900 shadow-[0_18px_42px_rgba(15,23,42,0.08)]",
-              label: "text-slate-900",
-              sub: "text-slate-500",
-              detail: "text-slate-600",
+              wrapper: "border-[#c09a53]/30 bg-[#0a0705] text-[#cca366] shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
+              label: "text-[#cca366]",
+              sub: "text-[#a38a6a]",
+              detail: "text-[#8b755a]",
             }
 
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-slate-300/70" />
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-[#c09a53] !bg-[#2a1d15]" />
       <div
-        className={`min-w-[170px] max-w-[220px] rounded-[22px] border px-4 py-3 transition-all duration-200 ${palette.wrapper} ${clickable ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(59,130,246,0.18)]" : ""}`}
+        className={`min-w-[170px] max-w-[220px] rounded-sm border px-4 py-3 transition-all duration-200 ${palette.wrapper} ${clickable ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#e4cfa1] hover:shadow-[0_4px_24px_rgba(192,154,83,0.3)]" : ""}`}
         onClick={clickable ? () => data.onCitationClick?.(data.citation as Citation) : undefined}
         role={clickable ? "button" : undefined}
         tabIndex={clickable ? 0 : undefined}
@@ -505,7 +505,7 @@ function AnswerGraphFlowNode({ data }: NodeProps<FlowNode<AnswerGraphNodeData>>)
         <div className={`mt-1 text-sm font-semibold leading-5 ${palette.label}`}>{data.label}</div>
         {data.detail && <div className={`mt-2 text-xs leading-5 ${palette.detail}`}>{data.detail}</div>}
       </div>
-      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-slate-300/70" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-[#c09a53] !bg-[#2a1d15]" />
     </>
   )
 }
@@ -534,8 +534,8 @@ function buildAnswerFlowGraph(
     data: {
       kind: "core",
       label: graphTitle.slice(0, 42),
-      sublabel: "Question",
-      detail: "The root question that the answer structure expands from.",
+      sublabel: "御题",
+      detail: "天下万机，由此推演。",
     },
   })
 
@@ -570,10 +570,10 @@ function buildAnswerFlowGraph(
       id: `edge-core-${factId}`,
       source: rootId,
       target: factId,
-      label: "explains",
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#0f172a" },
-      style: { stroke: "#334155", strokeWidth: 2.2 },
-      labelStyle: { fill: "#64748b", fontSize: 10, fontWeight: 700 },
+      label: "阐明",
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#c09a53" },
+      style: { stroke: "#c09a53", strokeWidth: 2.2 },
+      labelStyle: { fill: "#cca366", fontSize: 10, fontWeight: 700 },
     })
 
     nodes.push({
@@ -591,11 +591,11 @@ function buildAnswerFlowGraph(
       id: `edge-${factId}-${detailId}`,
       source: factId,
       target: detailId,
-      label: fact.sourceRefs.length ? "supports" : "details",
+      label: fact.sourceRefs.length ? "佐证" : "细部",
       animated: fact.sourceRefs.length > 0,
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#f59e0b" },
-      style: { stroke: "#f59e0b", strokeWidth: 1.8, strokeDasharray: fact.sourceRefs.length ? undefined : "5 6" },
-      labelStyle: { fill: "#a16207", fontSize: 10, fontWeight: 700 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#d49a6a" },
+      style: { stroke: "#d49a6a", strokeWidth: 1.8, strokeDasharray: fact.sourceRefs.length ? undefined : "5 6" },
+      labelStyle: { fill: "#8b2323", fontSize: 10, fontWeight: 700 },
     })
 
     fact.sourceRefs.forEach((ref, refIndex) => {
@@ -623,10 +623,10 @@ function buildAnswerFlowGraph(
         id: `edge-${sourceId}-${factId}`,
         source: sourceId,
         target: factId,
-        label: "cites",
-        markerEnd: { type: MarkerType.ArrowClosed, color: "#0ea5e9" },
-        style: { stroke: "#38bdf8", strokeWidth: 1.7, strokeDasharray: "4 6" },
-        labelStyle: { fill: "#0369a1", fontSize: 10, fontWeight: 700 },
+        label: "考据",
+        markerEnd: { type: MarkerType.ArrowClosed, color: "#6a9fb5" },
+        style: { stroke: "#6a9fb5", strokeWidth: 1.7, strokeDasharray: "4 6" },
+        labelStyle: { fill: "#4a7a8c", fontSize: 10, fontWeight: 700 },
       })
     })
   })
@@ -1404,26 +1404,27 @@ export default function AgentPage() {
         </div>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-        <div className="flex items-center justify-between border-b bg-muted/30 p-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsHistoryOpen((prev) => !prev)}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-sm border border-[#c09a53]/30 bg-[#1a110b]">
+        <div className="flex items-center justify-between border-b border-[#c09a53]/30 bg-[#2a1d15]/50 p-4 relative">
+          <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+          <div className="flex items-center gap-2 relative z-10">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#c09a53] hover:bg-[#c09a53]/20 hover:text-[#e4cfa1]" onClick={() => setIsHistoryOpen((prev) => !prev)}>
               <History className="h-4 w-4" />
             </Button>
             <div>
-              <h3 className="flex items-center gap-2 font-semibold">
-                <Bot className="h-4 w-4" /> {t("Agent Chat")}
+              <h3 className="flex items-center gap-2 text-lg font-bold tracking-widest text-[#e4cfa1]">
+                <Bot className="h-4 w-4" /> 廷议对答
               </h3>
-              <p className="mt-1 text-xs text-muted-foreground">Continue old chats, inspect contextual citations, and switch answer views.</p>
+              <p className="mt-1 text-[13px] text-[#a38a6a]">查阅往日奏疏，洞察诸臣图解，于此明断天下大势。</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <select
               value={selectedFileId}
               onChange={(event) => setSelectedFileId(event.target.value)}
-              className="w-56 overflow-hidden text-ellipsis whitespace-nowrap rounded-md border bg-background px-2 py-1 text-sm"
+              className="w-56 overflow-hidden text-ellipsis whitespace-nowrap rounded-sm border border-[#c09a53]/40 bg-[#0a0705] px-2 py-1 text-[13px] text-[#e4cfa1] focus:ring-[#c09a53] focus:border-[#c09a53]"
             >
-              <option value="all">All Documents</option>
+              <option value="all">天下总览</option>
               {groupedFileOptions.map(([label, items]) => (
                 <optgroup key={label} label={label}>
                   {items.map((file) => (
@@ -1434,33 +1435,34 @@ export default function AgentPage() {
                 </optgroup>
               ))}
             </select>
-            <Button variant="outline" size="sm" onClick={handleNewChat} className="flex h-8 gap-1">
-              <MessageSquarePlus className="h-4 w-4" /> New
+            <Button variant="outline" size="sm" onClick={handleNewChat} className="flex h-8 gap-1 bg-[#2a1d15] text-[#e4cfa1] border-[#c09a53]/50 hover:bg-[#c09a53]/20">
+              <MessageSquarePlus className="h-4 w-4" /> 开朝议事
             </Button>
           </div>
         </div>
 
-        <ScrollArea className="min-h-0 flex-1 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.04),_transparent_45%),linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,1))] p-4">
+        <ScrollArea className="min-h-0 flex-1 bg-transparent p-4">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center py-20 text-center opacity-70">
-              <div className="mb-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-4 rounded-sm border border-[#c09a53]/40 bg-[#2a1d15] p-4 shadow-sm text-[#e4cfa1]">
                 <Bot className="h-12 w-12" />
               </div>
-              <p className="text-lg font-medium">InsightGraph Agent</p>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Ask about people, events, code, or documents. Answers auto-render as cards, tables, graphs, and citation-backed summaries.
+              <p className="text-xl font-bold tracking-widest text-[#e4cfa1]">内阁首辅</p>
+              <p className="mt-2 max-w-md text-[15px] tracking-wide text-[#a38a6a]">
+                陛下可垂询天下大事、臣工履历或各地灾情。内阁将博极群书，为您献上详细奏对与因果图解。
               </p>
             </div>
           ) : (
             <div className="space-y-6">
               {messages.map((msg, index) => (
                 <div key={msg.id || index} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${msg.role === "user" ? "bg-primary text-primary-foreground" : "border border-slate-200 bg-white text-slate-700"}`}>
+                  <div className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[#c09a53]/30 ${msg.role === "user" ? "bg-[#8b2323] text-[#f4ebd0]" : "bg-[#2a1d15] text-[#e4cfa1]"}`}>
                     {msg.role === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0 max-w-[85%] space-y-3">
-                    <Card className={`overflow-hidden ${msg.role === "user" ? "border-primary/20 bg-primary text-primary-foreground" : "border-slate-200 bg-white/95 shadow-sm"}`}>
-                      <CardContent className="max-h-[min(68vh,56rem)] overflow-y-auto p-4">
+                    <Card className={`overflow-hidden rounded-sm border ${msg.role === "user" ? "border-[#c09a53]/30 bg-[#2a1d15]/80 text-[#e4cfa1]" : "border-[#c09a53]/40 bg-[#1a110b]/90 shadow-sm"}`}>
+                      <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none" />
+                      <CardContent className="max-h-[min(68vh,56rem)] overflow-y-auto p-4 relative z-10">
                         {msg.role === "assistant" ? (
                           <AssistantStructuredView
                             content={msg.content}
@@ -1481,10 +1483,10 @@ export default function AgentPage() {
                             key={`${citation.id || citation.file_id}-${citationIndex}`}
                             type="button"
                             onClick={() => handleCitationClick(citation)}
-                            className="flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[10px] text-secondary-foreground transition-colors hover:bg-secondary/80"
+                            className="flex items-center gap-1 rounded-sm bg-[#2a1d15] border border-[#c09a53]/30 px-2.5 py-1 text-[11px] text-[#cca366] transition-colors hover:bg-[#c09a53]/20 hover:text-[#e4cfa1]"
                           >
                             <FileText className="h-2.5 w-2.5" />
-                            {shortFileName(citation.file_name, citation.file_id)} · p.{citation.page_number || "?"}
+                            {shortFileName(citation.file_name, citation.file_id)} · 卷{citation.page_number || "?"}
                           </button>
                         ))}
                       </div>
@@ -1495,10 +1497,10 @@ export default function AgentPage() {
 
               {loading && (
                 <div className="flex gap-3">
-                  <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white">
+                  <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[#c09a53]/30 bg-[#2a1d15] text-[#e4cfa1]">
                     <Bot className="h-4 w-4" />
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="rounded-sm border border-[#c09a53]/30 bg-[#1a110b]/80 p-4 shadow-sm text-[#e4cfa1]">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 </div>
@@ -1508,7 +1510,7 @@ export default function AgentPage() {
           )}
         </ScrollArea>
 
-        <div className="shrink-0 border-t bg-muted/30 p-4">
+        <div className="shrink-0 border-t border-[#c09a53]/30 bg-[#1a110b] p-4 relative z-20">
           <form
             className="flex items-center gap-2"
             onSubmit={(event) => {
@@ -1519,30 +1521,30 @@ export default function AgentPage() {
             <input
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              className="h-11 flex-1 rounded-xl border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder={currentRunId ? "Continue this conversation..." : "Ask a question..."}
+              className="h-11 flex-1 rounded-sm border border-[#c09a53]/50 bg-[#0a0705] px-4 py-2 text-[15px] text-[#e4cfa1] focus:outline-none focus:ring-1 focus:ring-[#c09a53] placeholder:text-[#a38a6a]"
+              placeholder={currentRunId ? "廷议未歇，陛下可继续垂问..." : "传旨问对..."}
               disabled={loading}
             />
-            <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-xl" disabled={loading || !input.trim()}>
+            <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-sm bg-[#8b2323] hover:bg-[#6a1b1b] text-[#f4ebd0] border border-[#3d2b1f]" disabled={loading || !input.trim()}>
               <Send className="h-4 w-4" />
             </Button>
           </form>
         </div>
       </div>
 
-      <div className="min-h-0 w-96 shrink-0 overflow-hidden rounded-lg border bg-card">
+      <div className="min-h-0 w-96 shrink-0 overflow-hidden rounded-sm border border-[#c09a53]/30 bg-[#1a110b]">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full w-full flex-col">
-          <div className="border-b bg-muted/30 p-2">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="trace">Execution Trace</TabsTrigger>
-              <TabsTrigger value="reference">Reference</TabsTrigger>
+          <div className="border-b border-[#c09a53]/30 bg-[#2a1d15]/50 p-2">
+            <TabsList className="grid w-full grid-cols-2 bg-[#0a0705] border border-[#c09a53]/20">
+              <TabsTrigger value="trace" className="data-[state=active]:bg-[#c09a53]/20 data-[state=active]:text-[#e4cfa1] text-[#a38a6a]">执行推演</TabsTrigger>
+              <TabsTrigger value="reference" className="data-[state=active]:bg-[#c09a53]/20 data-[state=active]:text-[#e4cfa1] text-[#a38a6a]">文献查征</TabsTrigger>
             </TabsList>
           </div>
 
           <TabsContent value="trace" className="m-0 flex flex-1 flex-col overflow-hidden p-0 data-[state=active]:flex">
             <ScrollArea className="min-h-0 h-full flex-1 p-4">
               {trace.length === 0 ? (
-                <p className="py-10 text-center text-xs italic text-muted-foreground">Wait for agent to start...</p>
+                <p className="py-10 text-center text-[13px] italic text-[#a38a6a]">静候诸臣入阁议事...</p>
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3">

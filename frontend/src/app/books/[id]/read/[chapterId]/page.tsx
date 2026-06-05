@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, Menu, Search, BookOpen, FileText, LocateFixed, ChevronsUpDown } from "lucide-react"
+import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, Menu, Search, BookOpen, FileText, LocateFixed, ChevronsUpDown, Palette } from "lucide-react"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import HistoricalMap from '@/components/HistoricalMap'
@@ -46,6 +46,62 @@ export default function BookReaderPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  const [theme, setTheme] = useState<'light' | 'sepia' | 'dark'>('sepia')
+
+  const themeStyles = {
+    light: {
+      bg: "bg-slate-50",
+      sidebar: "bg-white border-r border-slate-200",
+      sidebarHeader: "bg-white border-b border-slate-200",
+      sidebarSubHeader: "bg-slate-50/50 border-b border-slate-200",
+      sidebarTextHover: "hover:bg-slate-100 text-slate-600",
+      sidebarActive: "bg-primary/10 text-primary font-medium",
+      topbar: "bg-white/90 border-b border-slate-200",
+      title: "text-slate-900",
+      text: "text-slate-800 prose-slate",
+      btn: "bg-transparent hover:bg-slate-100 border-slate-200 text-slate-800",
+      rightPanel: "bg-slate-50 border-l border-slate-200",
+      input: "bg-slate-50 border-slate-200",
+      icon: "text-slate-500",
+      muted: "text-slate-500",
+      searchIcon: "text-slate-400"
+    },
+    sepia: {
+      bg: "bg-[#f4ebd0]",
+      sidebar: "bg-[#eaddba] border-r border-[#c09a53]/30",
+      sidebarHeader: "bg-[#eaddba] border-b border-[#c09a53]/30",
+      sidebarSubHeader: "bg-[#eaddba]/50 border-b border-[#c09a53]/30",
+      sidebarTextHover: "hover:bg-[#d49a6a]/20 text-[#5c4033]",
+      sidebarActive: "bg-[#8b2323]/10 text-[#8b2323] font-bold",
+      topbar: "bg-[#f4ebd0]/90 border-b border-[#c09a53]/30",
+      title: "text-[#3d2b1f]",
+      text: "text-[#5c4033] prose-stone",
+      btn: "bg-transparent hover:bg-[#d49a6a]/20 border-[#c09a53]/50 text-[#5c4033]",
+      rightPanel: "bg-[#eaddba] border-l border-[#c09a53]/30",
+      input: "bg-[#f4ebd0] border-[#c09a53]/50 text-[#3d2b1f] focus:ring-[#c09a53]",
+      icon: "text-[#8b2323]",
+      muted: "text-[#8b755a]",
+      searchIcon: "text-[#8b755a]"
+    },
+    dark: {
+      bg: "bg-[#1a110b]",
+      sidebar: "bg-[#0a0705] border-r border-[#c09a53]/30",
+      sidebarHeader: "bg-[#0a0705] border-b border-[#c09a53]/30",
+      sidebarSubHeader: "bg-[#0a0705]/50 border-b border-[#c09a53]/30",
+      sidebarTextHover: "hover:bg-[#2a1d15] text-[#a38a6a]",
+      sidebarActive: "bg-[#c09a53]/20 text-[#e4cfa1] font-bold",
+      topbar: "bg-[#1a110b]/90 border-b border-[#c09a53]/30",
+      title: "text-[#e4cfa1]",
+      text: "text-[#cca366] prose-invert",
+      btn: "bg-transparent hover:bg-[#2a1d15] border-[#c09a53]/50 text-[#e4cfa1]",
+      rightPanel: "bg-[#0a0705] border-l border-[#c09a53]/30",
+      input: "bg-[#1a110b] border-[#c09a53]/50 text-[#e4cfa1] focus:ring-[#c09a53]",
+      icon: "text-[#c09a53]",
+      muted: "text-[#8b755a]",
+      searchIcon: "text-[#c09a53]/60"
+    }
+  }
+  const currentTheme = themeStyles[theme]
 
   const toggleCollapse = (e: React.MouseEvent, id: string) => {
     e.preventDefault()
@@ -281,33 +337,33 @@ export default function BookReaderPage() {
   const progressPercentage = totalChapters > 0 ? Math.round(((currentIndex + 1) / totalChapters) * 100) : 0
 
   return (
-    <div className="flex h-full bg-slate-50 relative overflow-hidden">
+    <div className={`flex h-full relative overflow-hidden transition-colors duration-300 ${currentTheme.bg}`}>
       {/* Left Pane: TOC Sidebar */}
       <div 
-        className={`absolute lg:relative inset-y-0 left-0 bg-white border-r w-72 z-20 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`absolute lg:relative inset-y-0 left-0 w-72 z-20 transform transition-all duration-300 ease-in-out ${currentTheme.sidebar} ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        <div className="p-4 border-b flex items-center justify-between bg-white sticky top-0 z-10">
-          <Link href={`/books/${bookId}`} className="text-sm text-muted-foreground hover:text-foreground flex items-center">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Library
+        <div className={`p-4 flex items-center justify-between sticky top-0 z-10 ${currentTheme.sidebarHeader}`}>
+          <Link href={`/books/${bookId}`} className={`text-[13px] flex items-center transition-colors hover:opacity-80 ${currentTheme.icon}`}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> 返回藏书阁
           </Link>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className={`h-4 w-4 ${currentTheme.icon}`} />
           </Button>
         </div>
-        <div className="px-5 py-3 border-b text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between bg-slate-50/50 sticky top-[61px] z-10">
-          <span>{t("Chapters")}</span>
+        <div className={`px-5 py-3 text-xs font-bold uppercase tracking-widest flex items-center justify-between sticky top-[61px] z-10 ${currentTheme.sidebarSubHeader} ${currentTheme.muted}`}>
+          <span>卷宗目录</span>
           <div className="flex items-center gap-1">
             <button 
               onClick={toggleAllCollapse}
-              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
-              title={collapsedIds.size > 0 ? "Expand All" : "Collapse All"}
+              className={`p-1 rounded transition-colors ${theme === 'dark' ? 'hover:bg-[#2a1d15]' : 'hover:bg-black/5'} ${currentTheme.icon} hover:opacity-80`}
+              title={collapsedIds.size > 0 ? "展开全部" : "折叠全部"}
             >
               <ChevronsUpDown className="w-4 h-4" />
             </button>
             <button 
               onClick={locateCurrentChapter}
-              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
-              title="Locate Current Chapter"
+              className={`p-1 rounded transition-colors ${theme === 'dark' ? 'hover:bg-[#2a1d15]' : 'hover:bg-black/5'} ${currentTheme.icon} hover:opacity-80`}
+              title="定位当前卷"
             >
               <LocateFixed className="w-4 h-4" />
             </button>
@@ -318,12 +374,12 @@ export default function BookReaderPage() {
             <Link key={c.id} href={`/books/${bookId}/read/${c.id}`} onClick={() => setSidebarOpen(false)}>
               <div 
                 id={`toc-item-${c.id}`}
-                className={`px-3 py-2 text-sm rounded-md mb-1 cursor-pointer transition-colors flex items-center gap-1 ${c.id === chapterId ? 'bg-primary/10 text-primary font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
+                className={`px-3 py-2 text-[13px] rounded-sm mb-1 cursor-pointer transition-colors flex items-center gap-1 ${c.id === chapterId ? currentTheme.sidebarActive : currentTheme.sidebarTextHover}`}
                 style={{ paddingLeft: `${Math.max(0.5, c.level * 0.75)}rem` }}
               >
                 {c.hasChildren ? (
                   <div 
-                    className="p-0.5 hover:bg-slate-200 hover:text-slate-900 rounded shrink-0 transition-colors" 
+                    className={`p-0.5 rounded shrink-0 transition-colors ${theme === 'dark' ? 'hover:bg-[#2a1d15]' : 'hover:bg-black/10'}`} 
                     onClick={(e) => toggleCollapse(e, c.id)}
                   >
                     {collapsedIds.has(c.id) ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -349,26 +405,40 @@ export default function BookReaderPage() {
         ref={contentRef}
         onScroll={handleScroll}
       >
-        <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b px-4 py-3 flex items-center gap-4 z-10 shadow-sm">
+        <div className={`sticky top-0 backdrop-blur-md px-4 py-3 flex items-center gap-4 z-10 shadow-sm ${currentTheme.topbar}`}>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
+            <Menu className={`h-5 w-5 ${currentTheme.icon}`} />
           </Button>
           <div className="flex-1 flex items-center justify-between max-w-3xl mx-auto">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="text-sm font-medium text-slate-700 line-clamp-1">{chapter.title}</div>
-              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 hidden sm:inline-flex">
-                {progressPercentage}%
+              <div className={`text-[13px] font-bold tracking-wide ${currentTheme.title} line-clamp-1`}>{chapter.title}</div>
+              <span className={`shrink-0 rounded-sm px-2 py-0.5 text-[10px] font-bold hidden sm:inline-flex ${theme === 'dark' ? 'bg-[#2a1d15] text-[#c09a53] border border-[#c09a53]/30' : 'bg-black/5 text-[#8b2323]'}`}>
+                阅 {progressPercentage}%
               </span>
             </div>
-            <div className="relative w-64 hidden sm:block ml-4">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <Input 
-                type="text" 
-                placeholder="Search in chapter..." 
-                className="pl-9 bg-slate-50 h-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center">
+                <Palette className={`w-4 h-4 mr-1 ${currentTheme.icon}`} />
+                <select 
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value as any)}
+                  className={`text-[11px] rounded-sm border px-1 py-1 h-9 ${currentTheme.input}`}
+                >
+                  <option value="sepia">宣纸</option>
+                  <option value="dark">暗夜</option>
+                  <option value="light">西洋</option>
+                </select>
+              </div>
+              <div className="relative w-48 hidden sm:block">
+                <Search className={`absolute left-2.5 top-2.5 h-4 w-4 ${currentTheme.searchIcon}`} />
+                <Input 
+                  type="text" 
+                  placeholder="书中查阅..." 
+                  className={`pl-9 h-9 text-[13px] rounded-sm ${currentTheme.input}`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -376,34 +446,34 @@ export default function BookReaderPage() {
         <div className="max-w-3xl mx-auto py-12 px-6 lg:px-12 min-h-full flex flex-col">
           {/* Mobile search */}
           <div className="relative w-full sm:hidden mb-8">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className={`absolute left-2.5 top-2.5 h-4 w-4 ${currentTheme.searchIcon}`} />
             <Input 
               type="text" 
-              placeholder="Search in chapter..." 
-              className="pl-9 bg-white h-10"
+              placeholder="书中查阅..." 
+              className={`pl-9 h-10 text-[13px] rounded-sm ${currentTheme.input}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <h1 className="text-3xl font-bold mb-10 text-slate-900 leading-tight">{chapter.title}</h1>
-          <div className="prose prose-slate prose-lg max-w-none text-slate-800 leading-relaxed whitespace-pre-wrap font-serif flex-1">
+          <h1 className={`text-3xl font-bold mb-10 leading-tight tracking-[0.1em] ${currentTheme.title}`}>{chapter.title}</h1>
+          <div className={`prose prose-lg max-w-none leading-relaxed whitespace-pre-wrap font-serif flex-1 ${currentTheme.text}`}>
             {renderContent()}
           </div>
 
-          <div className="mt-20 pt-8 border-t flex items-center justify-between pb-12">
+          <div className={`mt-20 pt-8 border-t ${theme === 'dark' ? 'border-[#c09a53]/30' : 'border-black/10'} flex items-center justify-between pb-12`}>
             {prevChapter ? (
               <Link href={`/books/${bookId}/read/${prevChapter.id}`}>
-                <Button variant="outline" className="flex items-center hover:bg-slate-100">
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+                <Button variant="outline" className={`flex items-center rounded-sm tracking-widest ${currentTheme.btn}`}>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> 上一卷
                 </Button>
               </Link>
             ) : <div />}
             
             {nextChapter ? (
               <Link href={`/books/${bookId}/read/${nextChapter.id}`}>
-                <Button variant="outline" className="flex items-center hover:bg-slate-100">
-                  Next <ChevronRight className="ml-2 h-4 w-4" />
+                <Button variant="outline" className={`flex items-center rounded-sm tracking-widest ${currentTheme.btn}`}>
+                  下一卷 <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             ) : <div />}
@@ -412,9 +482,9 @@ export default function BookReaderPage() {
       </div>
 
       {/* Right Pane: Book Info (Phase 2) / AI Space (Phase 4) */}
-      <div className="hidden xl:block w-80 bg-slate-50 border-l overflow-y-auto p-6">
+      <div className={`hidden xl:block w-80 overflow-y-auto p-6 transition-all duration-300 ${currentTheme.rightPanel}`}>
         <div className="space-y-6">
-          <div className="aspect-[2/3] bg-slate-200 rounded-md overflow-hidden shadow-sm relative">
+          <div className="aspect-[2/3] bg-[#0a0705] rounded-sm overflow-hidden shadow-sm relative border border-[#c09a53]/30">
              {book.cover_path ? (
                 <img src={`http://localhost:8000${book.cover_path}`} alt="cover" className="object-cover w-full h-full" />
               ) : (
@@ -424,28 +494,28 @@ export default function BookReaderPage() {
               )}
           </div>
           <div>
-            <h3 className="font-bold text-lg leading-tight">{book.title}</h3>
-            <p className="text-muted-foreground mt-1">{book.author || "Unknown Author"}</p>
+            <h3 className={`font-bold text-lg leading-tight tracking-[0.1em] ${currentTheme.title}`}>{book.title}</h3>
+            <p className={`mt-1 text-[13px] ${currentTheme.muted}`}>著者：{book.author || "佚名"}</p>
           </div>
-          <div className="pt-4 border-t">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-2">About this book</h4>
-            <div className="text-sm text-slate-600 prose prose-sm max-w-none">
+          <div className={`pt-4 border-t ${theme === 'dark' ? 'border-[#c09a53]/30' : 'border-black/10'}`}>
+            <h4 className={`text-[11px] font-bold uppercase tracking-widest mb-2 ${currentTheme.muted}`}>本卷提要</h4>
+            <div className={`text-[13px] prose prose-sm max-w-none leading-relaxed ${currentTheme.text}`}>
                {book.description ? (
                   <div dangerouslySetInnerHTML={{ __html: book.description }} />
                 ) : (
-                  <p>No description available.</p>
+                  <p>暂无提要。</p>
                 )}
             </div>
           </div>
-          <div className="pt-4 border-t mt-auto">
-            <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
-              <h4 className="text-sm font-medium text-primary mb-1">AI Assistant</h4>
-              <p className="text-xs text-slate-500">Intelligent chat and analysis features will be available here in upcoming phases.</p>
+          <div className={`pt-4 border-t mt-auto ${theme === 'dark' ? 'border-[#c09a53]/30' : 'border-black/10'}`}>
+            <div className={`rounded-sm p-4 border ${theme === 'dark' ? 'bg-[#2a1d15] border-[#c09a53]/30' : 'bg-black/5 border-black/10'}`}>
+              <h4 className={`text-[13px] font-bold mb-1 tracking-widest ${currentTheme.title}`}>内阁书办</h4>
+              <p className={`text-[11px] leading-relaxed ${currentTheme.muted}`}>诸如解书、批注等机枢要务，将于日后呈报陛下。</p>
             </div>
           </div>
-          <div className="pt-4 border-t">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-2">Historical Map</h4>
-            <div className="h-64 rounded-md overflow-hidden border border-slate-200 shadow-sm relative">
+          <div className={`pt-4 border-t ${theme === 'dark' ? 'border-[#c09a53]/30' : 'border-black/10'}`}>
+            <h4 className={`text-[11px] font-bold uppercase tracking-widest mb-2 ${currentTheme.muted}`}>天下舆图</h4>
+            <div className={`h-64 rounded-sm overflow-hidden border shadow-sm relative ${theme === 'dark' ? 'border-[#c09a53]/30' : 'border-black/10'}`}>
               <HistoricalMap />
             </div>
           </div>

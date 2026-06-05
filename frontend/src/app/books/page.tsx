@@ -87,42 +87,44 @@ export default function BooksPage() {
   // Let's just show extracted books first, then unextracted files.
 
   return (
-    <div className="flex-1 overflow-auto p-8 bg-slate-50">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("Books")}</h1>
-          <p className="text-muted-foreground mt-2">
-            Your personal library of parsed EPUB and PDF books.
+    <div className="flex-1 overflow-auto p-8 bg-transparent">
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
+        <div className="border-b border-[#c09a53]/30 pb-4">
+          <h1 className="text-3xl font-bold tracking-[0.2em] text-[#e4cfa1]">皇家藏书</h1>
+          <p className="text-[#a38a6a] mt-2 tracking-wide">
+            内府所藏之经史子集与天下舆图，皆可在此御览。
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {books.map((book) => (
-            <Card key={book.id} className="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-              <div className="aspect-[2/3] bg-slate-200 relative">
+            <Card key={book.id} className="overflow-hidden flex flex-col hover:shadow-lg transition-shadow bg-[#1a110b]/90 border-[#c09a53]/30 rounded-sm relative">
+              <div className="absolute inset-1 border border-[#c09a53]/10 pointer-events-none z-10" />
+              <div className="aspect-[2/3] bg-[#0a0705] relative border-b border-[#c09a53]/30">
                 {book.cover_path ? (
-                  <img src={`http://localhost:8000${book.cover_path}`} alt="cover" className="object-cover w-full h-full" />
+                  <img src={`http://localhost:8000${book.cover_path}`} alt="cover" className="object-cover w-full h-full opacity-80 mix-blend-luminosity" />
                 ) : (
-                  <div className="flex items-center justify-center w-full h-full text-slate-400">
+                  <div className="flex items-center justify-center w-full h-full text-[#c09a53]/30">
                     <BookIcon className="h-16 w-16" />
                   </div>
                 )}
               </div>
               <CardHeader className="p-4 flex-1">
-                <CardTitle className="line-clamp-2 text-lg">{book.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">{book.author || "Unknown Author"}</p>
+                <CardTitle className="line-clamp-2 text-lg font-bold text-[#e4cfa1] tracking-wide">{book.title}</CardTitle>
+                <p className="text-[13px] text-[#a38a6a] mt-1">著者：{book.author || "佚名"}</p>
               </CardHeader>
-              <CardFooter className="p-4 pt-0 flex gap-2">
+              <CardFooter className="p-4 pt-0 flex gap-2 relative z-20">
                 <Link href={`/books/${book.id}`} className="flex-1">
-                  <Button variant="default" className="w-full">{t("Read")}</Button>
+                  <Button variant="default" className="w-full bg-[#8b2323] hover:bg-[#6a1b1b] text-[#f4ebd0] tracking-widest font-bold border border-[#3d2b1f]">御览</Button>
                 </Link>
                 {book.source_file_id && (
                   <Button 
                     variant="outline" 
                     size="icon"
+                    className="bg-[#2a1d15] text-[#c09a53] border-[#c09a53]/50 hover:bg-[#c09a53]/20 hover:text-[#e4cfa1]"
                     onClick={() => handleReExtract(book.source_file_id!)}
                     disabled={extractingId === book.source_file_id}
-                    title="Re-extract Book"
+                    title="重新收录"
                   >
                     {extractingId === book.source_file_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                   </Button>
@@ -138,23 +140,23 @@ export default function BooksPage() {
             if (isExtracted) return null
             
             return (
-              <Card key={file.id} className="overflow-hidden flex flex-col border-dashed">
-                <div className="aspect-[2/3] bg-slate-100 flex items-center justify-center">
-                   <BookIcon className="h-16 w-16 text-slate-300" />
+              <Card key={file.id} className="overflow-hidden flex flex-col border-dashed border-[#c09a53]/40 bg-[#1a110b]/60 rounded-sm">
+                <div className="aspect-[2/3] bg-[#0a0705]/50 flex items-center justify-center border-b border-dashed border-[#c09a53]/40">
+                   <BookIcon className="h-16 w-16 text-[#c09a53]/20" />
                 </div>
                 <CardHeader className="p-4 flex-1">
-                  <CardTitle className="line-clamp-2 text-lg text-muted-foreground">{file.original_filename}</CardTitle>
-                  <p className="text-sm text-muted-foreground">EPUB File</p>
+                  <CardTitle className="line-clamp-2 text-lg text-[#cca366] font-bold tracking-wide">{file.original_filename}</CardTitle>
+                  <p className="text-[13px] text-[#a38a6a] mt-1">未入库之卷帙</p>
                 </CardHeader>
                 <CardFooter className="p-4 pt-0">
                   <Button 
                     variant="outline" 
-                    className="w-full"
+                    className="w-full bg-[#2a1d15] text-[#e4cfa1] border-[#c09a53]/50 hover:bg-[#c09a53]/20 tracking-widest font-bold"
                     onClick={() => handleExtract(file.id)}
                     disabled={extractingId === file.id}
                   >
                     {extractingId === file.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {t("Extract Book")}
+                    收录入库
                   </Button>
                 </CardFooter>
               </Card>

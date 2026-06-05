@@ -1,0 +1,147 @@
+[
+  {
+    "event_id": "shaanxi_revolt_warning",
+    "title": "陕西流民聚众",
+    "trigger": {
+      "region_id": "shaanxi",
+      "rebel_risk_gte": 70,
+      "famine_level_gte": 65
+    },
+    "effects": {
+      "public_order": -8,
+      "public_support": -5
+    },
+    "message": "陕西饥民聚众抢粮，地方官弹压不力。"
+  },
+  {
+    "event_id": "shaanxi_revolt",
+    "title": "陕西民变爆发",
+    "trigger": {
+      "region_id": "shaanxi",
+      "rebel_risk_gte": 85,
+      "public_order_lte": 30
+    },
+    "effects": {
+      "public_order": -15,
+      "monthly_tax_income": -10000,
+      "military_presence": -5
+    },
+    "message": "陕西民变已成燎原之势，官军疲敝，地方州县告急。"
+  },
+  {
+    "event_id": "liaodong_salary_arrears",
+    "title": "辽东军饷拖欠",
+    "trigger": {
+      "region_id": "liaodong",
+      "military_presence_gte": 70,
+      "treasury_silver_lte": 300000
+    },
+    "effects": {
+      "military_presence": -5,
+      "defense_level": -5,
+      "manchu_pressure": 5
+    },
+    "message": "辽东军饷久拖，边军怨言四起。"
+  },
+  {
+    "event_id": "eunuch_counterattack",
+    "title": "阉党反扑",
+    "trigger": {
+      "faction_id": "eunuch",
+      "hostility_gte": 75,
+      "influence_gte": 40
+    },
+    "effects": {
+      "factional_conflict": 8,
+      "bureaucratic_efficiency": -5,
+      "prestige": -3
+    },
+    "message": "阉党余势未尽，暗中串联言官与内廷。"
+  },
+  {
+    "event_id": "manchu_raid",
+    "title": "后金袭扰辽东",
+    "trigger": {
+      "region_id": "liaodong",
+      "defense_level_lte": 50,
+      "manchu_pressure_gte": 75
+    },
+    "effects": {
+      "population": -20000,
+      "tax_base": -3000,
+      "public_support": -10,
+      "manchu_pressure": -10
+    },
+    "message": "后金轻骑破关，劫掠人畜，辽防吃紧。"
+  },
+  {
+    "event_id": "donglin_infighting",
+    "title": "东林内讧",
+    "trigger": {
+      "faction_id": "donglin",
+      "influence_gte": 75,
+      "factional_conflict_gte": 80
+    },
+    "effects": {
+      "faction_influence": -10,
+      "bureaucratic_efficiency": -5
+    },
+    "message": "东林党内部分裂，清流言官互相攻讦，朝局动荡。"
+  },
+  {
+    "event_id": "jiangnan_tax_resistance",
+    "title": "江南抗税",
+    "trigger": {
+      "region_id": "jiangnan",
+      "tax_burden_gte": 75,
+      "public_order_lte": 50
+    },
+    "effects": {
+      "monthly_tax_income": -30000,
+      "public_order": -10,
+      "local_elite_support": -15
+    },
+    "message": "江南士绅鼓动百姓抗缴加派，地方官不敢强征。"
+  },
+  {
+    "event_id": "grain_price_surge",
+    "title": "粮价暴涨",
+    "trigger": {
+      "region_id": "capital",
+      "grain_storage_lte": 40000,
+      "famine_level_gte": 40
+    },
+    "effects": {
+      "public_support": -8,
+      "public_order": -5,
+      "famine_level": 5
+    },
+    "message": "京城存粮告急，奸商囤积居奇，粮价飞涨十倍。"
+  },
+  {
+    "event_id": "treasury_empty",
+    "title": "国库空虚",
+    "trigger": {
+      "treasury_silver_lte": 0
+    },
+    "effects": {
+      "bureaucratic_efficiency": -10,
+      "prestige": -5,
+      "public_order": -5
+    },
+    "message": "户部太仓见底，百官欠俸，九边无饷，天下震动。"
+  },
+  {
+    "event_id": "censors_uproar",
+    "title": "京师言官风潮",
+    "trigger": {
+      "factional_conflict_gte": 85,
+      "prestige_lte": 50
+    },
+    "effects": {
+      "bureaucratic_efficiency": -10,
+      "prestige": -2
+    },
+    "message": "言官大哗，纷纷上疏弹劾中枢重臣，六部公文停滞。"
+  }
+]
