@@ -7,10 +7,14 @@ import { mapLocations, mapRelations, MapLocation } from '@/lib/map-data';
 import { factionBoundaries, factionLabels, mingProvinces } from '@/lib/faction-boundaries';
 import { X, MapPin, Shield, Swords, Home, Mountain, Waves, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import GameOverlay from './game/GameOverlay';
+import { GameState } from '@/lib/gameApi';
 
 export default function FullHistoricalMapInner() {
   const [activeLocation, setActiveLocation] = useState<MapLocation | null>(null);
   const [currentZoom, setCurrentZoom] = useState(4.5);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [activeView, setActiveView] = useState<'standard' | 'famine' | 'stability' | 'threat'>('standard');
   const isMacroView = currentZoom < 4.5;
   
   const mapStyle = useMemo(() => ({
@@ -196,8 +200,13 @@ export default function FullHistoricalMapInner() {
               id="ming-prefectures-fill"
               type="fill"
               paint={{
-                'fill-color': '#a32727',
-                'fill-opacity': isMacroView ? 0.15 : 0.03
+                'fill-color': activeView === 'famine' ? '#cc3300' :
+                              activeView === 'stability' ? '#3366cc' :
+                              activeView === 'threat' ? '#ff9900' :
+                              '#a32727',
+                'fill-opacity': isMacroView 
+                  ? (activeView !== 'standard' ? 0.3 : 0.15) 
+                  : (activeView !== 'standard' ? 0.15 : 0.03)
               }}
             />
             <Layer
@@ -411,6 +420,9 @@ export default function FullHistoricalMapInner() {
           </div>
         )}
       </div>
+
+      {/* AI Strategy Game Overlay */}
+      <GameOverlay onStateChange={setGameState} onViewChange={setActiveView} />
     </div>
   );
 }

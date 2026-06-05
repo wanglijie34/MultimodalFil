@@ -1,6 +1,10 @@
 import os
 import uuid
 import shutil
+import re
+import hashlib
+import json
+import tempfile
 from pathlib import Path
 from typing import List, Optional, Tuple, Any
 
@@ -12,6 +16,8 @@ from sqlalchemy.future import select
 
 from app.models.file import File
 from app.models.book import Book, Chapter
+from app.integrations.minio_client import minio_client
+from app.services.llm_service import llm_service
 from loguru import logger
 
 # Where we will store extracted covers locally
@@ -52,31 +58,185 @@ class BookExtractorService:
             db.add(db_book)
             await db.flush()
             
-            import re
+            import fitz
             
-            chapters = []
-            for i, page in enumerate(pages):
-                text = page.text_content or ""
-                # Replace 5 or more repeating dots (common in OCR of TOC) with just "..."
-                text = re.sub(r'[．.。・·]{5,}', '...', text)
+            built_in_toc = []
+            try:
+                logger.info(f"Checking for built-in TOC in PDF: {db_file.storage_key}")
+                file_bytes = minio_client.download_file(db_file.storage_key)
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                    tmp.write(file_bytes)
+                    tmp_path = tmp.name
                 
-                chapters.append(Chapter(
-                    book_id=db_book.id,
-                    order_index=i,
-                    title=f"Page {page.page_number}",
-                    content_text=text
-                ))
+                doc = fitz.open(tmp_path)
+                toc = doc.get_toc()
+                doc.close()
+                os.remove(tmp_path)
+                
+                if toc:
+                    built_in_toc = [{"title": str(item[1]).strip(), "start_page": int(item[2])} for item in toc if len(item) >= 3]
+                    if len(built_in_toc) < 6:
+                        logger.warning(f"Built-in TOC has only {len(built_in_toc)} entries (likely basic bookmarks). Falling back to LLM.")
+                        built_in_toc = []
+                    else:
+                        logger.info(f"Found built-in TOC with {len(built_in_toc)} entries.")
+            except Exception as e:
+                logger.error(f"Failed to check built-in TOC: {e}")
+
+            chapters = []
+
+            if built_in_toc:
+                logger.info("Using built-in PDF bookmarks for chapters.")
+                current_chapter_title = "Front Matter"
+                current_text_blocks = []
+                next_toc_idx = 0
+                
+                for p in pages:
+                    t = p.text_content or ""
+                    t_clean = re.sub(r'[．.。・·]{5,}', '...', t)
+                    
+                    if next_toc_idx < len(built_in_toc):
+                        next_entry = built_in_toc[next_toc_idx]
+                        if p.page_number >= next_entry["start_page"]:
+                            if current_text_blocks:
+                                chapters.append(Chapter(
+                                    book_id=db_book.id,
+                                    order_index=len(chapters),
+                                    title=current_chapter_title,
+                                    content_text="\n\n".join(current_text_blocks)
+                                ))
+                                current_text_blocks = []
+                            current_chapter_title = next_entry["title"]
+                            next_toc_idx += 1
+                            # Fast forward if multiple TOC entries point to same page
+                            while next_toc_idx < len(built_in_toc) and p.page_number >= built_in_toc[next_toc_idx]["start_page"]:
+                                current_chapter_title = built_in_toc[next_toc_idx]["title"]
+                                next_toc_idx += 1
+                                
+                    current_text_blocks.append(t_clean)
+                    
+                if current_text_blocks:
+                    chapters.append(Chapter(
+                        book_id=db_book.id,
+                        order_index=len(chapters),
+                        title=current_chapter_title,
+                        content_text="\n\n".join(current_text_blocks)
+                    ))
+            else:
+                # 1. Prepare sample text for LLM (first 25 pages)
+                sample_text = ""
+                for p in pages[:25]:
+                    t = p.text_content or ""
+                    t = re.sub(r'[．.。・·]{5,}', '...', t)
+                    sample_text += f"\n--- Page {p.page_number} ---\n{t}"
+                    
+                # 2. Call LLM to extract TOC, using cache
+                cache_dir = "llm_cache"
+                os.makedirs(cache_dir, exist_ok=True)
+                cache_file = os.path.join(cache_dir, f"toc_{file_id}.json")
+                
+                toc_chapters = []
+                if os.path.exists(cache_file):
+                    try:
+                        with open(cache_file, "r", encoding="utf-8") as f:
+                            toc_chapters = json.load(f)
+                    except Exception:
+                        pass
+                        
+                if not toc_chapters:
+                    prompt = f"""You are an expert at extracting tables of contents from raw OCR text of scanned books.
+Here are the first few pages of a book:
+{sample_text}
+
+Identify the table of contents. Extract the list of chapter titles exactly as they are written.
+Return EXACTLY a JSON array of strings containing the chapter titles in order.
+For example: ["Chapter 1", "Chapter 2", "Chapter 3"]
+If you cannot find a clear table of contents, return an empty array [].
+JSON:"""
+                    try:
+                        response = await llm_service.chat([{"role": "user", "content": prompt}], json_mode=True)
+                        if "```json" in response:
+                            response = response.split("```json")[1].split("```")[0]
+                        elif "```" in response:
+                            response = response.split("```")[1].split("```")[0]
+                            
+                        data = json.loads(response.strip())
+                        if isinstance(data, list):
+                            toc_chapters = [str(x).strip() for x in data if str(x).strip()]
+                        elif isinstance(data, dict) and "chapters" in data:
+                            toc_chapters = [str(x).strip() for x in data["chapters"] if str(x).strip()]
+                            
+                        if toc_chapters:
+                            with open(cache_file, "w", encoding="utf-8") as f:
+                                json.dump(toc_chapters, f, ensure_ascii=False)
+                    except Exception as e:
+                        logger.error(f"TOC extraction failed: {e}")
+                        toc_chapters = []
+                
+                if toc_chapters and len(toc_chapters) > 0:
+                    logger.info(f"Using extracted TOC with {len(toc_chapters)} chapters for merging.")
+                    current_chapter_title = "Front Matter"
+                    current_text_blocks = []
+                    next_title_idx = 0
+                    
+                    for p in pages:
+                        t = p.text_content or ""
+                        t_clean = re.sub(r'[．.。・·]{5,}', '...', t)
+                        
+                        if next_title_idx < len(toc_chapters):
+                            next_title = toc_chapters[next_title_idx]
+                            clean_t = t_clean.replace(" ", "").replace("\n", "")
+                            clean_title = next_title.replace(" ", "").replace("\n", "")
+                            
+                            if clean_title in clean_t:
+                                if current_text_blocks:
+                                    chapters.append(Chapter(
+                                        book_id=db_book.id,
+                                        order_index=len(chapters),
+                                        title=current_chapter_title,
+                                        content_text="\n\n".join(current_text_blocks)
+                                    ))
+                                    current_text_blocks = []
+                                
+                                current_chapter_title = next_title
+                                next_title_idx += 1
+                                while next_title_idx < len(toc_chapters):
+                                    next_t = toc_chapters[next_title_idx].replace(" ", "").replace("\n", "")
+                                    if next_t in clean_t:
+                                        current_chapter_title = toc_chapters[next_title_idx]
+                                        next_title_idx += 1
+                                    else:
+                                        break
+                        
+                        current_text_blocks.append(t_clean)
+                        
+                    if current_text_blocks:
+                        chapters.append(Chapter(
+                            book_id=db_book.id,
+                            order_index=len(chapters),
+                            title=current_chapter_title,
+                            content_text="\n\n".join(current_text_blocks)
+                        ))
+                else:
+                    logger.info("No TOC found. Falling back to page-by-page mapping.")
+                    for i, page in enumerate(pages):
+                        text = page.text_content or ""
+                        text = re.sub(r'[．.。・·]{5,}', '...', text)
+                        chapters.append(Chapter(
+                            book_id=db_book.id,
+                            order_index=i,
+                            title=f"Page {page.page_number}",
+                            content_text=text
+                        ))
             
             if chapters:
                 db.add_all(chapters)
             await db.commit()
             await db.refresh(db_book)
-            logger.info(f"Successfully extracted PDF: {db_book.title} with {len(chapters)} pages/chapters.")
+            logger.info(f"Successfully extracted PDF: {db_book.title} with {len(chapters)} chapters.")
             return db_book
 
         # === EPUB LOGIC ===
-        from app.integrations.minio_client import minio_client
-        import tempfile
 
         try:
             logger.info(f"Downloading file from MinIO: {db_file.storage_key}")
@@ -117,7 +277,7 @@ class BookExtractorService:
         await db.flush()  # To get db_book.id
 
         # 5. Extract Chapters
-        chapters = self._extract_chapters(book_epub, db_book.id)
+        chapters = await self._extract_chapters(book_epub, db_book.id, file_id)
         if chapters:
             db.add_all(chapters)
             
@@ -152,7 +312,7 @@ class BookExtractorService:
             return f"/covers/{cover_filename}"
         return None
 
-    def _extract_chapters(self, book: epub.EpubBook, book_id: uuid.UUID) -> List[Chapter]:
+    async def _extract_chapters(self, book: epub.EpubBook, book_id: uuid.UUID, file_id: uuid.UUID) -> List[Chapter]:
         """
         Extract chapters by walking the TOC tree for structure (titles, hierarchy)
         and the spine for content (body text).
@@ -227,7 +387,109 @@ class BookExtractorService:
             if text.strip():
                 spine_items.append({'base_href': base, 'text': text})
         
-        # --- Step 4: Build base_href -> list of chapter entries mapping ---
+        # --- Step 4: Check if TOC is shallow and fallback to LLM ---
+        # Only fallback if the TOC is practically empty or very sparse compared to the spine items, 
+        # meaning many chapters are likely hidden without TOC entries.
+        if len(chapter_entries) == 0 or (len(chapter_entries) < 6 and len(spine_items) > len(chapter_entries) * 2):
+            logger.warning(f"EPUB built-in TOC is too shallow ({len(chapter_entries)} entries). Falling back to LLM extraction.")
+            sample_text = ""
+            for item in spine_items[:10]:
+                sample_text += f"\n{item['text'][:3000]}"
+                if len(sample_text) > 15000:
+                    break
+                    
+
+            from app.services.llm_service import llm_service
+            cache_dir = "llm_cache"
+            os.makedirs(cache_dir, exist_ok=True)
+            cache_file = os.path.join(cache_dir, f"toc_{file_id}.json")
+            
+            toc_chapters = []
+            if os.path.exists(cache_file):
+                try:
+                    with open(cache_file, "r", encoding="utf-8") as f:
+                        toc_chapters = json.load(f)
+                except Exception:
+                    pass
+                    
+            if not toc_chapters:
+                prompt = f"""You are an expert at extracting tables of contents from raw text of books.
+Here are the first few parts of a book:
+{sample_text}
+
+Identify the table of contents. Extract the list of chapter titles exactly as they are written.
+Return EXACTLY a JSON array of strings containing the chapter titles in order.
+For example: ["Chapter 1", "Chapter 2", "Chapter 3"]
+If you cannot find a clear table of contents, return an empty array [].
+JSON:"""
+                try:
+                    response = await llm_service.chat([{"role": "user", "content": prompt}], json_mode=True)
+                    if "```json" in response:
+                        response = response.split("```json")[1].split("```")[0]
+                    elif "```" in response:
+                        response = response.split("```")[1].split("```")[0]
+                        
+                    data = json.loads(response.strip())
+                    if isinstance(data, list):
+                        toc_chapters = [str(x).strip() for x in data if str(x).strip()]
+                    elif isinstance(data, dict) and "chapters" in data:
+                        toc_chapters = [str(x).strip() for x in data["chapters"] if str(x).strip()]
+                        
+                    if toc_chapters:
+                        with open(cache_file, "w", encoding="utf-8") as f:
+                            json.dump(toc_chapters, f, ensure_ascii=False)
+                except Exception as e:
+                    logger.error(f"TOC extraction failed: {e}")
+                    toc_chapters = []
+                    
+            if toc_chapters and len(toc_chapters) > 0:
+                logger.info(f"Using extracted TOC with {len(toc_chapters)} chapters for EPUB merging.")
+                chapters = []
+                current_chapter_title = "Front Matter"
+                current_text_blocks = []
+                next_title_idx = 0
+                
+                # Split the entire EPUB text based on LLM TOC
+                for spine_item in spine_items:
+                    t = spine_item['text']
+                    
+                    if next_title_idx < len(toc_chapters):
+                        next_title = toc_chapters[next_title_idx]
+                        clean_t = t.replace(" ", "").replace("\n", "")
+                        clean_title = next_title.replace(" ", "").replace("\n", "")
+                        
+                        if clean_title in clean_t:
+                            if current_text_blocks:
+                                chapters.append(Chapter(
+                                    book_id=book_id,
+                                    order_index=len(chapters),
+                                    title=current_chapter_title,
+                                    content_text="\n\n".join(current_text_blocks)
+                                ))
+                                current_text_blocks = []
+                            
+                            current_chapter_title = next_title
+                            next_title_idx += 1
+                            while next_title_idx < len(toc_chapters):
+                                next_t = toc_chapters[next_title_idx].replace(" ", "").replace("\n", "")
+                                if next_t in clean_t:
+                                    current_chapter_title = toc_chapters[next_title_idx]
+                                    next_title_idx += 1
+                                else:
+                                    break
+                    
+                    current_text_blocks.append(t)
+                    
+                if current_text_blocks:
+                    chapters.append(Chapter(
+                        book_id=book_id,
+                        order_index=len(chapters),
+                        title=current_chapter_title,
+                        content_text="\n\n".join(current_text_blocks)
+                    ))
+                return chapters
+
+        # --- Step 5: Fallback to built-in EPUB TOC mapping ---
         from collections import defaultdict
         href_to_entries: dict = defaultdict(list)
         for e in chapter_entries:

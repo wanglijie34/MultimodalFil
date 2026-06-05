@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import health, files, search, agent, graph, reports, websockets, system, books
+from app.api.v1 import health, files, search, agent, graph, reports, websockets, system, books, game
 
 api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
@@ -11,6 +11,7 @@ api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(websockets.router, tags=["websockets"])
 api_router.include_router(system.router, prefix="/system", tags=["system"])
 api_router.include_router(books.router, prefix="/books", tags=["books"])
+api_router.include_router(game.router, prefix="/game", tags=["game"])
 
 # Future routers
 # api_router.include_router(search.router, prefix="/search", tags=["search"])

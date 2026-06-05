@@ -49,7 +49,7 @@ class LLMService:
             from langchain_openai import ChatOpenAI
 
             model = ChatOpenAI(
-                model="deepseek-chat",
+                model="deepseek-v4-flash",
                 api_key=settings.DEEPSEEK_API_KEY,
                 base_url=settings.DEEPSEEK_BASE_URL,
                 temperature=0.2,
