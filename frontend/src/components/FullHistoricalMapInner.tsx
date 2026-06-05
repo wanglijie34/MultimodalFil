@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import Map, { Source, Layer, Marker, NavigationControl, FullscreenControl } from 'react-map-gl/maplibre';
+import Map, { Source, Layer, Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { mapLocations, mapRelations, MapLocation } from '@/lib/map-data';
 import { factionBoundaries, factionLabels, mingProvinces } from '@/lib/faction-boundaries';
@@ -13,10 +13,12 @@ import { GAME_ASSETS } from '@/lib/gameAssets';
 
 export default function FullHistoricalMapInner() {
   const [activeLocation, setActiveLocation] = useState<MapLocation | null>(null);
-  const [currentZoom, setCurrentZoom] = useState(4.5);
+  const [isMacroView, setIsMacroView] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [activeView, setActiveView] = useState<'standard' | 'famine' | 'stability' | 'tax' | 'military'>('standard');
-  const isMacroView = currentZoom < 4.5;
+  const [clickInfo, setClickInfo] = useState<{lng: number, lat: number, name: string, faction: string, type?: string} | null>(null);
+  const [cursor, setCursor] = useState<string>('');
+  const interactiveLayers = useMemo(() => ['location-circles', 'location-labels', 'faction-names', 'ming-provinces-labels', 'ming-prefectures-labels', 'extra-factions-labels'], []);
   
   const mapStyle = useMemo(() => ({
     version: 8,
@@ -134,25 +136,58 @@ export default function FullHistoricalMapInner() {
           // enable physical 3D terrain
           terrain={{ source: 'terrain-source', exaggeration: 1.5 }}
           maxPitch={85}
-          onZoom={(e) => setCurrentZoom(e.viewState.zoom)}
-          interactiveLayerIds={['location-circles', 'location-labels']}
-          onMouseEnter={(e) => {
-            if (e.features && e.features.length > 0) {
-              e.target.getCanvas().style.cursor = 'pointer';
+          onZoom={(e) => {
+            const newIsMacro = e.viewState.zoom < 4.5;
+            if (newIsMacro !== isMacroView) {
+              setIsMacroView(newIsMacro);
             }
           }}
-          onMouseLeave={(e) => {
-            e.target.getCanvas().style.cursor = '';
+          interactiveLayerIds={interactiveLayers}
+          cursor={cursor}
+          onMouseEnter={(e) => {
+            if (e.features && e.features.length > 0) {
+              setCursor('pointer');
+            }
+          }}
+          onMouseLeave={() => {
+            setCursor('');
           }}
           onClick={(e) => {
             if (e.features && e.features.length > 0) {
               const feature = e.features[0];
               if (feature.layer.id === 'location-circles' || feature.layer.id === 'location-labels') {
                 const loc = mapLocations.find(l => l.id === feature.properties.id);
-                if (loc) setActiveLocation(loc);
+                if (loc) {
+                  setActiveLocation(loc);
+                  setClickInfo(null);
+                }
+              } else if (['faction-names', 'ming-provinces-labels', 'ming-prefectures-labels', 'extra-factions-labels'].includes(feature.layer.id)) {
+                setActiveLocation(null);
+                
+                let type = 'prefecture';
+                let faction = feature.properties?.faction || feature.properties?.province || '大明';
+                
+                if (feature.layer.id === 'faction-names') {
+                  type = 'faction';
+                  faction = feature.properties?.name;
+                } else if (feature.layer.id === 'ming-provinces-labels') {
+                  type = 'province';
+                  faction = '大明帝国';
+                } else if (feature.layer.id === 'extra-factions-labels') {
+                  type = 'tribe';
+                }
+
+                setClickInfo({
+                  lng: e.lngLat.lng,
+                  lat: e.lngLat.lat,
+                  name: feature.properties?.name || '未知区域',
+                  faction,
+                  type
+                });
               }
             } else {
               setActiveLocation(null);
+              setClickInfo(null);
             }
           }}
         >
@@ -204,9 +239,9 @@ export default function FullHistoricalMapInner() {
                 id="extra-factions-labels"
                 type="symbol"
                 layout={{
-                  'text-field': ['get', 'name'],
-                  'text-size': 11,
-                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+                  'text-field': ['concat', '⛺ ', ['get', 'name']],
+                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                  'text-size': 10,
                   'text-letter-spacing': 0.1,
                   'text-anchor': 'center'
                 }}
@@ -230,7 +265,24 @@ export default function FullHistoricalMapInner() {
                               activeView === 'stability' ? '#3366cc' :
                               activeView === 'military' ? '#ff9900' :
                               activeView === 'tax' ? '#996633' :
-                              '#c6a982', // Base parchment color for Ming
+                              ['match', ['get', 'province'],
+                                '陕西', '#c6a982',
+                                '山西', '#ceb28a',
+                                '北直隶', '#be9d73',
+                                '山东', '#c0a680',
+                                '河南', '#cca67a',
+                                '四川', '#ceb28a',
+                                '湖广', '#be9d73',
+                                '江西', '#c6a982',
+                                '南直隶', '#ceb28a',
+                                '浙江', '#cca67a',
+                                '福建', '#c0a680',
+                                '广东', '#c6a982',
+                                '广西', '#be9d73',
+                                '贵州', '#c0a680',
+                                '云南', '#cca67a',
+                                '#c6a982' // Fallback Base parchment color
+                              ],
                 'fill-opacity': isMacroView 
                   ? (activeView !== 'standard' ? 0.5 : 1) 
                   : (activeView !== 'standard' ? 0.3 : 1)
@@ -246,22 +298,59 @@ export default function FullHistoricalMapInner() {
                 'line-dasharray': [3, 2]
               }}
             />
+          </Source>
+          <Source id="ming-prefectures-labels-source" type="geojson" data="/data/ming_prefectures_labels_points.geojson">
+            {!isMacroView && (
+              <Layer
+                id="ming-zhou-labels"
+                type="symbol"
+                filter={['!', ['any', 
+                  ['==', ['get', 'type'], '府'], 
+                  ['==', ['get', 'type'], '军民府'], 
+                  ['==', ['get', 'type'], '都司'], 
+                  ['==', ['get', 'type'], '直隶州'],
+                  ['==', ['get', 'type'], '宣慰司'],
+                  ['==', ['get', 'type'], '宣抚司']
+                ]]}
+                layout={{
+                  'text-field': ['get', 'name'],
+                  'text-size': 10,
+                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+                  'text-letter-spacing': 0.05,
+                  'text-anchor': 'center'
+                }}
+                paint={{
+                  'text-color': '#4a3b2c',
+                  'text-halo-color': 'rgba(215, 196, 161, 0.6)',
+                  'text-halo-width': 1.5,
+                  'text-opacity': 0.6
+                }}
+              />
+            )}
             {!isMacroView && (
               <Layer
                 id="ming-prefectures-labels"
                 type="symbol"
+                filter={['any', 
+                  ['==', ['get', 'type'], '府'], 
+                  ['==', ['get', 'type'], '军民府'], 
+                  ['==', ['get', 'type'], '都司'], 
+                  ['==', ['get', 'type'], '直隶州'],
+                  ['==', ['get', 'type'], '宣慰司'],
+                  ['==', ['get', 'type'], '宣抚司']
+                ]}
                 layout={{
                   'text-field': ['get', 'name'],
-                  'text-size': 12,
-                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+                  'text-size': 13,
+                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
                   'text-letter-spacing': 0.1,
                   'text-anchor': 'center'
                 }}
                 paint={{
                   'text-color': '#3b2f24',
-                  'text-halo-color': 'rgba(215, 196, 161, 0.8)',
+                  'text-halo-color': 'rgba(215, 196, 161, 0.85)',
                   'text-halo-width': 2,
-                  'text-opacity': 0.7
+                  'text-opacity': 0.85
                 }}
               />
             )}
@@ -377,6 +466,62 @@ export default function FullHistoricalMapInner() {
                 }}
               />
             </Source>
+          )}
+
+          {/* Click Popup using Marker for stability */}
+          {clickInfo && !activeLocation && (
+            <Marker
+              longitude={clickInfo.lng}
+              latitude={clickInfo.lat}
+              anchor="bottom"
+              className="z-50 pointer-events-none"
+            >
+              <div className="bg-[#1a120c]/95 border border-[#d49a6a]/40 p-3 shadow-2xl backdrop-blur-md rounded-md min-w-[160px]">
+                <div className="text-[#ffcc99] font-bold text-lg mb-1 flex items-center gap-2 pr-4">
+                  <span className="text-[#d49a6a]">📍</span> {clickInfo.name}
+                </div>
+                <div className="text-[#a88f78] text-sm mb-2">归属: {clickInfo.faction}</div>
+                
+                {/* Dynamic Rich Information Based on Type */}
+                {clickInfo.type && (
+                  <div className="space-y-2 mt-2 pt-2 border-t border-[#d49a6a]/30 text-sm text-[#c6a982]">
+                    {clickInfo.type === 'faction' && (
+                      <>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>阵营领袖</span><span className="font-bold text-[#ffcc99]">{clickInfo.name === '大明帝国' ? '崇祯帝 (朱由检)' : clickInfo.name === '后金' ? '皇太极' : clickInfo.name === '鞑靼' ? '林丹汗' : '当地首领'}</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>国力评级</span><span className="text-yellow-500">{"★".repeat((clickInfo.name.length % 3) + 3)}</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>兵力预估</span><span>{10 + (clickInfo.name.length * 11 % 40)} 万</span></div>
+                      </>
+                    )}
+                    {clickInfo.type === 'province' && (
+                      <>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>布政使/巡抚</span><span>{['洪承畴', '卢象升', '孙传庭', '杨嗣昌'][clickInfo.name.length % 4]}</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>常备驻军</span><span>{3 + (clickInfo.name.length * 7 % 8)} 万</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>赋税重地</span><span className={clickInfo.name.length % 2 === 0 ? "text-green-400" : "text-yellow-400"}>{clickInfo.name.length % 2 === 0 ? "是" : "否"}</span></div>
+                      </>
+                    )}
+                    {clickInfo.type === 'prefecture' && (
+                      <>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>知府</span><span>{['李', '王', '张', '刘', '陈', '赵'][clickInfo.name.length % 6]}某</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>在籍人口</span><span>{10 + (clickInfo.name.length * 13 % 50)} 万户</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>存粮状态</span><span className={clickInfo.name.length % 3 === 0 ? "text-red-400 font-bold" : "text-green-400"}>{clickInfo.name.length % 3 === 0 ? "严重告急" : "尚可维持"}</span></div>
+                      </>
+                    )}
+                    {clickInfo.type === 'tribe' && (
+                      <>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>部落首领</span><span>{['莽古尔泰', '阿敏', '代善', '多尔衮', '豪格'][clickInfo.name.length % 5]}</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>骑兵战力</span><span className="text-orange-400 font-bold">极度危险</span></div>
+                        <div className="flex justify-between border-b border-[#d49a6a]/10 pb-1"><span>对明态度</span><span className={clickInfo.name.length % 2 === 0 ? "text-red-500 font-bold" : "text-yellow-500"}>{clickInfo.name.length % 2 === 0 ? "敌对侵略" : "暗中袭扰"}</span></div>
+                      </>
+                    )}
+                  </div>
+                )}
+                  {activeView === 'standard' && (
+                    <div className="text-[#8a7a63] text-xs italic mt-1">
+                      点击查看地缘详情
+                    </div>
+                  )}
+              </div>
+            </Marker>
           )}
         </Map>
       </div>
