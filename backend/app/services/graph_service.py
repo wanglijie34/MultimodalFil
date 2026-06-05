@@ -27,6 +27,21 @@ class GraphService:
         Text: {chunk_content}
         JSON:"""
         
+        import hashlib
+        import os
+        
+        cache_dir = "llm_cache"
+        os.makedirs(cache_dir, exist_ok=True)
+        content_hash = hashlib.md5(chunk_content.encode("utf-8")).hexdigest()
+        cache_file = os.path.join(cache_dir, f"graph_{content_hash}.json")
+        
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+                
         try:
             response = await llm_service.chat([{"role": "user", "content": prompt}], json_mode=True)
             if "```json" in response:
@@ -42,10 +57,13 @@ class GraphService:
                 response_clean = re.sub(r',\s*([\]}])', r'\1', response)
                 data = json.loads(response_clean.strip())
                 
-            return {
+            final_data = {
                 "entities": data.get("entities", []),
                 "relations": data.get("relations", [])
             }
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(final_data, f, ensure_ascii=False)
+            return final_data
         except Exception as e:
             logger.error(f"Failed to extract entities: {e}")
             return {"entities": [], "relations": []}
@@ -60,6 +78,11 @@ class GraphService:
             return
             
         entity_id_map = {}
+        
+        # Load existing links to prevent duplicate key constraint violations
+        stmt = select(ChunkEntity.entity_id).where(ChunkEntity.chunk_id == chunk_id)
+        result = await db.execute(stmt)
+        linked_entity_ids = set(result.scalars().all())
         
         # 1. Save to Postgres
         for ent in entities:
@@ -112,9 +135,11 @@ class GraphService:
                 
             entity_id_map[name] = db_ent.id
             
-            # Link to Chunk
-            chunk_link = ChunkEntity(chunk_id=chunk_id, entity_id=db_ent.id)
-            db.add(chunk_link)
+            # Link to Chunk (Deduplicate)
+            if db_ent.id not in linked_entity_ids:
+                chunk_link = ChunkEntity(chunk_id=chunk_id, entity_id=db_ent.id)
+                db.add(chunk_link)
+                linked_entity_ids.add(db_ent.id)
             
         # Save Relations to Postgres
         for rel in relations:

@@ -27,3 +27,5 @@ pypdf
 loguru
 EbookLib
 beautifulsoup4
+PyMuPDF
+openai

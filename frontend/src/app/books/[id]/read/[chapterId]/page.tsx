@@ -4,6 +4,8 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2, ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, Menu, Search, BookOpen, FileText, LocateFixed, ChevronsUpDown } from "lucide-react"
 import Link from "next/link"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import HistoricalMap from '@/components/HistoricalMap'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useI18n } from "@/lib/i18n"
@@ -439,6 +441,12 @@ export default function BookReaderPage() {
             <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
               <h4 className="text-sm font-medium text-primary mb-1">AI Assistant</h4>
               <p className="text-xs text-slate-500">Intelligent chat and analysis features will be available here in upcoming phases.</p>
+            </div>
+          </div>
+          <div className="pt-4 border-t">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-2">Historical Map</h4>
+            <div className="h-64 rounded-md overflow-hidden border border-slate-200 shadow-sm relative">
+              <HistoricalMap />
             </div>
           </div>
         </div>

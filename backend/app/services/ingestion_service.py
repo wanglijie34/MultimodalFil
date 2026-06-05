@@ -57,12 +57,13 @@ class IngestionService:
         await db.commit()
         await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "parsing"})
 
+        tmp_path = None
         try:
             # 2. Download from MinIO to local temp file
-            file_data = minio_client.download_file(db_file.storage_key)
+            file_data = await asyncio.to_thread(minio_client.download_file, db_file.storage_key)
             
             with tempfile.NamedTemporaryFile(delete=False, suffix=f".{db_file.file_type}") as tmp:
-                tmp.write(file_data)
+                await asyncio.to_thread(tmp.write, file_data)
                 tmp_path = tmp.name
 
             # 3. Select parser and parse
@@ -70,7 +71,7 @@ class IngestionService:
             if not parser:
                 raise ValueError(f"No parser for file type: {db_file.file_type}")
 
-            parsed_doc = parser.parse(tmp_path, str(file_id))
+            parsed_doc = await asyncio.to_thread(parser.parse, tmp_path, str(file_id))
             
             # 4. Save pages
             db_file.status = "chunking"
@@ -86,7 +87,8 @@ class IngestionService:
                 db.add(db_page)
             
             # 5. Chunk
-            chunks = chunking_service.chunk_document(
+            chunks = await asyncio.to_thread(
+                chunking_service.chunk_document,
                 parsed_doc,
                 chunk_size=profile["chunk_size"],
                 chunk_overlap=profile["chunk_overlap"],
@@ -97,7 +99,7 @@ class IngestionService:
                     "file_category": profile["file_category"],
                     "indexing_profile": profile["indexing_profile"],
                     "query_bias": profile["query_bias"],
-                },
+                }
             )
             db.add_all(chunks)
             
@@ -163,6 +165,9 @@ class IngestionService:
             db_file.error_message = str(e)
             await db.commit()
             await manager.broadcast({"type": "file_status", "file_id": str(file_id), "status": "failed"})
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                await asyncio.to_thread(os.remove, tmp_path)
 
     async def _generate_hierarchical_summaries(self, db: AsyncSession, leaf_chunks: List[DocumentChunk]):
         """RAPTOR-style summary generation"""

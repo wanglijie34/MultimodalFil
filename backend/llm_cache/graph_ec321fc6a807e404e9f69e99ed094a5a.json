@@ -1,0 +1,1 @@
+{"entities": [{"name": "北使紀略", "type": "CONCEPT", "aliases": [], "attributes": {}}, {"name": "專載", "type": "CONCEPT", "aliases": [], "attributes": {}}], "relations": [{"source": "北使紀略", "target": "專載", "relation": "contains"}]}

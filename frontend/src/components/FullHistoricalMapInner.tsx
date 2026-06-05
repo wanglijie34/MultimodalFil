@@ -1,0 +1,416 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import Map, { Source, Layer, Marker, NavigationControl, FullscreenControl } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { mapLocations, mapRelations, MapLocation } from '@/lib/map-data';
+import { factionBoundaries, factionLabels, mingProvinces } from '@/lib/faction-boundaries';
+import { X, MapPin, Shield, Swords, Home, Mountain, Waves, Building2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export default function FullHistoricalMapInner() {
+  const [activeLocation, setActiveLocation] = useState<MapLocation | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(4.5);
+  const isMacroView = currentZoom < 4.5;
+  
+  const mapStyle = useMemo(() => ({
+    version: 8,
+    sources: {
+      'satellite': {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256
+      },
+      'terrain-source': {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        encoding: 'terrarium',
+        tileSize: 256,
+        maxzoom: 15
+      }
+    },
+    layers: [
+      {
+        id: 'satellite-layer',
+        type: 'raster',
+        source: 'satellite',
+        minzoom: 0,
+        maxzoom: 22
+      }
+    ],
+    terrain: {
+      source: 'terrain-source',
+      exaggeration: 1.5 // Make mountains pop!
+    }
+  }), []);
+
+  // Convert relations to GeoJSON for rendering route lines
+  const linesGeoJson = useMemo(() => {
+    return {
+      type: 'FeatureCollection',
+      features: mapRelations.map(rel => {
+        const fromNode = mapLocations.find(l => l.id === rel.from);
+        const toNode = mapLocations.find(l => l.id === rel.to);
+        if (!fromNode || !toNode) return null;
+        
+        let color = '#d49a6a';
+        if (rel.type === 'campaign') color = '#ff4d4d'; // Red for crisis/campaigns
+        if (rel.type === 'route') color = '#4da6ff'; // Blue for postal/logistics
+        if (rel.type === 'defense') color = '#ffb366'; // Orange for defense lines
+        
+        return {
+          type: 'Feature',
+          properties: { ...rel, color },
+          geometry: {
+            type: 'LineString',
+            coordinates: [ [fromNode.lng, fromNode.lat], [toNode.lng, toNode.lat] ]
+          }
+        };
+      }).filter(Boolean)
+    };
+  }, []);
+
+  const locationsGeoJson = useMemo(() => {
+    return {
+      type: 'FeatureCollection',
+      features: mapLocations.map(loc => {
+        let color = '#d49a6a';
+        let radius = 5;
+        if (loc.type === 'capital') { color = '#a32727'; radius = 8; }
+        else if (loc.type === 'city') { color = '#293d3d'; radius = 6; }
+        else if (loc.type === 'fortress') { color = '#4d3c2b'; radius = 6; }
+        else if (loc.type === 'event') { color = '#d94a18'; radius = 7; }
+        else if (loc.type === 'mountain') { color = 'transparent'; radius = 0; }
+        else if (loc.type === 'river') { color = 'transparent'; radius = 0; }
+        
+        let text_color = '#ffcc99';
+        if (loc.type === 'mountain') text_color = '#d4c7b8';
+        if (loc.type === 'river') text_color = '#99ccff';
+        
+        return {
+          type: 'Feature',
+          properties: { ...loc, color, radius, text_color },
+          geometry: { type: 'Point', coordinates: [loc.lng, loc.lat] }
+        };
+      })
+    };
+  }, []);
+
+  const getTypeIcon = (type: string) => {
+    switch(type) {
+      case 'capital': return <Home className="w-5 h-5 text-white" />;
+      case 'city': return <Building2 className="w-4 h-4 text-white" />;
+      case 'fortress': return <Shield className="w-5 h-5 text-white" />;
+      case 'event': return <Swords className="w-5 h-5 text-white" />;
+      case 'mountain': return <Mountain className="w-5 h-5 text-[#d4c7b8]" />;
+      case 'river': return <Waves className="w-5 h-5 text-[#99ccff]" />;
+      default: return <MapPin className="w-5 h-5 text-white" />;
+    }
+  };
+
+  const getMarkerColor = (type: string) => {
+    if (type === 'capital') return 'bg-[#a32727] border-[#ffb366]'; // deep red, golden border
+    if (type === 'city') return 'bg-[#293d3d] border-[#669999]'; // dark teal, muted border
+    if (type === 'fortress') return 'bg-[#4d3c2b] border-[#d49a6a]'; // dark earth
+    if (type === 'event') return 'bg-[#d94a18] border-[#ffb366]'; // fiery orange
+    if (type === 'mountain') return 'bg-transparent border-transparent shadow-none'; 
+    if (type === 'river') return 'bg-transparent border-transparent shadow-none';
+    return 'bg-[#4d3c2b] border-[#d49a6a]';
+  };
+
+  return (
+    <div className="w-full h-full relative overflow-hidden bg-black">
+      {/* 
+        We apply a global CSS filter here to tint the realistic satellite imagery 
+        into a yellowish/warm "sepia" tone to feel like an ancient map/sandbox.
+      */}
+      <div className="absolute inset-0 [&_.maplibregl-canvas]:sepia-[0.4] [&_.maplibregl-canvas]:hue-rotate-[-10deg] [&_.maplibregl-canvas]:contrast-[1.2] [&_.maplibregl-canvas]:brightness-[0.9]">
+        <Map
+          initialViewState={{
+            longitude: 112,
+            latitude: 38,
+            zoom: 4.5,
+            pitch: 60, // Start with a tilted 3D view
+            bearing: 0
+          }}
+          maxBounds={[[70, 0], [150, 55]]} // Restrict to China, Mongolia, SE Asia, Japan
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          mapStyle={mapStyle as any}
+          interactiveLayerIds={[]}
+          // enable physical 3D terrain
+          terrain={{ source: 'terrain-source', exaggeration: 1.5 }}
+          maxPitch={85}
+          onZoom={(e) => setCurrentZoom(e.viewState.zoom)}
+          interactiveLayerIds={['location-circles', 'location-labels']}
+          onMouseEnter={(e) => {
+            if (e.features && e.features.length > 0) {
+              e.target.getCanvas().style.cursor = 'pointer';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.target.getCanvas().style.cursor = '';
+          }}
+          onClick={(e) => {
+            if (e.features && e.features.length > 0) {
+              const feature = e.features[0];
+              if (feature.layer.id === 'location-circles' || feature.layer.id === 'location-labels') {
+                const loc = mapLocations.find(l => l.id === feature.properties.id);
+                if (loc) setActiveLocation(loc);
+              }
+            } else {
+              setActiveLocation(null);
+            }
+          }}
+        >
+          <FullscreenControl position="top-right" />
+          <NavigationControl position="bottom-right" />
+
+          {/* Render Faction Boundaries (Polygons) */}
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <Source id="factions" type="geojson" data={factionBoundaries as any}>
+            <Layer 
+              id="faction-fills"
+              type="fill"
+              filter={['!=', ['get', 'id'], 'ming']}
+              paint={{
+                'fill-color': ['get', 'color'],
+                'fill-opacity': 0.15 // Soft fade
+              }}
+            />
+            <Layer 
+              id="faction-lines"
+              type="line"
+              filter={['!=', ['get', 'id'], 'ming']}
+              paint={{
+                'line-color': ['get', 'color'],
+                'line-width': 25,
+                'line-opacity': 0.4,
+                'line-blur': 15 // Heavy blur for sphere of influence effect
+              }}
+            />
+          </Source>
+
+          {/* Render Ming Prefectures (Always visible to form the solid Ming shape) */}
+          <Source id="ming-prefectures" type="geojson" data="/data/ming_prefectures_1628.geojson">
+            <Layer
+              id="ming-prefectures-fill"
+              type="fill"
+              paint={{
+                'fill-color': '#a32727',
+                'fill-opacity': isMacroView ? 0.15 : 0.03
+              }}
+            />
+            <Layer
+              id="ming-prefectures-line"
+              type="line"
+              paint={{
+                'line-color': '#d49a6a',
+                'line-width': 1,
+                'line-opacity': isMacroView ? 0.1 : 0.25,
+                'line-dasharray': [2, 2]
+              }}
+            />
+            {!isMacroView && (
+              <Layer
+                id="ming-prefectures-labels"
+                type="symbol"
+                layout={{
+                  'text-field': ['get', 'name'],
+                  'text-size': 13,
+                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+                  'text-letter-spacing': 0.2,
+                  'text-anchor': 'center'
+                }}
+                paint={{
+                  'text-color': '#d4b392',
+                  'text-halo-color': 'rgba(40, 20, 10, 0.8)',
+                  'text-halo-width': 1.5,
+                  'text-opacity': 0.9
+                }}
+              />
+            )}
+          </Source>
+
+
+          {/* Render Macro Faction Names (Only in macro view) */}
+          {isMacroView && (
+            <>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Source id="faction-labels" type="geojson" data={factionLabels as any}>
+                <Layer
+                  id="faction-names"
+                  type="symbol"
+                  layout={{
+                    'text-field': ['get', 'name'],
+                    'text-size': 48,
+                    'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                    'text-letter-spacing': 0.2,
+                    'text-anchor': 'center'
+                  }}
+                  paint={{
+                    'text-color': ['get', 'color'],
+                    'text-halo-color': '#000000',
+                    'text-halo-width': 2,
+                    'text-opacity': 0.8
+                  }}
+                />
+              </Source>
+            </>
+          )}
+
+          {/* Render Route Lines and Ming Provinces (Only in micro view) */}
+          {!isMacroView && (
+            <>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Source id="ming-provinces" type="geojson" data={mingProvinces as any}>
+                <Layer
+                  id="ming-provinces-labels"
+                  type="symbol"
+                  layout={{
+                    'text-field': ['get', 'name'],
+                    'text-size': 26,
+                    'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                    'text-letter-spacing': 0.3,
+                    'text-anchor': 'center'
+                  }}
+                  paint={{
+                    'text-color': '#a32727',
+                    'text-halo-color': 'rgba(255, 204, 153, 0.7)',
+                    'text-halo-width': 2,
+                    'text-opacity': 0.7
+                  }}
+                />
+              </Source>
+
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Source id="routes" type="geojson" data={linesGeoJson as any}>
+                <Layer 
+                  id="route-lines-glow"
+                  type="line"
+                  paint={{
+                    'line-color': ['get', 'color'],
+                    'line-width': 6,
+                    'line-opacity': 0.3,
+                    'line-blur': 4
+                  }}
+                />
+                <Layer 
+                  id="route-lines"
+                  type="line"
+                  paint={{
+                    'line-color': ['get', 'color'],
+                    'line-width': 2,
+                    'line-dasharray': [2, 2]
+                  }}
+                />
+              </Source>
+            </>
+          )}
+
+          {/* Render Locations natively to fix 3D terrain drift (Only in micro view) */}
+          {!isMacroView && (
+            <Source id="locations" type="geojson" data={locationsGeoJson as any}>
+              <Layer
+                id="location-circles"
+                type="circle"
+                paint={{
+                  'circle-color': ['get', 'color'],
+                  'circle-radius': ['get', 'radius'],
+                  'circle-stroke-color': '#ffb366',
+                  'circle-stroke-width': ['case', ['==', ['get', 'radius'], 0], 0, 1.5],
+                  'circle-pitch-alignment': 'map'
+                }}
+              />
+              <Layer
+                id="location-labels"
+                type="symbol"
+                layout={{
+                  'text-field': ['get', 'name'],
+                  'text-size': 14,
+                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                  'text-offset': [0, -1.2],
+                  'text-anchor': 'bottom'
+                }}
+                paint={{
+                  'text-color': ['get', 'text_color'],
+                  'text-halo-color': 'rgba(0,0,0,0.8)',
+                  'text-halo-width': 2
+                }}
+              />
+            </Source>
+          )}
+        </Map>
+      </div>
+
+      {/* Slide-over Detail Panel */}
+      <div 
+        className={cn(
+          "absolute top-0 bottom-0 right-0 w-80 bg-[#1a1614]/95 backdrop-blur-xl border-l border-[#d49a6a]/30 z-[400] transition-transform duration-300 ease-in-out shadow-2xl",
+          activeLocation ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        {activeLocation && (
+          <div className="h-full flex flex-col">
+            <div className="p-4 flex items-start justify-between border-b border-[#d49a6a]/20">
+              <div className="flex items-center gap-3">
+                <div className={cn("p-2 rounded-lg border", getMarkerColor(activeLocation.type))}>
+                  {getTypeIcon(activeLocation.type)}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[#ffcc99]">{activeLocation.name}</h3>
+                  <span className="text-xs font-medium uppercase tracking-wider text-[#a88f78]">
+                    {activeLocation.type}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setActiveLocation(null)}
+                className="p-1.5 text-[#a88f78] hover:text-[#ffcc99] hover:bg-[#d49a6a]/20 rounded-md transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-5 flex-1 overflow-y-auto">
+              <p className="text-[#d4c7b8] leading-relaxed text-sm font-serif">
+                {activeLocation.description}
+              </p>
+
+              <div className="mt-8 pt-6 border-t border-[#d49a6a]/20">
+                <h4 className="text-xs font-bold text-[#d49a6a] uppercase tracking-wider mb-4">Related Events & Routes</h4>
+                <div className="space-y-4">
+                  {mapRelations.filter(r => r.from === activeLocation.id || r.to === activeLocation.id).map(rel => {
+                    const isFrom = rel.from === activeLocation.id;
+                    const otherNodeId = isFrom ? rel.to : rel.from;
+                    const otherNode = mapLocations.find(l => l.id === otherNodeId);
+                    
+                    return (
+                      <div key={rel.id} className="bg-black/40 rounded-md p-3 border border-[#d49a6a]/20 hover:border-[#d49a6a]/50 transition-colors cursor-pointer"
+                           onClick={() => {
+                             if (otherNode) setActiveLocation(otherNode);
+                           }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={cn(
+                            "w-2 h-2 rounded-full",
+                            rel.type === 'campaign' ? 'bg-[#ff4d4d]' : rel.type === 'route' ? 'bg-[#4da6ff]' : 'bg-[#d49a6a]'
+                          )} />
+                          <span className="text-sm font-bold text-[#ffcc99]">
+                            {isFrom ? 'To' : 'From'}: {otherNode?.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#a88f78] pl-4 font-serif">{rel.description}</p>
+                      </div>
+                    )
+                  })}
+                  {mapRelations.filter(r => r.from === activeLocation.id || r.to === activeLocation.id).length === 0 && (
+                     <p className="text-xs text-[#8a7a63] italic">No relations recorded.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

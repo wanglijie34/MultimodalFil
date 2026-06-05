@@ -22,8 +22,8 @@ class BookExtractorService:
     async def extract_book_from_file(self, db: AsyncSession, file_id: uuid.UUID) -> Optional[Book]:
         # 1. Verify file
         db_file = await db.get(File, file_id)
-        if not db_file or db_file.file_type != "epub":
-            logger.error(f"File {file_id} is not a valid EPUB.")
+        if not db_file or db_file.file_type not in ["epub", "pdf"]:
+            logger.error(f"File {file_id} is not a valid EPUB or PDF.")
             return None
 
         # Check if already extracted
@@ -33,6 +33,48 @@ class BookExtractorService:
             logger.info(f"Book for file {file_id} already exists.")
             return db_book
 
+        if db_file.file_type == "pdf":
+            from app.models.file import DocumentPage
+            # For PDF, we rely on the parsed DocumentPage from ingestion
+            stmt = select(DocumentPage).where(DocumentPage.file_id == file_id).order_by(DocumentPage.page_number)
+            pages = (await db.execute(stmt)).scalars().all()
+            
+            if not pages:
+                raise ValueError("PDF is still parsing or has no extractable text. Please wait for ingestion to complete.")
+
+            db_book = Book(
+                source_file_id=file_id,
+                title=db_file.original_filename,
+                author="Unknown",
+                language="en",
+                description="Imported PDF Document"
+            )
+            db.add(db_book)
+            await db.flush()
+            
+            import re
+            
+            chapters = []
+            for i, page in enumerate(pages):
+                text = page.text_content or ""
+                # Replace 5 or more repeating dots (common in OCR of TOC) with just "..."
+                text = re.sub(r'[．.。・·]{5,}', '...', text)
+                
+                chapters.append(Chapter(
+                    book_id=db_book.id,
+                    order_index=i,
+                    title=f"Page {page.page_number}",
+                    content_text=text
+                ))
+            
+            if chapters:
+                db.add_all(chapters)
+            await db.commit()
+            await db.refresh(db_book)
+            logger.info(f"Successfully extracted PDF: {db_book.title} with {len(chapters)} pages/chapters.")
+            return db_book
+
+        # === EPUB LOGIC ===
         from app.integrations.minio_client import minio_client
         import tempfile
 

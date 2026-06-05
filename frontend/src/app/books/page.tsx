@@ -38,7 +38,7 @@ export default function BooksPage() {
       ])
       
       setBooks(booksRes)
-      setFiles(filesRes.filter((f: any) => f.file_type === 'epub'))
+      setFiles(filesRes.filter((f: any) => ['epub', 'pdf'].includes(f.file_type)))
     } catch (error) {
       console.error("Error fetching books/files:", error)
     } finally {
@@ -92,7 +92,7 @@ export default function BooksPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("Books")}</h1>
           <p className="text-muted-foreground mt-2">
-            Your personal library of parsed EPUB books.
+            Your personal library of parsed EPUB and PDF books.
           </p>
         </div>
 
