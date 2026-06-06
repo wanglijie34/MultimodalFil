@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { Sidebar } from "./Sidebar"
-import { Save, LogOut, Globe, ScrollText, Users, Map as MapIcon, ChevronRight, UserCircle, PanelLeftOpen, X, AlertTriangle } from "lucide-react";
+import { Save, LogOut, Globe, ScrollText, Users, Map as MapIcon, ChevronRight, ChevronDown, UserCircle, PanelLeftOpen, X, AlertTriangle } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
 import { ToastRegion } from "@/components/ui/toast-region"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { getGameState, advise, Institution, Faction, ConsultationResult, getSaves, saveGame, loadGame } from '@/lib/gameApi'
+import { getGameState, advise, Institution, Faction, ConsultationResult } from '@/lib/gameApi'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -18,6 +18,7 @@ export function AppShell({ children }: AppShellProps) {
   const isFullBleed = pathname === '/map'
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [isTrustExpanded, setIsTrustExpanded] = useState(false)
   
   // Court Panel & Consult State
   const [isCourtOpen, setIsCourtOpen] = useState(false)
@@ -29,10 +30,6 @@ export function AppShell({ children }: AppShellProps) {
   const [consultations, setConsultations] = useState<ConsultationResult[]>([])
   const [selectedMinisters, setSelectedMinisters] = useState<string[]>([])
   
-  // Save/Load States
-  const [isSaveMenuOpen, setIsSaveMenuOpen] = useState(false)
-  const [savesList, setSavesList] = useState<string[]>([])
-  const [saveNameInput, setSaveNameInput] = useState("")
 
   const [gameState, setGameState] = useState<any>({})
 
@@ -95,11 +92,11 @@ export function AppShell({ children }: AppShellProps) {
             </div>
 
             {/* Dashboard Section */}
-            <div className="flex-1 flex justify-center items-center gap-8 text-sm">
+            <div className="flex-1 flex justify-center items-center gap-4 xl:gap-8 text-sm">
               {/* 国库 */}
               <div className="flex flex-col items-center justify-center relative group cursor-help">
                 <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">太仓银 (国库)</span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 whitespace-nowrap">
                   <span className="text-[#8b2323] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     {gameState?.treasury?.silver?.toLocaleString() || '100,000'} <span className="text-sm font-sans">两</span>
                   </span>
@@ -124,7 +121,7 @@ export function AppShell({ children }: AppShellProps) {
               {/* 私房钱 */}
               <div className="flex flex-col items-center justify-center relative group cursor-help">
                 <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">内帑银 (私房钱)</span>
-                <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   <span className="text-[#c09a53] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     {gameState?.treasury?.privy_purse?.toLocaleString() || '2,000,000'} <span className="text-sm font-sans">两</span>
                   </span>
@@ -141,7 +138,7 @@ export function AppShell({ children }: AppShellProps) {
               {/* 存粮 */}
               <div className="flex flex-col items-center justify-center relative group cursor-help">
                 <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">天下存粮 (京仓/通州仓)</span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 whitespace-nowrap">
                   <span className="text-[#e8debe] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                     {gameState?.treasury?.grain?.toLocaleString() || '200,000'} <span className="text-sm font-sans text-[#d4c4a8]">石</span>
                   </span>
@@ -153,6 +150,40 @@ export function AppShell({ children }: AppShellProps) {
                 <div className="absolute top-full mt-4 w-60 p-3 bg-[#1a110b]/95 backdrop-blur-md border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[100] text-[#d4c4a8] text-[13px] leading-relaxed rounded-sm text-left font-serif">
                   京城及周边的战略储备粮。用于赈济灾民或在极度饥荒时平抑粮价。粮草告急将直接导致京城防线崩溃。
                 </div>
+              </div>
+
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-[#c09a53]/20 to-transparent"></div>
+
+              {/* 信任度 */}
+              <div className="flex flex-col items-center justify-center relative cursor-pointer" onClick={() => setIsTrustExpanded(!isTrustExpanded)}>
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest hover:text-[#c09a53] transition-colors">群臣信任</span>
+                  {isTrustExpanded ? <ChevronDown size={14} className="text-[#c09a53] -mt-1"/> : <ChevronRight size={14} className="text-[#c09a53] -mt-1"/>}
+                </div>
+                
+                {isTrustExpanded ? (
+                  <div className="flex items-center gap-4 bg-[#1a110b]/80 border border-[#c09a53]/30 px-3 py-1 rounded shadow-inner" onClick={e => e.stopPropagation()}>
+                     <div className="flex flex-col items-center group relative cursor-help">
+                       <span className="text-[#8b2323] font-bold text-lg font-serif leading-none drop-shadow-sm">{gameState?.emperor?.civil_trust ?? 10}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
+                       <span className="text-[10px] text-[#c09a53] mt-0.5">文官</span>
+                       <div className="absolute top-full mt-3 w-48 p-2.5 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] text-[#d4c4a8] text-[12px] rounded-sm text-center leading-relaxed">
+                         内阁和六部全是敌人。
+                       </div>
+                     </div>
+                     <div className="w-px h-6 bg-[#c09a53]/30"></div>
+                     <div className="flex flex-col items-center group relative cursor-help">
+                       <span className="text-[#8b2323] font-bold text-lg font-serif leading-none drop-shadow-sm">{gameState?.emperor?.eunuch_trust ?? 0}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
+                       <span className="text-[10px] text-[#c09a53] mt-0.5">内廷</span>
+                       <div className="absolute top-full mt-3 w-48 p-2.5 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] text-[#d4c4a8] text-[12px] rounded-sm text-center leading-relaxed">
+                         你身边的太监随时可能在你的饭菜里下毒。
+                       </div>
+                     </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-0.5 opacity-80 hover:opacity-100">
+                    <span className="text-[#8b2323] font-bold text-[18px] font-serif leading-none drop-shadow-[0_0_5px_rgba(139,35,35,0.8)] border border-[#8b2323] px-1 rounded-sm">危</span>
+                  </div>
+                )}
               </div>
 
               <div className="w-px h-10 bg-gradient-to-b from-transparent via-[#c09a53]/20 to-transparent"></div>
@@ -174,19 +205,6 @@ export function AppShell({ children }: AppShellProps) {
             </div>
 
             <div className="flex items-center gap-4 relative z-10">
-              {/* Save/Load Button */}
-              <button
-                onClick={async () => {
-                  const saves = await getSaves();
-                  setSavesList(saves);
-                  setIsSaveMenuOpen(true);
-                }}
-                className="px-3 py-1.5 border border-[#c09a53]/50 bg-[#1a110b]/80 text-[#e4cfa1] hover:bg-[#c09a53]/20 flex items-center gap-2 rounded-sm shadow-sm transition-colors"
-                title="御览玉牒"
-              >
-                <ScrollText className="w-5 h-5" />
-                <span className="text-sm font-bold tracking-widest hidden sm:inline-block">御览玉牒</span>
-              </button>
 
             <div className="relative">
               <button 
@@ -397,72 +415,6 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           )}
 
-          {/* Save/Load Modal */}
-          {isSaveMenuOpen && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center pointer-events-auto z-[500] p-4">
-              <div className="w-[600px] bg-[#1a110b] border-2 border-[#c09a53]/60 shadow-[0_0_50px_rgba(192,154,83,0.3)] relative p-8 flex flex-col rounded-sm">
-                <button onClick={() => setIsSaveMenuOpen(false)} className="absolute top-4 right-4 text-[#c09a53] hover:text-[#e4cfa1]"><X className="w-6 h-6" /></button>
-                <h2 className="text-2xl font-bold text-[#e4cfa1] text-center border-b border-[#c09a53]/30 pb-4 mb-6 flex items-center justify-center gap-3">
-                  <ScrollText /> 御览玉牒 (存档管理)
-                </h2>
-                
-                <div className="mb-8 border border-[#c09a53]/30 p-4 bg-[#2a1d13]/50">
-                  <h3 className="text-[#c09a53] font-bold mb-3">封存宗庙 (新建存档)</h3>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={saveNameInput}
-                      onChange={e => setSaveNameInput(e.target.value)}
-                      placeholder="如: 崇祯元年大捷"
-                      className="flex-1 bg-[#1a110b] border border-[#c09a53]/50 text-[#e4cfa1] px-3 py-2 outline-none focus:border-[#c09a53]"
-                    />
-                    <button 
-                      onClick={async () => {
-                        if (saveNameInput.trim()) {
-                          await saveGame(saveNameInput.trim());
-                          const saves = await getSaves();
-                          setSavesList(saves);
-                          setSaveNameInput("");
-                          showToast("存档成功！", "success");
-                        }
-                      }}
-                      className="bg-[#8b2323]/40 border border-[#8b2323] text-[#e4cfa1] px-6 py-2 hover:bg-[#8b2323]/60 font-bold tracking-widest"
-                    >
-                      封存
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-[#c09a53] font-bold mb-3 border-b border-[#c09a53]/20 pb-2">逆转天机 (读取存档)</h3>
-                  <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-2">
-                    {savesList.length === 0 ? (
-                      <div className="text-center text-[#a38a6a] py-8">暂无宗庙秘档</div>
-                    ) : (
-                      savesList.map(save => (
-                        <div key={save} className="flex items-center justify-between p-3 border border-[#c09a53]/20 bg-[#1a110b] hover:border-[#c09a53]/50 transition-colors">
-                          <span className="text-[#e4cfa1] font-bold">{save}</span>
-                          <button 
-                            onClick={async () => {
-                              showToast(`陛下，正在逆转时空至【${save}】...`, "info");
-                              await loadGame(save);
-                              setIsSaveMenuOpen(false);
-                              showToast("时空逆转成功！", "success");
-                              window.location.reload(); // Reload to refresh everything
-                            }}
-                            className="text-[#c09a53] hover:text-[#e4cfa1] bg-[#c09a53]/10 px-4 py-1 border border-[#c09a53]/30 text-sm tracking-widest"
-                          >
-                            起驾
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
         </main>
       </div>
     </div>

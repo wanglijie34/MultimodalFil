@@ -16,6 +16,13 @@ class ConsultationResult(BaseModel):
 class EdictRequest(BaseModel):
     edict_text: str
 
+class ParseEdictResponse(BaseModel):
+    parsed_policy: List[Dict[str, Any]]
+
+class ExecuteEdictRequest(BaseModel):
+    edict_text: str
+    parsed_policy: List[Dict[str, Any]]
+
 class SimulationResult(BaseModel):
     parsed_policy: List[Dict[str, Any]] = Field(default_factory=list)
     court_flow_results: List[Dict[str, Any]] = Field(default_factory=list)

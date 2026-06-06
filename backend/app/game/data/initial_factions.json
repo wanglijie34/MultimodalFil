@@ -2,7 +2,7 @@
   {
     "faction_id": "jiangnan",
     "name": "江南清流集团",
-    "influence": 60,
+    "influence": 3,
     "loyalty": 45,
     "hostility": 35,
     "policy_preferences": {
@@ -16,7 +16,7 @@
   {
     "faction_id": "beifang",
     "name": "北方官僚",
-    "influence": 55,
+    "influence": 37,
     "loyalty": 50,
     "hostility": 30,
     "policy_preferences": {
@@ -37,18 +37,18 @@
       "anti_eunuch": 0.1,
       "tax_increase": 0.3,
       "relief": -0.2,
-      "military_spending": 1.0,
+      "military_spending": 1,
       "centralization": 0.2
     }
   },
   {
     "faction_id": "eunuch",
     "name": "阉党",
-    "influence": 70,
+    "influence": 60,
     "loyalty": 35,
     "hostility": 45,
     "policy_preferences": {
-      "anti_eunuch": -1.0,
+      "anti_eunuch": -1,
       "tax_increase": 0.3,
       "relief": -0.1,
       "military_spending": 0.2,

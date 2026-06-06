@@ -170,10 +170,18 @@ export async function acceptCandidates(candidateIds: string[]): Promise<boolean>
   return res.status === 'success';
 }
 
-export async function simulateEdict(state: GameState, edict: string): Promise<SimulationResult> {
-  const backendRes = await fetchApi('/game/edict', {
+export async function parseEdict(edict: string): Promise<any[]> {
+  const res = await fetchApi('/game/parse_edict', {
     method: 'POST',
     body: JSON.stringify({ edict_text: edict })
+  });
+  return res.parsed_policy || [];
+}
+
+export async function simulateEdict(state: GameState, edict: string, parsedPolicies: any[]): Promise<SimulationResult> {
+  const backendRes = await fetchApi('/game/execute_edict', {
+    method: 'POST',
+    body: JSON.stringify({ edict_text: edict, parsed_policy: parsedPolicies })
   });
 
   // Map backend's 'new_world_state' and 'narrative' (which is an object) to frontend's expected format

@@ -8,11 +8,13 @@
     "name": "崇祯",
     "prestige": 10,
     "legitimacy": 75,
-    "stress": 80
+    "stress": 80,
+    "civil_trust": 10,
+    "eunuch_trust": 0
   },
   "treasury": {
-    "silver": 100000,
-    "privy_purse": 2000000,
+    "silver": 200000,
+    "privy_purse": 4000000,
     "grain": 200000,
     "grain_consumption": 50000,
     "monthly_income": 500000,

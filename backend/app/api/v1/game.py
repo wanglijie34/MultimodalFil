@@ -58,7 +58,7 @@ async def get_advice(request: AdviseRequest):
 async def chat_with_minister(request: ChatRequest):
     reply = await chat_engine.chat_with_minister(request)
     return ChatResponse(reply=reply)
-from app.models.game_models import AdviseRequest, EdictRequest, SimulationResult, ChatRequest, ChatResponse, AppointRequest, DismissRequest, SaveGameRequest, LoadGameRequest, RecruitRequest, AcceptCandidateRequest
+from app.models.game_models import AdviseRequest, EdictRequest, SimulationResult, ChatRequest, ChatResponse, AppointRequest, DismissRequest, SaveGameRequest, LoadGameRequest, RecruitRequest, AcceptCandidateRequest, ParseEdictResponse, ExecuteEdictRequest
 from app.game.minister_generator import generate_candidates
 
 @router.get("/saves")
@@ -153,12 +153,16 @@ async def dismiss_minister(request: DismissRequest):
             
     return {"status": "success", "dismissed": dismissed}
 
-@router.post("/edict", response_model=SimulationResult)
-async def simulate_edict(request: EdictRequest):
+@router.post("/parse_edict", response_model=ParseEdictResponse)
+async def parse_edict(request: EdictRequest):
     edict_text = request.edict_text
-    
-    # 1. Parse policy
     policies = await policy_parser.parse_edict(edict_text)
+    return ParseEdictResponse(parsed_policy=policies)
+
+@router.post("/execute_edict", response_model=SimulationResult)
+async def execute_edict(request: ExecuteEdictRequest):
+    edict_text = request.edict_text
+    policies = request.parsed_policy
     
     # 2. Court Flow Engine
     flow_results = court_flow_engine.process_policies(policies)

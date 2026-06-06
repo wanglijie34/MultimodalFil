@@ -16,7 +16,7 @@
       "擅长控制官僚"
     ],
     "policy_bias": {
-      "anti_eunuch": -1.0,
+      "anti_eunuch": -1,
       "tax_increase": 0.4,
       "military_spending": 0.2,
       "relief": -0.2,
@@ -46,7 +46,7 @@
     "policy_bias": {
       "anti_eunuch": 0.1,
       "tax_increase": 0.3,
-      "military_spending": 1.0,
+      "military_spending": 1,
       "relief": -0.2,
       "purge": 0.1,
       "centralization": 0.3
@@ -88,7 +88,7 @@
     "name": "温体仁",
     "role": "文官",
     "faction": "jiangnan",
-    "status": "active",
+    "status": "reserve",
     "loyalty_to_emperor": 55,
     "personal_power": 45,
     "competence": 68,
@@ -116,7 +116,7 @@
     "name": "钱谦益",
     "role": "东林文臣",
     "faction": "jiangnan",
-    "status": "active",
+    "status": "reserve",
     "loyalty_to_emperor": 50,
     "personal_power": 45,
     "competence": 65,
@@ -144,7 +144,7 @@
     "name": "李标",
     "role": "内阁大臣",
     "faction": "beifang",
-    "status": "active",
+    "status": "reserve",
     "loyalty_to_emperor": 60,
     "personal_power": 40,
     "competence": 70,
@@ -172,7 +172,7 @@
     "name": "毕自严",
     "role": "户部官员",
     "faction": "beifang",
-    "status": "active",
+    "status": "reserve",
     "loyalty_to_emperor": 58,
     "personal_power": 42,
     "competence": 80,
@@ -188,7 +188,7 @@
       "tax_increase": 0.7,
       "military_spending": -0.2,
       "relief": -0.2,
-      "purge": 0.0,
+      "purge": 0,
       "centralization": 0.5
     },
     "speaking_style": "数字化、现实主义、强调国库承受力",
@@ -341,7 +341,7 @@
       "军阀倾向"
     ],
     "policy_bias": {
-      "military_spending": 1.0,
+      "military_spending": 1,
       "centralization": -0.8
     },
     "speaking_style": "桀骜不驯、推诿怯战、索要封赏",
@@ -398,54 +398,10 @@
     "biography": "曹化淳，少司礼太监，知兵善谋。崇祯初任东厂提督，以忠诚受信。后督理团营，整顿军务，于己巳之变中力守京城，然因权贵掣肘未能全功。甲申之变前辞归，明亡后悲恸自尽，时人惜之。其圆滑处世，亦遭清流非议。"
   },
   {
-    "minister_id": "周延儒",
-    "name": "周延儒",
-    "role": "内阁大臣",
-    "status": "active",
-    "faction": "jiangnan",
-    "personality": [
-      "圆滑",
-      "贪权",
-      "善辩"
-    ],
-    "loyalty_to_emperor": 79,
-    "personal_power": 22,
-    "competence": 88,
-    "corruption": 74,
-    "risk_tolerance": 48,
-    "policy_bias": {},
-    "speaking_style": "...",
-    "department": "内阁",
-    "hometown": "南直隶常州府宜兴县",
-    "biography": "周延儒，万历四十一年状元，以善辩著称，性格圆滑贪权。初任礼部右侍郎，后入阁为首辅。崇祯年间，他周旋于东林党与阉党之间，善于揣摩帝意，屡次被罢免又复起。任内虽有收复永平等功，但总体施政以固权为先，终因虚报战功、纵容亲信而被赐死。"
-  },
-  {
-    "minister_id": "薛国观",
-    "name": "薛国观",
-    "role": "内阁大臣",
-    "status": "active",
-    "faction": "beifang",
-    "personality": [
-      "刻薄",
-      "急功近利",
-      "敛财"
-    ],
-    "loyalty_to_emperor": 83,
-    "personal_power": 31,
-    "competence": 74,
-    "corruption": 10,
-    "risk_tolerance": 46,
-    "policy_bias": {},
-    "speaking_style": "...",
-    "department": "内阁",
-    "hometown": "陕西承宣布政使司西安府韩城县",
-    "biography": "薛国观，万历朝进士，崇祯时任户部尚书，以刻薄急功近利著称。为缓解财政危机，增设税目，盘剥商民，敛财有术，却致民怨沸腾。后因党争失势，被劾罢归，途中暴卒。"
-  },
-  {
     "minister_id": "郑三俊",
     "name": "郑三俊",
     "role": "吏部尚书",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "清正",
@@ -459,7 +415,7 @@
     "risk_tolerance": 89,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "吏部",
+    "department": "",
     "hometown": "南直隶池州府建德县",
     "biography": "郑三俊，明末东林党人，以清正刚直、重法理著称。崇祯年间历任刑部、吏部尚书，执法严明，不阿权贵。然迂腐守旧，屡触帝怒，终因党争罢归。明亡后隐居不仕，忠节以终。"
   },
@@ -467,7 +423,7 @@
     "minister_id": "徐光启",
     "name": "徐光启",
     "role": "礼部尚书",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "务实",
@@ -481,7 +437,7 @@
     "risk_tolerance": 87,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "礼部",
+    "department": "",
     "hometown": "南直隶松江府上海县",
     "biography": "徐光启，南直隶上海人，万历进士，官至礼部尚书兼东阁大学士。师从利玛窦，精通西学，译《几何原本》，编著《农政全书》。忧国务实，力主引进西洋火器以固边防，然朝政腐败，壮志难酬。"
   },
@@ -555,7 +511,7 @@
     "minister_id": "曹于汴",
     "name": "曹于汴",
     "role": "左都御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "beifang",
     "personality": [
       "刚直",
@@ -568,7 +524,7 @@
     "risk_tolerance": 83,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "都察院左右都御史",
+    "department": "",
     "hometown": "山西平阳府安邑县",
     "biography": "曹于汴，字自梁，安邑人。万历二十年进士，历任刑科给事中，刚直不阿，数劾权贵。天启初，任左佥都御史，协理院事，与东林党人同气相求，力主澄清吏治。魏忠贤擅权时，因其嫉恶如仇，被削籍归里。崇祯初复官，升至左都御史。虽遭党祸而不改其志，以风节闻于世。"
   },
@@ -597,7 +553,7 @@
     "minister_id": "王应熊",
     "name": "王应熊",
     "role": "通政使",
-    "status": "active",
+    "status": "reserve",
     "faction": "beifang",
     "personality": [
       "圆融",
@@ -610,7 +566,7 @@
     "risk_tolerance": 30,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "通政司使",
+    "department": "",
     "hometown": "四川承宣布政使司重庆府巴县",
     "biography": "王应熊，字非熊，万历进士，累官至礼部尚书兼东阁大学士。性圆融，善迎合上意，在朝中依违两可，无甚建树。崇祯朝财政困窘，其任户部要职时，未能锐意改革，唯承旨行事，颇受清流非议。后乞归，卒于家。"
   },
@@ -618,7 +574,7 @@
     "minister_id": "吴麟征",
     "name": "吴麟征",
     "role": "吏科给事中",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "忠义",
@@ -631,7 +587,7 @@
     "risk_tolerance": 69,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "六科给事中",
+    "department": "",
     "hometown": "浙江承宣布政使司嘉兴府海盐县",
     "biography": "吴麟征，字圣生，号竹亭，崇祯朝进士。初授建昌知县，以廉能称。擢兵科给事中，直言敢谏，屡劾权佞。甲申之变，李自成破京，麟征身先守正阳门，城陷自缢死。其忠义之举，为东林所重。"
   },
@@ -639,7 +595,7 @@
     "minister_id": "刘宗周",
     "name": "刘宗周",
     "role": "户科给事中",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "大儒",
@@ -653,7 +609,7 @@
     "risk_tolerance": 39,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "六科给事中",
+    "department": "",
     "hometown": "浙江承宣布政使司绍兴府山阴县",
     "biography": "刘宗周，字起东，号念台，明末大儒，蕺山学派创始人。自幼受儒家熏陶，以道德自任。万历二十九年进士，历官礼部主事、左都御史。秉性刚直，屡忤权宦，崇祯时因劾温体仁被削籍。明亡后绝食殉国，终年六十八。著有《人谱》《论语学案》等，其学统影响黄宗羲等。"
   },
@@ -661,7 +617,7 @@
     "minister_id": "倪元璐",
     "name": "倪元璐",
     "role": "礼科给事中",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "才子",
@@ -675,7 +631,7 @@
     "risk_tolerance": 31,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "六科给事中",
+    "department": "",
     "hometown": "浙江承宣布政使司绍兴府上虞县",
     "biography": "倪元璐，字玉汝，号鸿宝。天启二年进士，崇祯朝官至户部尚书。尚气节，以才子名世，工书画。刚正不阿，曾疏劾阉党。李自成破北京，自缢死，忠烈可风。"
   },
@@ -683,7 +639,7 @@
     "minister_id": "左光斗",
     "name": "左光斗",
     "role": "兵科给事中",
-    "status": "active",
+    "status": "dead",
     "faction": "beifang",
     "personality": [
       "铁骨",
@@ -696,7 +652,7 @@
     "risk_tolerance": 50,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "六科给事中",
+    "department": "",
     "hometown": "河南某府县",
     "biography": "左光斗，字遗直，桐城人。东林党中坚，以清廉刚直著称。万历三十五年进士，任御史时力排阉党，巡视屯田，兴修水利，民称其惠。天启中与杨涟共劾魏忠贤，被诬陷下狱，酷刑致死。铁骨铮铮，不畏强御，为晚明直臣之典范。"
   },
@@ -704,7 +660,7 @@
     "minister_id": "黄尊素",
     "name": "黄尊素",
     "role": "刑科给事中",
-    "status": "active",
+    "status": "dead",
     "faction": "jiangnan",
     "personality": [
       "智囊",
@@ -717,7 +673,7 @@
     "risk_tolerance": 32,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "六科给事中",
+    "department": "",
     "hometown": "浙江承宣布政使司绍兴府余姚县",
     "biography": "黄尊素，字真长，明末东林党智囊，以沉稳多谋著称。万历进士，任御史时屡劾阉党，刚直不阿。曾策划援救杨涟、左光斗，事败被逮，受酷刑不屈而死。其子黄宗羲承其志，成一代大儒。"
   },
@@ -725,7 +681,7 @@
     "minister_id": "魏大中",
     "name": "魏大中",
     "role": "工科给事中",
-    "status": "active",
+    "status": "dead",
     "faction": "jiangnan",
     "personality": [
       "激烈",
@@ -738,7 +694,7 @@
     "risk_tolerance": 85,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "六科给事中",
+    "department": "",
     "hometown": "浙江承宣布政使司嘉兴府嘉善县",
     "biography": "魏大中（1575-1625），字孔时，嘉善人。东林党骨干，性刚烈，不畏权贵。万历进士，累官至吏科都给事中。天启间，因弹劾阉党魏忠贤，遭其诬陷，下诏狱，受酷刑死，追谥忠节。"
   },
@@ -746,7 +702,7 @@
     "minister_id": "杨涟",
     "name": "杨涟",
     "role": "浙江道御史",
-    "status": "active",
+    "status": "dead",
     "faction": "jiangnan",
     "personality": [
       "极刚",
@@ -759,7 +715,7 @@
     "risk_tolerance": 84,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "湖广承宣布政使司德安府应山县",
     "biography": "杨涟，字文孺，号大洪，东林党领袖。天启年间任左副都御史，以刚直敢谏闻名。上疏弹劾魏忠贤二十四大罪，虽遭酷刑致死，然其忠烈之气撼动朝野，堪称明末士大夫风骨之巅。"
   },
@@ -788,7 +744,7 @@
     "minister_id": "侯恂",
     "name": "侯恂",
     "role": "福建道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "beifang",
     "personality": [
       "识才",
@@ -801,7 +757,7 @@
     "risk_tolerance": 69,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "河南承宣布政使司归德府商丘县",
     "biography": "侯恂，商丘人，万历进士，东林党要员。以识才著称，曾提携左良玉等将领。天启间因东林党争罢官，崇祯初起复，任户部尚书。后因结党被劾，下狱论死。明亡后殉国，其子侯方域为复社领袖。"
   },
@@ -1211,7 +1167,7 @@
     "minister_id": "游士任",
     "name": "游士任",
     "role": "四川道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "强硬",
@@ -1224,7 +1180,7 @@
     "risk_tolerance": 74,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "湖广承宣布政使司武昌府嘉鱼县",
     "biography": "游士任，天启间进士，授御史。以直言敢谏著称，屡劾阉党及朝中权贵，尤指魏忠贤擅权。崇祯初起复，仍刚正不阿，弹劾不避权幸。后因触怒权臣，被贬谪远方，卒于贬所。其一生以弹劾为业，东林党中称其强硬。"
   },
@@ -1232,7 +1188,7 @@
     "minister_id": "李应升",
     "name": "李应升",
     "role": "陕西道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "不畏死",
@@ -1245,7 +1201,7 @@
     "risk_tolerance": 41,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "南直隶常州府江阴县",
     "biography": "李应升，东林党人，万历四十四年进士，授南康推官，以清正廉明著称。天启年间，任御史，上疏弹劾魏忠贤及其党羽，直言敢谏，不畏权阉。后遭魏忠贤诬陷，被捕入狱，受尽酷刑，不屈而死，年仅三十四岁。其忠义气节，震动朝野。"
   },
@@ -1253,7 +1209,7 @@
     "minister_id": "张弘道",
     "name": "张弘道",
     "role": "云南道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "圆滑",
@@ -1266,7 +1222,7 @@
     "risk_tolerance": 38,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "南直隶应天府上元县",
     "biography": "张弘道，南直隶应天府人，天启二年进士。初任户部主事，以圆滑世故著称，善察上官之意，故仕途平稳。崇祯初年，升任山西司郎中，主管钱粮，然见朝局动荡，常以观望自保，不轻言利弊。时人讥其“但知守成，不知振作”。后因解送钱粮稽迟，被劾罢归。"
   },
@@ -1274,7 +1230,7 @@
     "minister_id": "史记枢",
     "name": "史记枢",
     "role": "河南道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "刚直",
@@ -1287,7 +1243,7 @@
     "risk_tolerance": 44,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "南直隶苏州府吴县",
     "biography": "史记枢，字君敬，南直吴县人。天启二年进士，授福建道御史。崇祯初，屡疏劾阉党余孽，并请罢矿税、止织造，以宽民力。尝巡按陕西，岁饥，不待奏报即发仓赈灾，全活甚众。后以事忤权臣，罢归。性刚直，居官清廉，家无余财，卒之日，敛以布衾。"
   },
@@ -1295,7 +1251,7 @@
     "minister_id": "周宗建",
     "name": "周宗建",
     "role": "广西道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "敢言",
@@ -1308,7 +1264,7 @@
     "risk_tolerance": 32,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "南直隶苏州府吴江县",
     "biography": "周宗建，字季侯，号来玉，南直隶吴江人。万历四十一年进士，授武康知县，擢御史。天启初，疏劾魏忠贤与客氏，直言敢谏，忠贤深恨之。后被诬陷，下诏狱，毙于狱中。崇祯初平反，追赠太仆寺卿。"
   },
@@ -1316,7 +1272,7 @@
     "minister_id": "李邦华",
     "name": "李邦华",
     "role": "广东道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "精干",
@@ -1329,7 +1285,7 @@
     "risk_tolerance": 41,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "江西承宣布政使司吉安府庐陵县",
     "biography": "李邦华，江西庐陵人，东林党人。精干知兵，历任兵部尚书等职。以整饬边防、主张剿抚流寇著称，但受朝局掣肘，崇祯末殉国。"
   },
@@ -1337,7 +1293,7 @@
     "minister_id": "刘之纶",
     "name": "刘之纶",
     "role": "山西道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "beifang",
     "personality": [
       "慷慨",
@@ -1350,7 +1306,7 @@
     "risk_tolerance": 36,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "四川承宣布政使司成都府宜宾县",
     "biography": "刘之纶，字元诚，慷慨谈兵，以东林党人入仕。崇祯二年清军入关，之纶以兵部侍郎自请督师，募万人出京东御敌。因器械不利、援军不至，在遵化娘娘庙山力战殉国。其直言敢谏，然书生用兵，空怀报国之志。"
   },
@@ -1358,7 +1314,7 @@
     "minister_id": "许誉卿",
     "name": "许誉卿",
     "role": "山东道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "固执",
@@ -1371,7 +1327,7 @@
     "risk_tolerance": 62,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "南直隶松江府华亭县",
     "biography": "许誉卿，字公实，东林党人。天启间进士，任吏科给事中，以直言敢谏闻名。崇祯初，屡疏劾阉党余孽，忤旨罢归。后起复原官，仍刚直不阿，弹劾权贵无所避。性固执，与同僚多不合，然清流自许，终以党争去职。明亡后，悲愤而卒。"
   },
@@ -1379,7 +1335,7 @@
     "minister_id": "熊明遇",
     "name": "熊明遇",
     "role": "湖广道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "圆融",
@@ -1392,7 +1348,7 @@
     "risk_tolerance": 43,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "江西承宣布政使司南昌府进贤县",
     "biography": "熊明遇，字子良，万历进士，历任兵科给事中、南京右佥都御史。其人性圆融，善附和时论，在明末党争中屡有周旋。曾上疏言边事，然多随声附和，鲜有独见。崇祯初官至兵部尚书，后因事罢归。著有《绿雪楼集》。"
   },
@@ -1400,7 +1356,7 @@
     "minister_id": "姜曰广",
     "name": "姜曰广",
     "role": "贵州道御史",
-    "status": "active",
+    "status": "reserve",
     "faction": "jiangnan",
     "personality": [
       "名臣",
@@ -1413,7 +1369,7 @@
     "risk_tolerance": 77,
     "policy_bias": {},
     "speaking_style": "...",
-    "department": "十三道监察御史",
+    "department": "",
     "hometown": "江西承宣布政使司南昌府新建县",
     "biography": "姜曰广，崇祯朝名臣，东林党人，以守正不阿著称。历任翰林院编修、吏部侍郎等职，直言敢谏，力主抗清。南明时官至礼部尚书，因党争失势，后殉国。"
   },
@@ -1960,5 +1916,686 @@
     "speaking_style": "...",
     "hometown": "甘肃某府县",
     "biography": "生平不详。"
+  },
+  {
+    "minister_id": "黄立极",
+    "name": "黄立极",
+    "role": "首辅",
+    "department": "内阁",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "圆滑",
+      "阉党核心",
+      "老成"
+    ],
+    "loyalty_to_emperor": 46,
+    "personal_power": 63,
+    "competence": 81,
+    "corruption": 85,
+    "risk_tolerance": 60,
+    "policy_bias": {},
+    "speaking_style": "臣以为...",
+    "hometown": "北直隶大名府元城县",
+    "biography": "黄立极，万历进士，天启间累官礼部尚书兼东阁大学士。为人圆滑老成，深结魏忠贤，成为阉党核心，参与倾陷东林。崇祯即位后，被劾致仕。其仕途以明哲保身著称，无显著建树，终因阉党背景被逐。"
+  },
+  {
+    "minister_id": "施凤来",
+    "name": "施凤来",
+    "role": "次辅",
+    "department": "内阁",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "谄媚",
+      "懦弱",
+      "文辞华丽"
+    ],
+    "loyalty_to_emperor": 43,
+    "personal_power": 61,
+    "competence": 73,
+    "corruption": 64,
+    "risk_tolerance": 41,
+    "policy_bias": {},
+    "speaking_style": "臣以为...",
+    "hometown": "浙江承宣布政使司嘉兴府平湖县",
+    "biography": "施凤来，浙江平湖人。万历三十五年进士，天启间依附魏忠贤，官至礼部尚书兼东阁大学士。其人善写青词，文辞华丽，但性格谄媚懦弱，每议事唯诺顺从。崇祯初被弹劾罢官，后郁郁而终。"
+  },
+  {
+    "minister_id": "张瑞图",
+    "name": "张瑞图",
+    "role": "群辅",
+    "department": "内阁",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "书法名家",
+      "依附",
+      "趋炎附势"
+    ],
+    "loyalty_to_emperor": 52,
+    "personal_power": 61,
+    "competence": 88,
+    "corruption": 70,
+    "risk_tolerance": 62,
+    "policy_bias": {},
+    "speaking_style": "臣以为...",
+    "hometown": "福建承宣布政使司泉州府晋江县",
+    "biography": "张瑞图，万历三十五年探花，以书法名世，与董其昌并称。天启年间，依附魏忠贤，趋炎附势，升至建极殿大学士。其为魏阉撰颂文、书碑文，为人不齿。崇祯即位后，被列入逆案，削籍为民。其书风奇崛，独树一帜，然人品遭史家诟病。"
+  },
+  {
+    "minister_id": "李国𣚴",
+    "name": "李国𣚴",
+    "role": "群辅",
+    "department": "内阁",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "投机分子",
+      "随风倒"
+    ],
+    "loyalty_to_emperor": 41,
+    "personal_power": 89,
+    "competence": 79,
+    "corruption": 71,
+    "risk_tolerance": 57,
+    "policy_bias": {},
+    "speaking_style": "臣以为...",
+    "hometown": "北直隶保定府高阳县",
+    "biography": "万历四十一年进士，初授庶吉士。天启间攀附魏忠贤，任礼部尚书兼东阁大学士，入阁参机务。崇祯初魏阉败，首鼠两端，先劾忠贤以自保，后忤逆温体仁遭贬。其人性狡诈，见风使舵，朝野不齿。"
+  },
+  {
+    "minister_id": "郭允厚",
+    "name": "郭允厚",
+    "role": "群辅/户部尚书",
+    "department": "内阁,户部",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "理财",
+      "偏向阉党",
+      "谨慎"
+    ],
+    "loyalty_to_emperor": 47,
+    "personal_power": 83,
+    "competence": 63,
+    "corruption": 56,
+    "risk_tolerance": 49,
+    "policy_bias": {},
+    "speaking_style": "臣以为...",
+    "hometown": "山东承宣布政使司曹州府曹县",
+    "biography": "郭允厚，万历年间进士，精通理财，曾任户部尚书。崇祯初年为筹措军饷，推行苛税，民怨沸腾。为人谨慎，依附阉党，以迎合上意著称。后因党争罢黜，郁郁而终。"
+  },
+  {
+    "minister_id": "周应秋",
+    "name": "周应秋",
+    "loyalty_to_emperor": 16,
+    "personal_power": 70,
+    "competence": 48,
+    "corruption": 80,
+    "risk_tolerance": 71,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "吏部尚书",
+    "department": "吏部",
+    "faction": "eunuch",
+    "personality": [
+      "贪婪",
+      "五虎之一",
+      "十狗首脑"
+    ],
+    "status": "active",
+    "hometown": "南直隶常州府江阴县",
+    "biography": "周应秋，常州江阴人。万历进士，谄附魏忠贤，拜为义父，得授吏部尚书。性贪，鬻爵纳贿，人称‘周日万’。为阉党‘十狗’之首，主杀戮，陷忠良无算。崇祯立，定逆案，论死。"
+  },
+  {
+    "minister_id": "来宗道",
+    "name": "来宗道",
+    "loyalty_to_emperor": 18,
+    "personal_power": 77,
+    "competence": 38,
+    "corruption": 79,
+    "risk_tolerance": 59,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "礼部尚书",
+    "department": "礼部",
+    "faction": "eunuch",
+    "personality": [
+      "骑墙",
+      "偏向阉党",
+      "懦弱"
+    ],
+    "status": "active",
+    "hometown": "浙江承宣布政使司杭州府海宁县",
+    "biography": "来宗道，浙江海宁人，万历三十二年进士，累官礼部尚书。为人骑墙，初附东林，后见魏忠贤势盛，遂投靠阉党，助其残害忠良。崇祯即位后，首鼠两端，终被弹劾罢官，郁郁而终。"
+  },
+  {
+    "minister_id": "崔呈秀",
+    "name": "崔呈秀",
+    "loyalty_to_emperor": 13,
+    "personal_power": 81,
+    "competence": 60,
+    "corruption": 82,
+    "risk_tolerance": 65,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "兵部尚书兼左都御史",
+    "department": "兵部,都察院左右都御史",
+    "faction": "eunuch",
+    "personality": [
+      "五虎之首",
+      "干练",
+      "狠毒"
+    ],
+    "status": "active",
+    "hometown": "北直隶蓟州卫",
+    "biography": "崔呈秀，蓟州卫人。天启初投靠魏忠贤，为阉党五虎之首。精于罗织罪名，倾陷东林党人。官至兵部尚书、左都御史，贪权纳贿，残害忠良。崇祯登基后遭清算，自知罪不可赦，自缢而死。"
+  },
+  {
+    "minister_id": "苏茂相",
+    "name": "苏茂相",
+    "loyalty_to_emperor": 12,
+    "personal_power": 82,
+    "competence": 35,
+    "corruption": 98,
+    "risk_tolerance": 73,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "刑部尚书",
+    "department": "刑部",
+    "faction": "eunuch",
+    "personality": [
+      "爪牙",
+      "陷害清流",
+      "阿谀"
+    ],
+    "status": "active",
+    "hometown": "福建承宣布政使司泉州府晋江县",
+    "biography": "苏茂相，字弘家，万历朝进士，初任刑部主事，后攀附魏忠贤，屡献谗言构陷东林党人。天启间擢刑部尚书，助阉党罗织罪名，残害杨涟、左光斗等清流。崇祯即位后贬官归乡，乡人嗤之。"
+  },
+  {
+    "minister_id": "薛凤翔",
+    "name": "薛凤翔",
+    "loyalty_to_emperor": 30,
+    "personal_power": 77,
+    "competence": 61,
+    "corruption": 75,
+    "risk_tolerance": 43,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "工部尚书",
+    "department": "工部",
+    "faction": "eunuch",
+    "personality": [
+      "营建生祠",
+      "贪污",
+      "逢迎"
+    ],
+    "status": "active",
+    "hometown": "南直隶常州府武进县",
+    "biography": "薛凤翔以工部尚书自居，实为魏忠贤门下走狗。为邀宠，督建生祠数十座，贪墨工银中饱私囊。凡营缮必先媚阉党，后顾国计，朝野侧目。崇祯初定逆案，名列阉党，终遭罢黜。"
+  },
+  {
+    "minister_id": "房壮丽",
+    "name": "房壮丽",
+    "loyalty_to_emperor": 18,
+    "personal_power": 65,
+    "competence": 71,
+    "corruption": 95,
+    "risk_tolerance": 78,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "右都御史",
+    "department": "都察院左右都御史",
+    "faction": "eunuch",
+    "personality": [
+      "魏党",
+      "言官",
+      "党同伐异"
+    ],
+    "status": "active",
+    "hometown": "北直隶保定府清苑县",
+    "biography": "房壮丽，北直隶清苑人，万历进士。初为御史，见魏忠贤势炽，遂投靠为走狗。天启间屡兴大狱，诬陷东林，擢右都御史。尝构陷杨涟、左光斗，行刑时亲为监斩，谈笑自若。崇祯立，定逆案，论死。"
+  },
+  {
+    "minister_id": "霍维华",
+    "name": "霍维华",
+    "loyalty_to_emperor": 11,
+    "personal_power": 76,
+    "competence": 36,
+    "corruption": 99,
+    "risk_tolerance": 66,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "通政使",
+    "department": "通政司使",
+    "faction": "eunuch",
+    "personality": [
+      "阉党核心",
+      "蒙蔽圣听",
+      "擅权"
+    ],
+    "status": "active",
+    "hometown": "北直隶河间府东光县",
+    "biography": "霍维华，阉党核心，通政使。谄事魏忠贤，为其私改邸报，蒙蔽君听。诬陷忠良，助兴大狱，擅权纳贿，祸国殃民。崇祯即位后，仍施故技，终被罢黜，为天下笑。"
+  },
+  {
+    "minister_id": "陈尔翼",
+    "name": "陈尔翼",
+    "loyalty_to_emperor": 28,
+    "personal_power": 82,
+    "competence": 61,
+    "corruption": 86,
+    "risk_tolerance": 70,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "吏科给事中",
+    "department": "六科给事中",
+    "faction": "eunuch",
+    "personality": [
+      "封驳",
+      "阉党死忠",
+      "攻击东林"
+    ],
+    "status": "active",
+    "hometown": "浙江承宣布政使司宁波府鄞县",
+    "biography": "陈尔翼，阉党忠实走狗，官至吏科给事中。天启间屡上疏攻击东林，以封驳之权阻塞正言，助魏忠贤迫害异己。崇祯初仍不思悔改，反诬东林结党，极尽谄媚凶残之态，终被削籍为民，臭名昭著。"
+  },
+  {
+    "minister_id": "黄宪臣",
+    "name": "黄宪臣",
+    "loyalty_to_emperor": 27,
+    "personal_power": 55,
+    "competence": 68,
+    "corruption": 98,
+    "risk_tolerance": 56,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "户科给事中",
+    "department": "六科给事中",
+    "faction": "eunuch",
+    "personality": [
+      "阉党",
+      "阻挠政策",
+      "趋炎附势"
+    ],
+    "status": "active",
+    "hometown": "北直隶河间府任丘县",
+    "biography": "黄宪臣，北直隶任丘人，户科给事中。谄附魏忠贤，屡上疏弹劾东林，阻挠新政。借查核之权，逼令富户献纳，中饱私囊。崇祯初，阉党势衰，犹妄图攀附权贵，终被清算下狱，天下称快。"
+  },
+  {
+    "minister_id": "李鲁生",
+    "name": "李鲁生",
+    "loyalty_to_emperor": 21,
+    "personal_power": 67,
+    "competence": 78,
+    "corruption": 82,
+    "risk_tolerance": 60,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "礼科给事中",
+    "department": "六科给事中",
+    "faction": "eunuch",
+    "personality": [
+      "阉党",
+      "言辞犀利",
+      "攀附"
+    ],
+    "status": "active",
+    "hometown": "福建承宣布政使司福州府侯官县",
+    "biography": "李鲁生，天启年间礼科给事中，本为诸生，投靠魏忠贤，以言辞犀利、阿谀奉承著称。每有奏疏，必称忠贤为‘厂臣’，不呼其名，极尽谄媚。崇祯初年，阉党倒台，被劾罢官，崇祯帝钦定‘逆案’，列名其中，终身禁锢，乡人耻之。"
+  },
+  {
+    "minister_id": "霍守典",
+    "name": "霍守典",
+    "loyalty_to_emperor": 12,
+    "personal_power": 73,
+    "competence": 58,
+    "corruption": 71,
+    "risk_tolerance": 70,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "兵科给事中",
+    "department": "六科给事中",
+    "faction": "eunuch",
+    "personality": [
+      "阉党",
+      "阻断军情",
+      "畏战"
+    ],
+    "status": "active",
+    "hometown": "山东承宣布政使司东昌府堂邑县",
+    "biography": "霍守典，万历末年为兵科给事中，后依附魏忠贤，成为阉党爪牙。在崇祯年间，他畏敌如虎，多次阻挠军情传达，导致边关战报延误，贻误战机。其为人阴险狡诈，为保全禄位不惜破坏朝政，时人皆唾弃之。"
+  },
+  {
+    "minister_id": "曹顺",
+    "name": "曹顺",
+    "loyalty_to_emperor": 14,
+    "personal_power": 70,
+    "competence": 66,
+    "corruption": 90,
+    "risk_tolerance": 49,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "刑科给事中",
+    "department": "六科给事中",
+    "faction": "eunuch",
+    "personality": [
+      "阉党",
+      "枉法",
+      "构陷"
+    ],
+    "status": "active",
+    "hometown": "北直隶保定府清苑县",
+    "biography": "曹顺，保定清苑人。天启年间投靠魏忠贤，擢刑科给事中。为阉党爪牙，诬陷东林党人，屡兴大狱，酷刑逼供，枉法构陷，朝野侧目。崇祯即位，阉党势衰，曹顺被劾罢官，下狱论死，民心称快。"
+  },
+  {
+    "minister_id": "李恒茂",
+    "name": "李恒茂",
+    "loyalty_to_emperor": 10,
+    "personal_power": 69,
+    "competence": 63,
+    "corruption": 97,
+    "risk_tolerance": 52,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "工科给事中",
+    "department": "六科给事中",
+    "faction": "eunuch",
+    "personality": [
+      "阉党",
+      "贪墨",
+      "包庇"
+    ],
+    "status": "active",
+    "hometown": "北直隶顺德府钜鹿县",
+    "biography": "李恒茂，北直隶钜鹿人，天启年间进士。投靠魏忠贤，任工科给事中，贪墨无度，包庇阉党爪牙。崇祯即位后，因弹劾东林党人而遭贬，后病卒。"
+  },
+  {
+    "minister_id": "梁克从",
+    "name": "梁克从",
+    "loyalty_to_emperor": 19,
+    "personal_power": 72,
+    "competence": 47,
+    "corruption": 90,
+    "risk_tolerance": 44,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "浙江道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "狠辣"
+    ],
+    "status": "active",
+    "hometown": "北直隶真定府赵州",
+    "biography": "梁克从，北直隶真定人，万历朝进士，投靠魏忠贤，位列‘十狗’。任浙江道御史时，罗织东林党罪状，屡兴大狱，酷刑逼供，株连甚众。其人性狠辣，以刑杀为乐，浙中士人畏之如虎。崇祯即位后，被劾罢官，抄没家产，论死。"
+  },
+  {
+    "minister_id": "潘士良",
+    "name": "潘士良",
+    "loyalty_to_emperor": 20,
+    "personal_power": 72,
+    "competence": 38,
+    "corruption": 84,
+    "risk_tolerance": 76,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "江西道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "诬告"
+    ],
+    "status": "active",
+    "hometown": "河南承宣布政使司开封府祥符县",
+    "biography": "潘士良，祥符人，天启年间投靠魏忠贤，任江西道御史，为阉党‘十狗’之一。他专事诬告东林党人，罗织罪名，迫害忠良。崇祯即位后，被列为逆案，削籍为民，遗臭万年。"
+  },
+  {
+    "minister_id": "徐吉",
+    "name": "徐吉",
+    "loyalty_to_emperor": 22,
+    "personal_power": 54,
+    "competence": 72,
+    "corruption": 97,
+    "risk_tolerance": 51,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "福建道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "敛财"
+    ],
+    "status": "active",
+    "hometown": "北直隶保定府雄县",
+    "biography": "徐吉，天启年间攀附魏忠贤，列入阉党“十狗”。为福建道御史时，借查案之名搜刮民财，构陷东林党人，凡不附己者皆劾罢。其敛财手段狠辣，地方富户多被勒索至破家。崇祯即位后，入逆案论死。"
+  },
+  {
+    "minister_id": "王绩",
+    "name": "王绩",
+    "loyalty_to_emperor": 14,
+    "personal_power": 84,
+    "competence": 49,
+    "corruption": 74,
+    "risk_tolerance": 63,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "四川道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "残忍"
+    ],
+    "status": "active",
+    "hometown": "北直隶保定府清苑县",
+    "biography": "王绩，北直隶保定府人，以谄事魏忠贤得任四川道御史。为人残忍，甘为鹰犬，屡兴大狱，残害东林党人。常挟私诬告，罗织罪名，致多家破人亡。朝野侧目，呼为‘十狗’之一，实为阉党之爪牙。"
+  },
+  {
+    "minister_id": "杨维垣",
+    "name": "杨维垣",
+    "loyalty_to_emperor": 10,
+    "personal_power": 69,
+    "competence": 38,
+    "corruption": 96,
+    "risk_tolerance": 79,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "陕西道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十孩儿",
+      "神枪手",
+      "构陷无度"
+    ],
+    "status": "active",
+    "hometown": "山东承宣布政使司登州府蓬莱县",
+    "biography": "杨维垣，万历进士，崇祯初年依附魏忠贤，为阉党十孩儿之一，弹劾东林党不遗余力。后升陕西道御史，构陷忠良无数，尤善使用诬告手段，人称神枪手。甲申之变后降清，终遭清算处死。"
+  },
+  {
+    "minister_id": "袁本秀",
+    "name": "袁本秀",
+    "loyalty_to_emperor": 27,
+    "personal_power": 63,
+    "competence": 73,
+    "corruption": 82,
+    "risk_tolerance": 75,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "云南道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "阿附"
+    ],
+    "status": "active",
+    "hometown": "南直隶苏州府吴江县",
+    "biography": "袁本秀，云南道御史，阉党鹰犬，名列'十狗'。崇祯初年，依附魏忠贤，屡兴大狱，罗织东林党人罪名。忠贤败，阿附新任权阉，弹劾清流不遗余力。为人阴狠贪婪，借巡按之职索贿无度，民怨沸腾。后因党争被劾，黜为庶人，终身不复用。"
+  },
+  {
+    "minister_id": "李灿",
+    "name": "李灿",
+    "loyalty_to_emperor": 20,
+    "personal_power": 71,
+    "competence": 61,
+    "corruption": 88,
+    "risk_tolerance": 62,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "河南道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "贪鄙"
+    ],
+    "status": "active",
+    "hometown": "北直隶河间府献县",
+    "biography": "李灿，献县人，以谄附魏忠贤得授河南道御史。为人贪鄙残刻，常兴大狱，罗织罪名以胁百官，索贿无厌。其为阉党鹰犬，助纣为虐，世人切齿，号曰‘十狗’之一。"
+  },
+  {
+    "minister_id": "鞠国祯",
+    "name": "鞠国祯",
+    "loyalty_to_emperor": 20,
+    "personal_power": 84,
+    "competence": 31,
+    "corruption": 100,
+    "risk_tolerance": 47,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "广西道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "钻营"
+    ],
+    "status": "active",
+    "hometown": "北直隶真定府获鹿县",
+    "biography": "鞠国祯，获鹿人，崇祯朝广西道御史。谄附魏忠贤，列入阉党‘十狗’之列，专以罗织罪名、构陷东林为能事。常借巡视之名，勒索地方，民怨沸腾。忠贤败，仍多方钻营，妄图脱罪，终被追论，下狱瘐死，时人快之。"
+  },
+  {
+    "minister_id": "石三畏",
+    "name": "石三畏",
+    "loyalty_to_emperor": 23,
+    "personal_power": 76,
+    "competence": 51,
+    "corruption": 89,
+    "risk_tolerance": 44,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "广东道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "无耻"
+    ],
+    "status": "active",
+    "hometown": "北直隶河间府沧州",
+    "biography": "石三畏，沧州人，以谄附魏忠贤得授广东道御史。其为十狗之一，专事罗织东林党人，构陷忠良，无耻之极。每出巡，必携忠贤密令，以酷刑逼供，致冤狱无数。崇祯初，逆案定，论死，天下称快。"
+  },
+  {
+    "minister_id": "卓迈",
+    "name": "卓迈",
+    "loyalty_to_emperor": 30,
+    "personal_power": 90,
+    "competence": 78,
+    "corruption": 79,
+    "risk_tolerance": 60,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "山西道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "刻薄"
+    ],
+    "status": "active",
+    "hometown": "福建承宣布政使司福州府闽县",
+    "biography": "卓迈，山西道御史，阉党骨干，名列‘十狗’。刻薄寡恩，善揣上意，屡兴大狱，诬陷东林党人。巡按地方，横征暴敛，民怨沸腾。崇祯即位后，仍不思悔改，终被清算下狱。"
+  },
+  {
+    "minister_id": "陈朝辅",
+    "name": "陈朝辅",
+    "loyalty_to_emperor": 23,
+    "personal_power": 89,
+    "competence": 33,
+    "corruption": 89,
+    "risk_tolerance": 71,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "山东道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "巧言"
+    ],
+    "status": "active",
+    "hometown": "北直隶保定府定兴县",
+    "biography": "陈朝辅，北直保定府人，天启年间依附魏忠贤，为十狗之一。任山东道御史期间，巧言令色，罗织罪名弹劾东林党人，迫害忠良。崇祯即位后清算阉党，其仍持观望狡辩，终被削职为民，遗臭青史。"
+  },
+  {
+    "minister_id": "陆万龄",
+    "name": "陆万龄",
+    "loyalty_to_emperor": 24,
+    "personal_power": 55,
+    "competence": 71,
+    "corruption": 94,
+    "risk_tolerance": 49,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "湖广道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "狂热分子",
+      "提议魏忠贤配享孔庙",
+      "无下限"
+    ],
+    "status": "active",
+    "hometown": "山东承宣布政使司兖州府济宁州",
+    "biography": "陆万龄，山东济宁人，湖广道御史。天启间投靠魏忠贤，极尽谄媚，首倡魏忠贤配享孔庙，称其“驱虏安邦，功在社稷”，遭士林唾弃。崇祯即位后定罪处死，为阉党笑柄。"
+  },
+  {
+    "minister_id": "刘徽",
+    "name": "刘徽",
+    "loyalty_to_emperor": 17,
+    "personal_power": 61,
+    "competence": 71,
+    "corruption": 79,
+    "risk_tolerance": 46,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "role": "贵州道御史",
+    "department": "十三道监察御史",
+    "faction": "eunuch",
+    "personality": [
+      "十狗",
+      "鹰犬",
+      "见风使舵"
+    ],
+    "status": "active",
+    "hometown": "北直隶河间府任丘县",
+    "biography": "刘徽，任丘人，天启间投靠魏忠贤，任贵州道御史，专事罗织东林党罪名，以十狗自居，鹰犬之态毕露。崇祯即位后，见风使舵，反诬同党求生，然终被清算，杖毙狱中，为士林所不齿。"
   }
 ]

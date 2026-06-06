@@ -15,8 +15,6 @@ existing_ministers = [
 
 # 需要补充的朝堂高级实缺官员（补全 UI 上的空缺）
 high_tier_historical = [
-    {"name": "周延儒", "role": "内阁大臣", "department": "内阁", "faction": "revenue_bureaucrats", "personality": ["圆滑", "贪权", "善辩"]},
-    {"name": "薛国观", "role": "内阁大臣", "department": "内阁", "faction": "revenue_bureaucrats", "personality": ["刻薄", "急功近利", "敛财"]},
     {"name": "郑三俊", "role": "吏部尚书", "department": "吏部", "faction": "donglin", "personality": ["清正", "迂腐", "重法理"]},
     {"name": "徐光启", "role": "礼部尚书", "department": "礼部", "faction": "donglin", "personality": ["务实", "精通西学", "忧国"]},
     {"name": "王在晋", "role": "兵部尚书", "department": "兵部", "faction": "revenue_bureaucrats", "personality": ["保守", "稳健", "文臣带兵"]},
