@@ -1,6 +1,8 @@
 export interface MapLocation {
   id: string;
   name: string;
+  lat?: number;
+  lng?: number;
   type: 'capital' | 'fortress' | 'garrison' | 'event' | 'mountain' | 'river' | 'city';
   description: string;
 }

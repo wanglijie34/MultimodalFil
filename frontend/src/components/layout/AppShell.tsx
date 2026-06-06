@@ -34,12 +34,15 @@ export function AppShell({ children }: AppShellProps) {
   const [savesList, setSavesList] = useState<string[]>([])
   const [saveNameInput, setSaveNameInput] = useState("")
 
+  const [gameState, setGameState] = useState<any>({})
+
   useEffect(() => {
     const fetchState = () => {
       getGameState().then(res => {
         if (res.institutions) setInstitutions(res.institutions)
         if (res.factions) setFactions(res.factions)
         if (res.available_ministers) setMinisters(res.available_ministers)
+        if (res.world_state) setGameState(res.world_state)
       }).catch(console.error)
     }
     fetchState()
@@ -66,44 +69,124 @@ export function AppShell({ children }: AppShellProps) {
       <div className="flex flex-col flex-1 overflow-hidden relative">
         <header className="flex h-16 items-center justify-between px-6 border-b border-[#c09a53]/30 bg-[#1a110b]/90 shadow-md relative z-30">
           <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[#c09a53]/50 to-transparent pointer-events-none" />
-          <div className="flex items-center gap-4 relative z-10">
-            {!isSidebarOpen && (
-              <button 
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-2 -ml-2 text-[#a38a6a] hover:text-[#e4cfa1] transition-colors hover:bg-[#c09a53]/20 rounded-md"
-                title="Open Sidebar"
+          <div className="flex items-center gap-4 relative z-10 w-full justify-between pr-4">
+            <div className="flex items-center gap-4">
+              {!isSidebarOpen && (
+                <button 
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-2 -ml-2 text-[#a38a6a] hover:text-[#e4cfa1] transition-colors hover:bg-[#c09a53]/20 rounded-md"
+                  title="Open Sidebar"
+                >
+                  <PanelLeftOpen className="h-5 w-5" />
+                </button>
+              )}
+              <h1 className="text-xl font-bold text-[#e4cfa1] tracking-widest drop-shadow-md whitespace-nowrap">崇祯元年 · 十月</h1>
+              
+              <button
+                onClick={() => setIsCourtOpen(!isCourtOpen)}
+                className="ml-4 w-12 h-12 rounded-full bg-[#1a110b]/95 border-2 border-[#c09a53]/60 shadow-[0_0_15px_rgba(192,154,83,0.3)] flex items-center justify-center transition-all duration-500 text-[#e4cfa1] hover:bg-[#c09a53]/20 hover:scale-110 group relative"
               >
-                <PanelLeftOpen className="h-5 w-5" />
+                <div className="absolute inset-1 border border-[#c09a53]/30 rounded-full pointer-events-none group-hover:border-[#c09a53]/60 transition-colors" />
+                <div className="absolute inset-2 border border-dashed border-[#c09a53]/20 rounded-full pointer-events-none animate-[spin_20s_linear_infinite_reverse]" />
+                <span className="font-bold text-[14px] font-serif leading-tight drop-shadow-md">
+                  朝堂
+                </span>
               </button>
-            )}
-            <h1 className="text-xl font-bold text-[#e4cfa1] tracking-widest drop-shadow-md whitespace-nowrap">崇祯元年 · 十月</h1>
-            
-            {/* The circular button for Court Panel */}
-            <button
-              onClick={() => setIsCourtOpen(!isCourtOpen)}
-              className="ml-4 w-12 h-12 rounded-full bg-[#1a110b]/95 border-2 border-[#c09a53]/60 shadow-[0_0_15px_rgba(192,154,83,0.3)] flex items-center justify-center transition-all duration-500 text-[#e4cfa1] hover:bg-[#c09a53]/20 hover:scale-110 group relative"
-            >
-              <div className="absolute inset-1 border border-[#c09a53]/30 rounded-full pointer-events-none group-hover:border-[#c09a53]/60 transition-colors" />
-              <div className="absolute inset-2 border border-dashed border-[#c09a53]/20 rounded-full pointer-events-none animate-[spin_20s_linear_infinite_reverse]" />
-              <span className="font-bold text-[14px] font-serif leading-tight drop-shadow-md">
-                朝堂
-              </span>
-            </button>
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            {/* Save/Load Button */}
-            <button
-              onClick={async () => {
-                const saves = await getSaves();
-                setSavesList(saves);
-                setIsSaveMenuOpen(true);
-              }}
-              className="px-3 py-1.5 border border-[#c09a53]/50 bg-[#1a110b]/80 text-[#e4cfa1] hover:bg-[#c09a53]/20 flex items-center gap-2 rounded-sm shadow-sm transition-colors mr-2"
-              title="御览玉牒"
-            >
-              <ScrollText className="w-5 h-5" />
-              <span className="text-sm font-bold tracking-widest hidden sm:inline-block">御览玉牒</span>
-            </button>
+            </div>
+
+            {/* Dashboard Section */}
+            <div className="flex-1 flex justify-center items-center gap-8 text-sm">
+              {/* 国库 */}
+              <div className="flex flex-col items-center justify-center relative group cursor-help">
+                <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">太仓银 (国库)</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[#8b2323] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {gameState?.treasury?.silver?.toLocaleString() || '100,000'} <span className="text-sm font-sans">两</span>
+                  </span>
+                  <div className="flex flex-col justify-center gap-1 border-l border-[#c09a53]/20 pl-2 h-7">
+                    <span className="text-[#c09a53] text-[10px] leading-none">岁入: +{(gameState?.treasury?.monthly_income * 12)?.toLocaleString() || '6,000,000'}</span>
+                    <span className="text-[#8b2323] text-[10px] leading-none">岁出: -{(gameState?.treasury?.monthly_expense * 12)?.toLocaleString() || '11,200,000'}</span>
+                  </div>
+                </div>
+                {gameState?.treasury?.debt > 0 && (
+                  <div className="absolute -bottom-8 whitespace-nowrap text-[#8b2323] text-[11px] font-bold animate-pulse border border-[#8b2323]/50 px-2 py-0.5 bg-[#8b2323]/10 backdrop-blur-sm shadow-[0_0_10px_rgba(139,35,35,0.2)]">
+                    欠饷总额: {gameState?.treasury?.debt?.toLocaleString()} 两
+                  </div>
+                )}
+                {/* Tooltip */}
+                <div className="absolute top-full mt-8 w-60 p-3 bg-[#1a110b]/95 backdrop-blur-md border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[100] text-[#d4c4a8] text-[13px] leading-relaxed rounded-sm text-left font-serif">
+                  国家正规财政，用于发放官僚俸禄、军队饷银、兴修水利等。若出现巨额赤字，极易引发军队哗变或流民起义。
+                </div>
+              </div>
+
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-[#c09a53]/20 to-transparent"></div>
+
+              {/* 私房钱 */}
+              <div className="flex flex-col items-center justify-center relative group cursor-help">
+                <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">内帑银 (私房钱)</span>
+                <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[#c09a53] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {gameState?.treasury?.privy_purse?.toLocaleString() || '2,000,000'} <span className="text-sm font-sans">两</span>
+                  </span>
+                  <span className="text-sm drop-shadow-md">🔒</span>
+                </div>
+                {/* Tooltip */}
+                <div className="absolute top-full mt-4 w-60 p-3 bg-[#1a110b]/95 backdrop-blur-md border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[100] text-[#d4c4a8] text-[13px] leading-relaxed rounded-sm text-left font-serif">
+                  皇帝的私人小金库。可用于应急填补国库亏空，但过度动用会损害皇帝威望，让官僚觉得皇帝软弱可欺。
+                </div>
+              </div>
+
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-[#c09a53]/20 to-transparent"></div>
+
+              {/* 存粮 */}
+              <div className="flex flex-col items-center justify-center relative group cursor-help">
+                <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">天下存粮 (京仓/通州仓)</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[#e8debe] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    {gameState?.treasury?.grain?.toLocaleString() || '200,000'} <span className="text-sm font-sans text-[#d4c4a8]">石</span>
+                  </span>
+                  <div className="flex flex-col justify-center border-l border-[#c09a53]/20 pl-2 h-7">
+                    <span className="text-[#8b2323] text-[10px] leading-none">消耗率: -{gameState?.treasury?.grain_consumption?.toLocaleString() || '50,000'} 石/月</span>
+                  </div>
+                </div>
+                {/* Tooltip */}
+                <div className="absolute top-full mt-4 w-60 p-3 bg-[#1a110b]/95 backdrop-blur-md border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[100] text-[#d4c4a8] text-[13px] leading-relaxed rounded-sm text-left font-serif">
+                  京城及周边的战略储备粮。用于赈济灾民或在极度饥荒时平抑粮价。粮草告急将直接导致京城防线崩溃。
+                </div>
+              </div>
+
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-[#c09a53]/20 to-transparent"></div>
+
+              {/* 威望 */}
+              <div className="flex flex-col items-center justify-center relative group cursor-help">
+                <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">天子威望</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-24 h-2.5 bg-[#1a110b] border border-[#c09a53]/30 relative overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.9)] rounded-sm">
+                    <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#8b6b3d] to-[#c09a53] shadow-[0_0_10px_rgba(192,154,83,0.5)]" style={{width: `${Math.min(100, Math.max(0, gameState?.emperor?.prestige || 65))}%`}}/>
+                  </div>
+                  <span className="text-[#e8debe] font-bold font-serif text-xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{gameState?.emperor?.prestige || 65}</span>
+                </div>
+                {/* Tooltip */}
+                <div className="absolute top-full right-0 mt-4 w-60 p-3 bg-[#1a110b]/95 backdrop-blur-md border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[100] text-[#d4c4a8] text-[13px] leading-relaxed rounded-sm text-left font-serif">
+                  体现皇帝在官僚体系和天下的权威。威望过低会导致圣旨难以推行，地方官僚推诿扯皮，甚至引发谋反。
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 relative z-10">
+              {/* Save/Load Button */}
+              <button
+                onClick={async () => {
+                  const saves = await getSaves();
+                  setSavesList(saves);
+                  setIsSaveMenuOpen(true);
+                }}
+                className="px-3 py-1.5 border border-[#c09a53]/50 bg-[#1a110b]/80 text-[#e4cfa1] hover:bg-[#c09a53]/20 flex items-center gap-2 rounded-sm shadow-sm transition-colors"
+                title="御览玉牒"
+              >
+                <ScrollText className="w-5 h-5" />
+                <span className="text-sm font-bold tracking-widest hidden sm:inline-block">御览玉牒</span>
+              </button>
 
             <div className="relative">
               <button 
@@ -176,6 +259,7 @@ export function AppShell({ children }: AppShellProps) {
               </div>
             </div>
           </div>
+        </div>
         </header>
         {/* Court Panel Dropdown */}
         {isCourtOpen && (

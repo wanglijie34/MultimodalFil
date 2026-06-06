@@ -1,30 +1,35 @@
 {
   "turn": 1,
   "date": {
-    "year": 1627,
-    "month": 10
+    "year": 1628,
+    "month": 1
   },
   "emperor": {
     "name": "崇祯",
-    "prestige": 60,
+    "prestige": 10,
     "legitimacy": 75,
-    "stress": 25
+    "stress": 80
   },
   "treasury": {
-    "silver": 1200000,
-    "monthly_income": 180000,
-    "monthly_expense": 230000,
-    "debt": 0
+    "silver": 100000,
+    "privy_purse": 2000000,
+    "grain": 200000,
+    "grain_consumption": 50000,
+    "monthly_income": 500000,
+    "monthly_expense": 933333,
+    "debt": 5200000
   },
   "national_metrics": {
-    "public_support": 45,
-    "bureaucratic_efficiency": 48,
-    "military_readiness": 42,
-    "corruption": 68,
-    "factional_conflict": 72,
-    "disaster_pressure": 65,
-    "rebel_pressure": 35,
-    "manchu_pressure": 70
+    "public_support": 30,
+    "troops": 1100000,
+    "military_equipment": 200000,
+    "bureaucratic_efficiency": 30,
+    "military_readiness": 20,
+    "corruption": 85,
+    "factional_conflict": 85,
+    "disaster_pressure": 90,
+    "rebel_pressure": 60,
+    "manchu_pressure": 85
   },
   "policy_flags": {
     "wei_zhongxian_purged": false,

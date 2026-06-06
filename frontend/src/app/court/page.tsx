@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getGameState, GameState, Minister, chatWithMinister, ChatMessage, getReserveMinisters, appointMinister, dismissMinister, AppointRequest, DismissRequest, AcceptCandidateRequest } from "@/lib/gameApi";
+import { getGameState, GameState, Minister, chatWithMinister, ChatMessage, getReserveMinisters, appointMinister, dismissMinister } from "@/lib/gameApi";
 import { showToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import { X, Send, User, MessageSquare, UserMinus, UserPlus, Users } from "lucide-react";

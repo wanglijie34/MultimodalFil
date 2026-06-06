@@ -1,5 +1,21 @@
 import { fetchApi } from './api';
 
+export interface Minister {
+  minister_id: string;
+  name: string;
+  status: string;
+  role: string;
+  faction: string;
+  department?: string;
+  hometown?: string;
+  loyalty_to_emperor: number;
+  competence: number;
+  corruption: number;
+  personal_power: number;
+  biography?: string;
+  personality?: string[];
+  policy_bias?: Record<string, number>;
+}
 export interface GameState {
   year: number;
   turn: number;
@@ -10,9 +26,13 @@ export interface GameState {
   events: string[];
   // New stats for the updated header
   grain?: number;
+  grain_consumption?: number;
   troops?: number;
   supplies?: number;
   prestige?: number;
+  debt?: number;
+  privy_purse?: number;
+  regions?: any[];
 }
 
 export interface Institution {
@@ -172,7 +192,11 @@ export async function simulateEdict(state: GameState, edict: string): Promise<Si
     troops: ws.military?.troops || state.troops || 0,
     supplies: ws.military?.supplies || state.supplies || 0,
     prestige: ws.emperor?.prestige || state.prestige || 0,
-    grain: state.grain || 2880000 // default mock for grain as it's regional in MVP
+    debt: ws.treasury?.debt || state.debt || 0,
+    privy_purse: ws.treasury?.privy_purse || state.privy_purse || 0,
+    grain: ws.treasury?.grain || state.grain || 0,
+    grain_consumption: ws.treasury?.grain_consumption || state.grain_consumption || 0,
+    regions: backendRes.regions || state.regions || []
   };
 
   const narrativeObj = backendRes.narrative || {};

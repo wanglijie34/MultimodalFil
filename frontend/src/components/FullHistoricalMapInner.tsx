@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Map, { Source, Layer, Marker, Popup, NavigationControl, FullscreenControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { mapLocations, mapRelations, MapLocation } from '@/lib/map-data';
@@ -8,7 +8,7 @@ import { factionBoundaries, factionLabels, mingProvinces } from '@/lib/faction-b
 import { X, MapPin, Shield, Swords, Home, Mountain, Waves, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GameOverlay from './game/GameOverlay';
-import { GameState, getChongzhenDate } from '@/lib/gameApi';
+import { GameState, getGameState } from '@/lib/gameApi';
 import { GAME_ASSETS } from '@/lib/gameAssets';
 
 export default function FullHistoricalMapInner() {
@@ -20,7 +20,23 @@ export default function FullHistoricalMapInner() {
   const [cursor, setCursor] = useState<string>('');
   const interactiveLayers = useMemo(() => ['location-circles', 'location-labels', 'faction-names', 'ming-provinces-labels', 'ming-prefectures-labels', 'extra-factions-labels'], []);
 
-  const dynamicFillColor = useMemo(() => {
+  useEffect(() => {
+    const fetchState = () => {
+      getGameState().then(res => {
+        if (res.world_state) {
+          setGameState({
+            ...res.world_state,
+            regions: res.regions
+          });
+        }
+      }).catch(console.error);
+    };
+    fetchState();
+    window.addEventListener('gameStateChanged', fetchState);
+    return () => window.removeEventListener('gameStateChanged', fetchState);
+  }, []);
+
+  const dynamicFillColor: any = useMemo(() => {
     if (activeView === 'standard' || !gameState?.regions) {
       return [
         'match', ['get', 'province'],
@@ -44,17 +60,16 @@ export default function FullHistoricalMapInner() {
       ];
     }
 
-    const matchExpr: any[] = ['match', ['get', 'province']];
-
     const getFamineColor = (val: number) => {
-      if (val >= 80) return '#6b0000'; // Extreme famine
-      if (val >= 60) return '#9e1a1a'; // Severe famine
-      if (val >= 40) return '#cc3300'; // Moderate
-      if (val >= 20) return '#e65c00'; // Mild
-      return '#c6a982'; // Normal
+      if (val >= 80) return '#6b0000'; // Extreme famine (Dark Red)
+      if (val >= 60) return '#cc3300'; // Severe famine (Red/Orange)
+      if (val >= 40) return '#ff9900'; // Moderate (Orange)
+      if (val >= 20) return '#ffcc66'; // Mild (Light Orange)
+      return '#fcf5d2'; // Normal (Light Yellow)
     };
 
     const getStabilityColor = (val: number) => { 
+      if (val < 0) return '#7f8c8d'; // Neutral / Unknown (Grey)
       if (val >= 80) return '#2980b9'; // Very stable
       if (val >= 60) return '#3498db'; // Stable
       if (val >= 40) return '#c6a982'; // Average
@@ -63,11 +78,11 @@ export default function FullHistoricalMapInner() {
     };
 
     const getTaxColor = (val: number) => {
-      if (val >= 80) return '#3e2723'; // Crushing tax
-      if (val >= 60) return '#5d4037'; // Heavy tax
-      if (val >= 40) return '#8d6e63'; // Moderate
-      if (val >= 20) return '#bcaaa4'; // Light
-      return '#c6a982'; // Normal
+      if (val >= 80) return '#8b0000'; // Crushing tax (Glaring Red)
+      if (val >= 60) return '#cc0000'; // Heavy tax (Red)
+      if (val >= 40) return '#d49a6a'; // Moderate
+      if (val >= 20) return '#e6ccb3'; // Light
+      return '#f5f5dc'; // Normal (Light Beige)
     };
 
     const getMilitaryColor = (val: number) => {
@@ -78,34 +93,118 @@ export default function FullHistoricalMapInner() {
       return '#bf360c'; // Critical danger
     };
 
-    gameState.regions.forEach(region => {
-      matchExpr.push(region.name);
-      
-      let color = '#c6a982';
-      if (activeView === 'famine') color = getFamineColor(region.famine_level || region.disaster_level || 0);
-      else if (activeView === 'stability') color = getStabilityColor(region.public_support || 0);
-      else if (activeView === 'tax') color = getTaxColor(region.tax_burden || 0);
-      else if (activeView === 'military') color = getMilitaryColor(region.defense_level || 0);
+    const geoToRegionMap: Record<string, string> = {
+      '北直隶': '直隶',
+      '南直隶': '江南',
+      '浙江': '江南',
+      '江西': '江南',
+      '福建': '江南',
+      '广东': '湖广', 
+      '广西': '湖广',
+      '云南': '云贵',
+      '贵州': '云贵',
+      '山东': '山东',
+      '山西': '山西',
+      '河南': '河南',
+      '陕西': '陕西',
+      '四川': '四川',
+      '湖广': '湖广'
+    };
 
-      matchExpr.push(color);
+    const regionMap = new globalThis.Map();
+    gameState.regions.forEach(r => regionMap.set(r.name, r));
+
+    const matchExpr: any[] = ['match', ['get', 'province']];
+
+    Object.entries(geoToRegionMap).forEach(([geoProv, gameRegName]) => {
+      const region = regionMap.get(gameRegName);
+      if (region) {
+        let color = '#c6a982';
+        if (activeView === 'famine') color = getFamineColor(region.famine_level || region.disaster_level || 0);
+        else if (activeView === 'stability') color = getStabilityColor(region.public_support || 0);
+        else if (activeView === 'tax') color = getTaxColor(region.tax_burden || 0);
+        else if (activeView === 'military') {
+          let dl = region.defense_level || 0;
+          // Make interior Shaanxi and Shanxi visually lighter green to contrast with Nine Borders
+          if (geoProv === '陕西' || geoProv === '山西' || geoProv === '北直隶') {
+            dl = 40; 
+          }
+          color = getMilitaryColor(dl);
+        }
+        matchExpr.push(geoProv, color);
+      }
     });
 
     matchExpr.push('#c6a982'); // Default fallback
+
+    if (activeView === 'military') {
+      return [
+        'case',
+        ['in', ['get', 'name'], ['literal', [
+          '永平府', '顺天府', '万全都司', '大同府', 
+          '延安府', '榆林卫', '宁夏卫', '宁夏中卫', '宁夏后卫', 
+          '庆阳府', '平凉府', '临洮府', '靖虏卫', 
+          '甘州卫', '肃州卫', '凉州卫', '庄浪卫', '镇夷所', '高台所', '山丹卫', '永昌卫', '镇番卫', '西宁卫'
+        ]]],
+        '#1b5e20', // Deep green for Nine Borders
+        matchExpr
+      ];
+    }
+
     return matchExpr;
 
+  }, [activeView, gameState]);
+
+  const dynamicFactionColor: any = useMemo(() => {
+    const defaultMatch: any[] = ['match', ['get', 'faction'],
+      '后金', '#6a2a2a', 
+      '北元 / 鞑靼', '#4a3b2c', 
+      '瓦剌', '#3b2f4c', 
+      '东察合台汗国', '#2d4c3f', 
+      '吐蕃诸部', '#7a5230'
+    ];
+    if (activeView === 'standard' || !gameState?.regions) {
+      return [...defaultMatch, '#c6a982'];
+    }
+
+    const matchExpr = [...defaultMatch];
+
+    const getFamineColor = (val: number) => {
+      if (val >= 80) return '#6b0000'; if (val >= 60) return '#cc3300'; if (val >= 40) return '#ff9900'; if (val >= 20) return '#ffcc66'; return '#fcf5d2';
+    };
+    const getStabilityColor = (val: number) => { 
+      if (val < 0) return '#7f8c8d'; if (val >= 80) return '#2980b9'; if (val >= 60) return '#3498db'; if (val >= 40) return '#c6a982'; if (val >= 20) return '#e74c3c'; return '#c0392b';
+    };
+    const getTaxColor = (val: number) => {
+      if (val >= 80) return '#8b0000'; if (val >= 60) return '#cc0000'; if (val >= 40) return '#d49a6a'; if (val >= 20) return '#e6ccb3'; return '#f5f5dc';
+    };
+    const getMilitaryColor = (val: number) => {
+      if (val >= 80) return '#1b5e20'; if (val >= 60) return '#388e3c'; if (val >= 40) return '#81c784'; if (val >= 20) return '#f57f17'; return '#bf360c';
+    };
+
+    const liaodong = gameState.regions.find(r => r.name === '辽东');
+    if (liaodong) {
+      let color = '#c6a982';
+      if (activeView === 'famine') color = getFamineColor(liaodong.famine_level || liaodong.disaster_level || 0);
+      else if (activeView === 'stability') color = getStabilityColor(liaodong.public_support || 0);
+      else if (activeView === 'tax') color = getTaxColor(liaodong.tax_burden || 0);
+      else if (activeView === 'military') color = getMilitaryColor(liaodong.defense_level || 0);
+      matchExpr.push('辽东都司', color);
+    }
+
+    matchExpr.push(
+      activeView === 'famine' ? '#cc3300' :
+      activeView === 'stability' ? '#3366cc' :
+      activeView === 'military' ? '#ff9900' :
+      activeView === 'tax' ? '#996633' : '#c6a982'
+    );
+    
+    return matchExpr;
   }, [activeView, gameState]);
   
   const mapStyle = useMemo(() => ({
     version: 8,
-    sources: {
-      'terrain-source': {
-        type: 'raster-dem',
-        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-        encoding: 'terrarium',
-        tileSize: 256,
-        maxzoom: 15
-      }
-    },
+    sources: {},
     layers: [
       {
         id: 'background',
@@ -114,11 +213,7 @@ export default function FullHistoricalMapInner() {
           'background-color': '#1a2228' // Deep ink/teal water
         }
       }
-    ],
-    terrain: {
-      source: 'terrain-source',
-      exaggeration: 1.5 // Make mountains pop!
-    }
+    ]
   }), []);
 
   // Convert relations to GeoJSON for rendering route lines
@@ -177,14 +272,12 @@ export default function FullHistoricalMapInner() {
             longitude: 112,
             latitude: 38,
             zoom: 4.5,
-            pitch: 60, // Start with a tilted 3D view
+            pitch: 0, // Reset to a flat 2D view
             bearing: 0
           }}
           maxBounds={[[70, 0], [150, 55]]} // Restrict to China, Mongolia, SE Asia, Japan
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           mapStyle={mapStyle as any}
-          // enable physical 3D terrain
-          terrain={{ source: 'terrain-source', exaggeration: 1.5 }}
           maxPitch={85}
           onZoom={(e) => {
             const newIsMacro = e.viewState.zoom < 4.5;
@@ -249,25 +342,15 @@ export default function FullHistoricalMapInner() {
             id="extra-factions" 
             type="geojson" 
             data="/data/extra_factions.geojson"
-            tolerance={2.5}
+            tolerance={0}
             maxzoom={9}
           >
             <Layer
               id="extra-factions-fill"
               type="fill"
               paint={{
-                'fill-color': ['match', ['get', 'faction'],
-                  '后金', '#6a2a2a', // Deep blood/crimson for Jurchen
-                  '北元 / 鞑靼', '#4a3b2c', // Dark earth
-                  '瓦剌', '#3b2f4c', // Dark purple-ish
-                  '东察合台汗国', '#2d4c3f', // Dark green
-                  '吐蕃诸部', '#7a5230', // Tibetan bronze/earth
-                  // Default for Dusi/Ming borders
-                  activeView === 'famine' ? '#cc3300' :
-                  activeView === 'stability' ? '#3366cc' :
-                  activeView === 'military' ? '#ff9900' :
-                  activeView === 'tax' ? '#996633' : '#c6a982'
-                ],
+                'fill-color': dynamicFactionColor,
+                'fill-antialias': false,
                 'fill-opacity': ['match', ['get', 'faction'],
                   ['辽东都司'], // Only Liaodong gets parchment look now
                   isMacroView 
@@ -317,7 +400,7 @@ export default function FullHistoricalMapInner() {
             type="geojson" 
             data="/data/ming_prefectures_1628.geojson" 
             generateId={true}
-            tolerance={2.5}
+            tolerance={0}
             maxzoom={9}
           >
             <Layer
@@ -325,6 +408,7 @@ export default function FullHistoricalMapInner() {
               type="fill"
               paint={{
                 'fill-color': dynamicFillColor,
+                'fill-antialias': false,
                 'fill-opacity': isMacroView 
                   ? (activeView !== 'standard' ? 0.7 : 1) 
                   : (activeView !== 'standard' ? 0.5 : 1)
@@ -577,6 +661,18 @@ export default function FullHistoricalMapInner() {
               </div>
             </Marker>
           )}
+
+          {/* Liaodong Military Debt Warning */}
+          {activeView === 'military' && (gameState?.treasury?.debt > 0) && (
+            <Marker longitude={123.1815} latitude={41.2694} anchor="bottom" style={{ zIndex: 100 }}>
+              <div className="flex flex-col items-center animate-pulse pointer-events-none mt-[-20px]">
+                <div className="bg-[#8b2323]/95 border border-[#ff3333] text-white px-2 py-1 rounded text-xs font-bold whitespace-nowrap shadow-[0_0_15px_rgba(255,51,51,0.6)] font-serif">
+                  ⚠️ 银两赤字/欠饷警告
+                </div>
+                <div className="w-0.5 h-6 bg-gradient-to-t from-transparent to-[#ff3333]"></div>
+              </div>
+            </Marker>
+          )}
         </Map>
       </div>
 
@@ -666,7 +762,7 @@ export default function FullHistoricalMapInner() {
       </div>
 
       {/* AI Strategy Game Overlay */}
-      <GameOverlay onStateChange={setGameState} onViewChange={setActiveView} />
+      <GameOverlay gameState={gameState as GameState} onStateChange={setGameState} onViewChange={setActiveView} />
     </div>
   );
 }

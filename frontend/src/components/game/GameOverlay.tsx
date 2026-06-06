@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, CircleDollarSign, Wheat, Tent, Swords, Shield, Heart, X, ScrollText, AlertTriangle, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ScrollText, AlertTriangle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GameState, SimulationResult, simulateEdict } from '@/lib/gameApi';
 import { GAME_ASSETS } from '@/lib/gameAssets';
@@ -10,15 +10,6 @@ interface GameOverlayProps {
   gameState: GameState;
   onStateChange: (newState: GameState) => void;
   onViewChange: (view: 'standard' | 'famine' | 'stability' | 'tax' | 'military') => void;
-}
-
-function formatNumber(val: number, unit: string = '') {
-  if (val >= 10000) {
-    const w = val / 10000;
-    const str = parseFloat(w.toFixed(2)).toString();
-    return `${str}万${unit}`;
-  }
-  return `${val}${unit}`;
 }
 
 const FALLBACK_STATE: GameState = {
@@ -104,21 +95,6 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
       {/* Global Vignette and Paper Texture Overlay */}
       <div className="absolute inset-0 pointer-events-none z-[1] shadow-[inset_0_0_200px_rgba(10,7,5,0.9)] mix-blend-multiply bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjxwYXRoIGQ9Ik0wIDBMNCA0Wk00IDBMMCA0WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-50" />
       
-      {/* Top Resource Bar (Updated to horizontal dark bar design) */}
-      <div className="absolute top-0 left-0 right-0 h-[56px] pointer-events-auto bg-[#0a0705] border-t-[3px] border-b-[3px] border-[#3a2818] flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.9)] relative z-50">
-        <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjxwYXRoIGQ9Ik0wIDBMNCA0Wk00IDBMMCA0WiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] mix-blend-screen pointer-events-none" />
-        <div className="absolute inset-0 border-t border-b border-[#cca366]/20 pointer-events-none" />
-        
-        <div className="flex items-center gap-10 relative z-10 px-8 w-full max-w-[1200px] justify-between">
-          <TopStat icon={<CircleDollarSign className="w-8 h-8" strokeWidth={1.5} />} label="国库" valueStr={formatNumber(gameState.treasury, '两')} />
-          <TopStat icon={<Wheat className="w-8 h-8" strokeWidth={1.5} />} label="粮草" valueStr={formatNumber(gameState.grain || 2880000, '石')} />
-          <TopStat icon={<Tent className="w-8 h-8" strokeWidth={1.5} />} label="兵力" valueStr={formatNumber(gameState.troops || 576000, '')} />
-          <TopStat icon={<Swords className="w-8 h-8" strokeWidth={1.5} />} label="军备" valueStr={formatNumber(gameState.supplies || 90700, '')} />
-          <TopStat icon={<Shield className="w-8 h-8" strokeWidth={1.5} />} label="威望" valueStr={String(gameState.prestige || 10)} />
-          <TopStat icon={<Heart className="w-8 h-8" strokeWidth={1.5} />} label="民心" valueStr={String(gameState.stability || 45)} />
-        </div>
-      </div>
-
       {/* Right Mode Panel */}
       <div className="absolute top-36 right-8 pointer-events-auto flex flex-col items-end z-50">
         <div 
@@ -342,20 +318,6 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
         </div>
       )}
 
-    </div>
-  );
-}
-
-function TopStat({ icon, label, valueStr }: { icon: React.ReactNode, label: string, valueStr: string }) {
-  return (
-    <div className="flex items-center gap-3 relative z-10 group cursor-default">
-      <div className="text-[#a38a6a] flex-shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-        {icon}
-      </div>
-      <div className="flex flex-col justify-center">
-        <span className="text-[14px] text-[#8a7a60] font-bold tracking-widest leading-none mb-1 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">{label}</span>
-        <span className="text-[17px] text-[#e8debe] font-serif tracking-wider leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{valueStr}</span>
-      </div>
     </div>
   );
 }
