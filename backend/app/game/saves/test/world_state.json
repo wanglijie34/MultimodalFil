@@ -1,0 +1,35 @@
+{
+  "turn": 1,
+  "date": {
+    "year": 1627,
+    "month": 10
+  },
+  "emperor": {
+    "name": "崇祯",
+    "prestige": 60,
+    "legitimacy": 75,
+    "stress": 25
+  },
+  "treasury": {
+    "silver": 700000,
+    "monthly_income": 180000,
+    "monthly_expense": 230000,
+    "debt": 0
+  },
+  "national_metrics": {
+    "public_support": 45,
+    "bureaucratic_efficiency": 48,
+    "military_readiness": 42,
+    "corruption": 68,
+    "factional_conflict": 72,
+    "disaster_pressure": 65,
+    "rebel_pressure": 35,
+    "manchu_pressure": 70
+  },
+  "policy_flags": {
+    "wei_zhongxian_purged": false,
+    "liao_tax_increased": true,
+    "large_scale_relief_active": false,
+    "military_reform_active": false
+  }
+}

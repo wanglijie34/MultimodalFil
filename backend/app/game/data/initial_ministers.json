@@ -10,7 +10,11 @@
     "competence": 55,
     "corruption": 90,
     "risk_tolerance": 70,
-    "personality": ["阴鸷", "权力欲强", "擅长控制官僚"],
+    "personality": [
+      "阴鸷",
+      "权力欲强",
+      "擅长控制官僚"
+    ],
     "policy_bias": {
       "anti_eunuch": -1.0,
       "tax_increase": 0.4,
@@ -19,7 +23,9 @@
       "purge": 0.8,
       "centralization": 0.9
     },
-    "speaking_style": "威胁式、恭顺表面、强调朝廷控制"
+    "speaking_style": "威胁式、恭顺表面、强调朝廷控制",
+    "hometown": "北直隶河间府肃宁县",
+    "biography": "魏忠贤，原名李进忠，市井无赖出身，自阉入宫后得宠于熹宗。他阴鸷狠辣，操纵东厂，控制朝堂，打压东林党，权势熏天。虽目不识丁，却擅权术，利用皇帝怠政独揽大权，加速了明朝的没落。"
   },
   {
     "minister_id": "yuan_chonghuan",
@@ -32,7 +38,11 @@
     "competence": 82,
     "corruption": 25,
     "risk_tolerance": 75,
-    "personality": ["强硬", "自信", "重视边防"],
+    "personality": [
+      "强硬",
+      "自信",
+      "重视边防"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.1,
       "tax_increase": 0.3,
@@ -41,20 +51,26 @@
       "purge": 0.1,
       "centralization": 0.3
     },
-    "speaking_style": "直接、军事化、强调辽东不可失"
+    "speaking_style": "直接、军事化、强调辽东不可失",
+    "hometown": "大同某府县",
+    "biography": "袁崇焕，字元素，东莞人。万历进士，自请守辽，筑宁远城，督师蓟辽。宁远之战，重创后金，努尔哈赤受创死。然性刚直，议和后金，杀毛文龙，致己巳之变。崇祯中计，以为通敌，凌迟处死，天下冤之。"
   },
   {
     "minister_id": "sun_chengzong",
     "name": "孙承宗",
     "role": "老臣 / 边防战略家",
-    "faction": "donglin",
+    "faction": "beifang",
     "status": "active",
     "loyalty_to_emperor": 70,
     "personal_power": 50,
     "competence": 88,
     "corruption": 15,
     "risk_tolerance": 50,
-    "personality": ["稳健", "老成", "重视制度"],
+    "personality": [
+      "稳健",
+      "老成",
+      "重视制度"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.6,
       "tax_increase": 0.1,
@@ -63,20 +79,26 @@
       "purge": -0.2,
       "centralization": 0.5
     },
-    "speaking_style": "沉稳、长远、重视制度成本"
+    "speaking_style": "沉稳、长远、重视制度成本",
+    "hometown": "北直隶保定府高阳县",
+    "biography": "孙承宗，东林党人，历仕万历、泰昌、天启、崇祯四朝。为人稳健老成，重制度。曾督师蓟辽，修筑宁远城，擢用袁崇焕、祖大寿等，为关宁防线奠基。后遭魏阉排挤归乡。崇祯十一年清军攻高阳，率家人守城殉国，年七十六。"
   },
   {
     "minister_id": "wen_tiren",
     "name": "温体仁",
     "role": "文官",
-    "faction": "revenue_bureaucrats",
+    "faction": "jiangnan",
     "status": "active",
     "loyalty_to_emperor": 55,
     "personal_power": 45,
     "competence": 68,
     "corruption": 45,
     "risk_tolerance": 60,
-    "personality": ["圆滑", "权谋", "善于迎合"],
+    "personality": [
+      "圆滑",
+      "权谋",
+      "善于迎合"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.2,
       "tax_increase": 0.5,
@@ -85,20 +107,26 @@
       "purge": 0.4,
       "centralization": 0.6
     },
-    "speaking_style": "谨慎、官样文章、善于推责"
+    "speaking_style": "谨慎、官样文章、善于推责",
+    "hometown": "浙江承宣布政使司湖州府乌程县",
+    "biography": "温体仁，乌程人，万历二十六年进士。历任礼部尚书、东阁大学士，崇祯朝首辅。为人圆滑权谋，善揣上意，借‘复社案’打击异己，排斥东林党人。施政一味逢迎，导致国事日非，崇祯末年致仕。"
   },
   {
     "minister_id": "qian_qianyi",
     "name": "钱谦益",
     "role": "东林文臣",
-    "faction": "donglin",
+    "faction": "jiangnan",
     "status": "active",
     "loyalty_to_emperor": 50,
     "personal_power": 45,
     "competence": 65,
     "corruption": 30,
     "risk_tolerance": 35,
-    "personality": ["清议", "重名节", "党争倾向"],
+    "personality": [
+      "清议",
+      "重名节",
+      "党争倾向"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.9,
       "tax_increase": -0.4,
@@ -107,20 +135,26 @@
       "purge": 0.5,
       "centralization": 0.1
     },
-    "speaking_style": "道德化、引用礼制、强调清流"
+    "speaking_style": "道德化、引用礼制、强调清流",
+    "hometown": "南直隶苏州府常熟县",
+    "biography": "字受之，号牧斋，东林党魁，文坛领袖。万历进士，官至礼部侍郎。清军南下时迎降，后暗中资助抗清，晚年以诗文自遣。重名节但晚节有亏，一生陷于党争与气节矛盾中。"
   },
   {
     "minister_id": "li_biao",
     "name": "李标",
     "role": "内阁大臣",
-    "faction": "donglin",
+    "faction": "beifang",
     "status": "active",
     "loyalty_to_emperor": 60,
     "personal_power": 40,
     "competence": 70,
     "corruption": 25,
     "risk_tolerance": 40,
-    "personality": ["谨慎", "温和", "重视朝局稳定"],
+    "personality": [
+      "谨慎",
+      "温和",
+      "重视朝局稳定"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.6,
       "tax_increase": -0.1,
@@ -129,20 +163,26 @@
       "purge": -0.1,
       "centralization": 0.3
     },
-    "speaking_style": "中庸、委婉、强调不可过急"
+    "speaking_style": "中庸、委婉、强调不可过急",
+    "hometown": "北直隶真定府高邑县",
+    "biography": "李标，东林党人，崇祯初年入阁，官至首辅。为人谨慎温和，常劝谏崇祯帝以国事为重，力求朝局稳定。面对党争激烈与内忧外患，他居中调和，但因性格软弱，未能力挽狂澜。后因朝政日非，引疾辞职，归乡而终。"
   },
   {
     "minister_id": "bi_ziyan",
     "name": "毕自严",
     "role": "户部官员",
-    "faction": "revenue_bureaucrats",
+    "faction": "beifang",
     "status": "active",
     "loyalty_to_emperor": 58,
     "personal_power": 42,
     "competence": 80,
     "corruption": 20,
     "risk_tolerance": 45,
-    "personality": ["务实", "财政理性", "重视收支"],
+    "personality": [
+      "务实",
+      "财政理性",
+      "重视收支"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.2,
       "tax_increase": 0.7,
@@ -151,20 +191,26 @@
       "purge": 0.0,
       "centralization": 0.5
     },
-    "speaking_style": "数字化、现实主义、强调国库承受力"
+    "speaking_style": "数字化、现实主义、强调国库承受力",
+    "hometown": "山东承宣布政使司济南府淄川县",
+    "biography": "毕自严，万历进士，官至户部尚书。以务实理财著称，精于核算，力主节流。崇祯初，统筹边饷、辽饷，整顿财政，虽遭掣肘仍竭力维持收支平衡。其《石隐园藏稿》详载明末财政困局，堪称财政理性之典范。"
   },
   {
     "minister_id": "wang_chengen",
     "name": "王承恩",
     "role": "内侍",
-    "faction": "eunuch",
+    "faction": "beifang",
     "status": "active",
     "loyalty_to_emperor": 90,
     "personal_power": 25,
     "competence": 55,
     "corruption": 20,
     "risk_tolerance": 45,
-    "personality": ["忠诚", "谨慎", "近侍视角"],
+    "personality": [
+      "忠诚",
+      "谨慎",
+      "近侍视角"
+    ],
     "policy_bias": {
       "anti_eunuch": 0.1,
       "tax_increase": 0.1,
@@ -173,6 +219,1746 @@
       "purge": -0.2,
       "centralization": 0.4
     },
-    "speaking_style": "恭谨、忧惧、提醒皇帝人心"
+    "speaking_style": "恭谨、忧惧、提醒皇帝人心",
+    "hometown": "北直隶保定府雄县",
+    "biography": "王承恩，保定雄县人，崇祯朝近侍太监。李自成破京时，帝命其监守内城，力战不敌。城陷之际，执意随帝登煤山，帝自缢后，悲泣再拜，亦自缢于侧。其忠义之举，为大明画上悲壮句点。"
+  },
+  {
+    "minister_id": "huang_daozhou",
+    "name": "黄道周",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "loyalty_to_emperor": 85,
+    "personal_power": 30,
+    "competence": 65,
+    "corruption": 5,
+    "risk_tolerance": 80,
+    "personality": [
+      "刚正不阿",
+      "死谏",
+      "忠义"
+    ],
+    "policy_bias": {
+      "anti_eunuch": 0.8,
+      "tax_increase": -0.2,
+      "relief": 0.5
+    },
+    "speaking_style": "引经据典、言辞激烈、毫不退让",
+    "hometown": "福建漳浦县",
+    "biography": "黄道周，福建漳浦人，东林党名臣。以刚正不阿、直言敢谏著称，崇祯朝因多次触怒皇帝而遭贬谪。明亡后，坚持抗清，被俘后不屈而死，忠义凛然。其书法与学问亦为世所重。"
+  },
+  {
+    "minister_id": "shi_kefa",
+    "name": "史可法",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "loyalty_to_emperor": 95,
+    "personal_power": 40,
+    "competence": 75,
+    "corruption": 10,
+    "risk_tolerance": 60,
+    "personality": [
+      "愚忠",
+      "尽责",
+      "文臣带兵"
+    ],
+    "policy_bias": {
+      "anti_eunuch": 0.5,
+      "military_spending": 0.7,
+      "relief": 0.4
+    },
+    "speaking_style": "忠贞不屈、慷慨激昂、以死报国",
+    "hometown": "北直隶河间府沧州",
+    "biography": "史可法，崇祯年间进士，东林党人，以忠义著称。历任户部主事、右佥都御史等职。清军破扬州时，率部死守，城破殉国。虽愚忠无谋，然尽责至死，文臣统兵之典范。"
+  },
+  {
+    "minister_id": "yang_sichang",
+    "name": "杨嗣昌",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "loyalty_to_emperor": 80,
+    "personal_power": 70,
+    "competence": 85,
+    "corruption": 40,
+    "risk_tolerance": 75,
+    "personality": [
+      "四正六隅",
+      "攘外必先安内",
+      "独断"
+    ],
+    "policy_bias": {
+      "tax_increase": 0.9,
+      "military_spending": 0.9,
+      "relief": -0.5,
+      "centralization": 0.8
+    },
+    "speaking_style": "战略宏大、数据详实、手段冷酷",
+    "hometown": "湖广承宣布政使司常德府武陵县",
+    "biography": "杨嗣昌，万历进士，崇祯朝兵部尚书。力主‘四正六隅’十面张网之策以剿流寇，又倡‘攘外必先安内’，致国力疲于内耗。性刚愎，独断专行，终因战略失误，愧惧交加而卒于军中。"
+  },
+  {
+    "minister_id": "sun_chuanting",
+    "name": "孙传庭",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "loyalty_to_emperor": 75,
+    "personal_power": 60,
+    "competence": 90,
+    "corruption": 30,
+    "risk_tolerance": 85,
+    "personality": [
+      "铁腕",
+      "务实",
+      "治军严明"
+    ],
+    "policy_bias": {
+      "tax_increase": 0.6,
+      "military_spending": 0.8,
+      "purge": 0.4
+    },
+    "speaking_style": "干练、务实、常常要钱要粮",
+    "hometown": "宁夏某府县",
+    "biography": "孙传庭，明末督师，以铁腕治军闻名。崇祯年间剿抚流寇，战功卓著，然朝局掣肘。后于潼关与李自成决战，兵败殉国。其务实作风令麾下秦军骁勇，然大明气数已尽，难挽狂澜。"
+  },
+  {
+    "minister_id": "zuo_liangyu",
+    "name": "左良玉",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "loyalty_to_emperor": 40,
+    "personal_power": 80,
+    "competence": 75,
+    "corruption": 70,
+    "risk_tolerance": 60,
+    "personality": [
+      "骄兵悍将",
+      "保存实力",
+      "军阀倾向"
+    ],
+    "policy_bias": {
+      "military_spending": 1.0,
+      "centralization": -0.8
+    },
+    "speaking_style": "桀骜不驯、推诿怯战、索要封赏",
+    "hometown": "延绥某府县",
+    "biography": "左良玉，明末辽东大将，起于行伍，积功至平贼将军。于中原、湖广等地镇压流寇，屡立战功，然骄横跋扈，常保存实力，不听朝廷调遣。闯军东进时避而不战，南明时坐拥武昌，终成军阀，加速明亡。"
+  },
+  {
+    "minister_id": "wu_sangui",
+    "name": "吴三桂",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "loyalty_to_emperor": 50,
+    "personal_power": 75,
+    "competence": 85,
+    "corruption": 60,
+    "risk_tolerance": 70,
+    "personality": [
+      "关宁铁骑",
+      "投机",
+      "骁勇"
+    ],
+    "policy_bias": {
+      "military_spending": 0.9,
+      "centralization": -0.5
+    },
+    "speaking_style": "武将作风、索要军饷、陈述辽东险恶",
+    "hometown": "辽东都指挥使司广宁前屯卫中后所",
+    "biography": "吴三桂，祖籍江南，生于辽东将门。弱冠从军，以关宁铁骑威震边陲。崇祯年间，官至总兵，镇守宁远。甲申国变，引清兵入关，击败李自成，封平西王。后镇守云南，举兵反清，三藩之乱旋起旋灭，终究身败名裂，留下反复无常的历史骂名。"
+  },
+  {
+    "minister_id": "cao_huachun",
+    "name": "曹化淳",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "loyalty_to_emperor": 85,
+    "personal_power": 65,
+    "competence": 60,
+    "corruption": 50,
+    "risk_tolerance": 50,
+    "personality": [
+      "知兵太监",
+      "忠诚",
+      "圆滑"
+    ],
+    "policy_bias": {
+      "anti_eunuch": -0.8,
+      "military_spending": 0.3,
+      "centralization": 0.7
+    },
+    "speaking_style": "奴颜婢膝、旁敲侧击、护主",
+    "hometown": "北直隶保定府容城县",
+    "biography": "曹化淳，少司礼太监，知兵善谋。崇祯初任东厂提督，以忠诚受信。后督理团营，整顿军务，于己巳之变中力守京城，然因权贵掣肘未能全功。甲申之变前辞归，明亡后悲恸自尽，时人惜之。其圆滑处世，亦遭清流非议。"
+  },
+  {
+    "minister_id": "周延儒",
+    "name": "周延儒",
+    "role": "内阁大臣",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "圆滑",
+      "贪权",
+      "善辩"
+    ],
+    "loyalty_to_emperor": 79,
+    "personal_power": 22,
+    "competence": 88,
+    "corruption": 74,
+    "risk_tolerance": 48,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "内阁",
+    "hometown": "南直隶常州府宜兴县",
+    "biography": "周延儒，万历四十一年状元，以善辩著称，性格圆滑贪权。初任礼部右侍郎，后入阁为首辅。崇祯年间，他周旋于东林党与阉党之间，善于揣摩帝意，屡次被罢免又复起。任内虽有收复永平等功，但总体施政以固权为先，终因虚报战功、纵容亲信而被赐死。"
+  },
+  {
+    "minister_id": "薛国观",
+    "name": "薛国观",
+    "role": "内阁大臣",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "刻薄",
+      "急功近利",
+      "敛财"
+    ],
+    "loyalty_to_emperor": 83,
+    "personal_power": 31,
+    "competence": 74,
+    "corruption": 10,
+    "risk_tolerance": 46,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "内阁",
+    "hometown": "陕西承宣布政使司西安府韩城县",
+    "biography": "薛国观，万历朝进士，崇祯时任户部尚书，以刻薄急功近利著称。为缓解财政危机，增设税目，盘剥商民，敛财有术，却致民怨沸腾。后因党争失势，被劾罢归，途中暴卒。"
+  },
+  {
+    "minister_id": "郑三俊",
+    "name": "郑三俊",
+    "role": "吏部尚书",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "清正",
+      "迂腐",
+      "重法理"
+    ],
+    "loyalty_to_emperor": 80,
+    "personal_power": 47,
+    "competence": 56,
+    "corruption": 70,
+    "risk_tolerance": 89,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "吏部",
+    "hometown": "南直隶池州府建德县",
+    "biography": "郑三俊，明末东林党人，以清正刚直、重法理著称。崇祯年间历任刑部、吏部尚书，执法严明，不阿权贵。然迂腐守旧，屡触帝怒，终因党争罢归。明亡后隐居不仕，忠节以终。"
+  },
+  {
+    "minister_id": "徐光启",
+    "name": "徐光启",
+    "role": "礼部尚书",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "务实",
+      "精通西学",
+      "忧国"
+    ],
+    "loyalty_to_emperor": 86,
+    "personal_power": 49,
+    "competence": 78,
+    "corruption": 32,
+    "risk_tolerance": 87,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "礼部",
+    "hometown": "南直隶松江府上海县",
+    "biography": "徐光启，南直隶上海人，万历进士，官至礼部尚书兼东阁大学士。师从利玛窦，精通西学，译《几何原本》，编著《农政全书》。忧国务实，力主引进西洋火器以固边防，然朝政腐败，壮志难酬。"
+  },
+  {
+    "minister_id": "王在晋",
+    "name": "王在晋",
+    "role": "兵部尚书",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "保守",
+      "稳健",
+      "文臣带兵"
+    ],
+    "loyalty_to_emperor": 84,
+    "personal_power": 49,
+    "competence": 61,
+    "corruption": 41,
+    "risk_tolerance": 79,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "兵部",
+    "hometown": "南直隶苏州府太仓州",
+    "biography": "王在晋，万历进士，历任户部主事、兵部尚书等职。以稳健保守著称，主张固守辽东，反对袁崇焕等冒进之策。督师蓟辽期间，强调屯田练兵，然与孙承宗、袁崇焕等意见不合，后因党争去职。其理财重节流，但难挽明朝财政颓势。"
+  },
+  {
+    "minister_id": "乔允升",
+    "name": "乔允升",
+    "role": "刑部尚书",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "宽厚",
+      "清廉",
+      "恤刑"
+    ],
+    "loyalty_to_emperor": 43,
+    "personal_power": 69,
+    "competence": 57,
+    "corruption": 47,
+    "risk_tolerance": 55,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "刑部",
+    "hometown": "南直隶扬州府宝应县",
+    "biography": "乔允升，字吉甫，号贞庵，南直隶宝应人。万历二十年进士，官至刑部尚书。性宽厚，廉明有守，谙练法律，屡决疑狱，平反甚多。崇祯时，以笔误坐事，戍边，朝野惜之。"
+  },
+  {
+    "minister_id": "南居益",
+    "name": "南居益",
+    "role": "工部尚书",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "实干",
+      "忠直",
+      "擅造船炮"
+    ],
+    "loyalty_to_emperor": 40,
+    "personal_power": 63,
+    "competence": 57,
+    "corruption": 49,
+    "risk_tolerance": 69,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "工部",
+    "hometown": "陕西承宣布政使司同州府渭南县",
+    "biography": "南居益，陕西渭南人，东林党人，以实干忠直著称。天启间任福建巡抚，督造战船、火药，整顿水师，屡挫荷兰殖民者。崇祯初任户部侍郎，疏陈战守大计，遭排挤去职。后因拒饷李自成，绝食而死。"
+  },
+  {
+    "minister_id": "曹于汴",
+    "name": "曹于汴",
+    "role": "左都御史",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "刚直",
+      "嫉恶如仇"
+    ],
+    "loyalty_to_emperor": 43,
+    "personal_power": 28,
+    "competence": 87,
+    "corruption": 35,
+    "risk_tolerance": 83,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "都察院左右都御史",
+    "hometown": "山西平阳府安邑县",
+    "biography": "曹于汴，字自梁，安邑人。万历二十年进士，历任刑科给事中，刚直不阿，数劾权贵。天启初，任左佥都御史，协理院事，与东林党人同气相求，力主澄清吏治。魏忠贤擅权时，因其嫉恶如仇，被削籍归里。崇祯初复官，升至左都御史。虽遭党祸而不改其志，以风节闻于世。"
+  },
+  {
+    "minister_id": "房可壮",
+    "name": "房可壮",
+    "role": "右都御史",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "清流",
+      "死谏"
+    ],
+    "loyalty_to_emperor": 64,
+    "personal_power": 70,
+    "competence": 83,
+    "corruption": 57,
+    "risk_tolerance": 88,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "都察院左右都御史",
+    "hometown": "山东青州府益都县",
+    "biography": "房可壮，万历年间进士，东林党人。以清流自居，不畏权贵，屡次上疏弹劾阉党及朝中奸佞。崇祯年间，因直言进谏触怒皇帝，被下狱致死，其刚烈直谏之名传于后世。"
+  },
+  {
+    "minister_id": "王应熊",
+    "name": "王应熊",
+    "role": "通政使",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "圆融",
+      "附和"
+    ],
+    "loyalty_to_emperor": 44,
+    "personal_power": 55,
+    "competence": 86,
+    "corruption": 38,
+    "risk_tolerance": 30,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "通政司使",
+    "hometown": "四川承宣布政使司重庆府巴县",
+    "biography": "王应熊，字非熊，万历进士，累官至礼部尚书兼东阁大学士。性圆融，善迎合上意，在朝中依违两可，无甚建树。崇祯朝财政困窘，其任户部要职时，未能锐意改革，唯承旨行事，颇受清流非议。后乞归，卒于家。"
+  },
+  {
+    "minister_id": "吴麟征",
+    "name": "吴麟征",
+    "role": "吏科给事中",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "忠义",
+      "直言"
+    ],
+    "loyalty_to_emperor": 93,
+    "personal_power": 59,
+    "competence": 60,
+    "corruption": 63,
+    "risk_tolerance": 69,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "六科给事中",
+    "hometown": "浙江承宣布政使司嘉兴府海盐县",
+    "biography": "吴麟征，字圣生，号竹亭，崇祯朝进士。初授建昌知县，以廉能称。擢兵科给事中，直言敢谏，屡劾权佞。甲申之变，李自成破京，麟征身先守正阳门，城陷自缢死。其忠义之举，为东林所重。"
+  },
+  {
+    "minister_id": "刘宗周",
+    "name": "刘宗周",
+    "role": "户科给事中",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "大儒",
+      "偏执",
+      "高道德"
+    ],
+    "loyalty_to_emperor": 58,
+    "personal_power": 79,
+    "competence": 70,
+    "corruption": 57,
+    "risk_tolerance": 39,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "六科给事中",
+    "hometown": "浙江承宣布政使司绍兴府山阴县",
+    "biography": "刘宗周，字起东，号念台，明末大儒，蕺山学派创始人。自幼受儒家熏陶，以道德自任。万历二十九年进士，历官礼部主事、左都御史。秉性刚直，屡忤权宦，崇祯时因劾温体仁被削籍。明亡后绝食殉国，终年六十八。著有《人谱》《论语学案》等，其学统影响黄宗羲等。"
+  },
+  {
+    "minister_id": "倪元璐",
+    "name": "倪元璐",
+    "role": "礼科给事中",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "才子",
+      "忠烈",
+      "尚气节"
+    ],
+    "loyalty_to_emperor": 80,
+    "personal_power": 29,
+    "competence": 50,
+    "corruption": 17,
+    "risk_tolerance": 31,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "六科给事中",
+    "hometown": "浙江承宣布政使司绍兴府上虞县",
+    "biography": "倪元璐，字玉汝，号鸿宝。天启二年进士，崇祯朝官至户部尚书。尚气节，以才子名世，工书画。刚正不阿，曾疏劾阉党。李自成破北京，自缢死，忠烈可风。"
+  },
+  {
+    "minister_id": "左光斗",
+    "name": "左光斗",
+    "role": "兵科给事中",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "铁骨",
+      "抗阉"
+    ],
+    "loyalty_to_emperor": 86,
+    "personal_power": 43,
+    "competence": 83,
+    "corruption": 79,
+    "risk_tolerance": 50,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "六科给事中",
+    "hometown": "河南某府县",
+    "biography": "左光斗，字遗直，桐城人。东林党中坚，以清廉刚直著称。万历三十五年进士，任御史时力排阉党，巡视屯田，兴修水利，民称其惠。天启中与杨涟共劾魏忠贤，被诬陷下狱，酷刑致死。铁骨铮铮，不畏强御，为晚明直臣之典范。"
+  },
+  {
+    "minister_id": "黄尊素",
+    "name": "黄尊素",
+    "role": "刑科给事中",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "智囊",
+      "沉稳"
+    ],
+    "loyalty_to_emperor": 69,
+    "personal_power": 75,
+    "competence": 50,
+    "corruption": 73,
+    "risk_tolerance": 32,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "六科给事中",
+    "hometown": "浙江承宣布政使司绍兴府余姚县",
+    "biography": "黄尊素，字真长，明末东林党智囊，以沉稳多谋著称。万历进士，任御史时屡劾阉党，刚直不阿。曾策划援救杨涟、左光斗，事败被逮，受酷刑不屈而死。其子黄宗羲承其志，成一代大儒。"
+  },
+  {
+    "minister_id": "魏大中",
+    "name": "魏大中",
+    "role": "工科给事中",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "激烈",
+      "不畏死"
+    ],
+    "loyalty_to_emperor": 92,
+    "personal_power": 26,
+    "competence": 50,
+    "corruption": 10,
+    "risk_tolerance": 85,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "六科给事中",
+    "hometown": "浙江承宣布政使司嘉兴府嘉善县",
+    "biography": "魏大中（1575-1625），字孔时，嘉善人。东林党骨干，性刚烈，不畏权贵。万历进士，累官至吏科都给事中。天启间，因弹劾阉党魏忠贤，遭其诬陷，下诏狱，受酷刑死，追谥忠节。"
+  },
+  {
+    "minister_id": "杨涟",
+    "name": "杨涟",
+    "role": "浙江道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "极刚",
+      "领袖气场"
+    ],
+    "loyalty_to_emperor": 81,
+    "personal_power": 62,
+    "competence": 69,
+    "corruption": 38,
+    "risk_tolerance": 84,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "湖广承宣布政使司德安府应山县",
+    "biography": "杨涟，字文孺，号大洪，东林党领袖。天启年间任左副都御史，以刚直敢谏闻名。上疏弹劾魏忠贤二十四大罪，虽遭酷刑致死，然其忠烈之气撼动朝野，堪称明末士大夫风骨之巅。"
+  },
+  {
+    "minister_id": "毛羽健",
+    "name": "毛羽健",
+    "role": "江西道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "锐利",
+      "谏言"
+    ],
+    "loyalty_to_emperor": 60,
+    "personal_power": 63,
+    "competence": 55,
+    "corruption": 36,
+    "risk_tolerance": 88,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "湖广承宣布政使司荆州府公安县",
+    "biography": "毛羽健，字芝田，公安人。天启二年进士，授知县，擢御史。性锐利，好直言，屡劾权阉魏忠贤。崇祯初，疏陈驿递之弊，建言裁革冗役，以纾民困。然性急峻，同僚多畏其锋。后因劾阁臣温体仁，反被构陷，谪戍而卒。"
+  },
+  {
+    "minister_id": "侯恂",
+    "name": "侯恂",
+    "role": "福建道御史",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "识才",
+      "结党"
+    ],
+    "loyalty_to_emperor": 80,
+    "personal_power": 54,
+    "competence": 93,
+    "corruption": 30,
+    "risk_tolerance": 69,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "河南承宣布政使司归德府商丘县",
+    "biography": "侯恂，商丘人，万历进士，东林党要员。以识才著称，曾提携左良玉等将领。天启间因东林党争罢官，崇祯初起复，任户部尚书。后因结党被劾，下狱论死。明亡后殉国，其子侯方域为复社领袖。"
+  },
+  {
+    "minister_id": "陈奇瑜",
+    "name": "陈奇瑜",
+    "role": "陕西督师",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "轻敌",
+      "有才无命"
+    ],
+    "loyalty_to_emperor": 67,
+    "personal_power": 49,
+    "competence": 72,
+    "corruption": 6,
+    "risk_tolerance": 37,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "督师",
+    "hometown": "山东承宣布政使司青州府",
+    "biography": "陈奇瑜，字玉铉，天启五年进士。崇祯间任右佥都御史，巡抚延绥，督剿流寇，连战连捷。然因轻敌，受李自成等伪降，被围于车厢峡，虽侥幸脱险，终因误国遭劾戍边。有才无命，惜哉。"
+  },
+  {
+    "minister_id": "卢象升",
+    "name": "卢象升",
+    "role": "宣大总督",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "忠烈",
+      "武举出身",
+      "亲陷阵"
+    ],
+    "loyalty_to_emperor": 89,
+    "personal_power": 20,
+    "competence": 85,
+    "corruption": 11,
+    "risk_tolerance": 69,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总督",
+    "hometown": "山东某府县",
+    "biography": "字建斗，号九台。天启武进士，授户部主事。崇祯年间累官至兵部尚书，总督山西、宣大诸军。为人忠烈耿直，每战必亲陷阵，身先士卒。清兵入寇，象升力主决战，然朝中主和派掣肘，孤军奋战，最终在巨鹿贾庄血战殉国。追赠太子少师，谥忠烈。"
+  },
+  {
+    "minister_id": "郑崇俭",
+    "name": "郑崇俭",
+    "role": "陕西巡抚",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "平庸",
+      "随大流"
+    ],
+    "loyalty_to_emperor": 84,
+    "personal_power": 54,
+    "competence": 53,
+    "corruption": 27,
+    "risk_tolerance": 81,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "巡抚",
+    "hometown": "山西承宣布政使司平阳府襄陵县",
+    "biography": "郑崇俭，万历四十四年进士，由知县累迁至兵部右侍郎。崇祯年间任陕西巡抚，上任后多随大流，少有建树，既不能剿灭流寇，亦不拂逆上意。后因部下败绩连坐下狱，愤懑而死。其人平庸，然亦非大恶，唯碌碌随波逐流而已。"
+  },
+  {
+    "minister_id": "满桂",
+    "name": "满桂",
+    "role": "大同总兵",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "粗犷",
+      "死战",
+      "蒙古裔"
+    ],
+    "loyalty_to_emperor": 80,
+    "personal_power": 77,
+    "competence": 58,
+    "corruption": 64,
+    "risk_tolerance": 78,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总兵",
+    "hometown": "北直隶宣府镇（今河北宣化）",
+    "biography": "蒙古裔，幼年入明。行伍出身，以勇猛粗犷著称。崇祯初任大同总兵，与后金作战屡立战功。崇祯二年（1629）后金入关，满桂率军驰援京师，与袁崇焕不和。十二月于永定门外与后金军死战，力竭而亡。临死前高呼‘吾死报国，无憾矣！’"
+  },
+  {
+    "minister_id": "赵率教",
+    "name": "赵率教",
+    "role": "山海关总兵",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "骁勇",
+      "轻进"
+    ],
+    "loyalty_to_emperor": 75,
+    "personal_power": 67,
+    "competence": 67,
+    "corruption": 29,
+    "risk_tolerance": 71,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总兵",
+    "hometown": "陕西承宣布政使司延安府绥德州",
+    "biography": "赵率教，明末边将，骁勇善战，自辽阳沦陷后募兵抗金，累迁至总兵。崇祯二年己巳之变中，率军驰援京师，因轻敌冒进，战死于遵化。性刚果，不善谋，然忠义凛然，为关宁军砥柱之一。"
+  },
+  {
+    "minister_id": "祖大寿",
+    "name": "祖大寿",
+    "role": "辽东总兵",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "军阀",
+      "观望",
+      "重家族"
+    ],
+    "loyalty_to_emperor": 76,
+    "personal_power": 70,
+    "competence": 86,
+    "corruption": 51,
+    "risk_tolerance": 70,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总兵",
+    "hometown": "浙江某府县",
+    "biography": "祖籍辽东，世袭军职，以勇猛善战著称。在明末乱世中，他凭借家族势力在关宁军中举足轻重。多次降清复明，首鼠两端，始终以保全家族利益为第一要务。后降清，为清朝攻取江南出力，但亦被后世视为反复无常的军阀典型。"
+  },
+  {
+    "minister_id": "骆养性",
+    "name": "骆养性",
+    "role": "锦衣卫指挥使",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "圆滑",
+      "自保",
+      "敛财"
+    ],
+    "loyalty_to_emperor": 60,
+    "personal_power": 68,
+    "competence": 62,
+    "corruption": 36,
+    "risk_tolerance": 34,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "锦衣卫",
+    "hometown": "南直隶某府县",
+    "biography": "骆养性，崇祯朝锦衣卫指挥使，圆滑世故，善自保。任内敛财无度，结交权宦，但遇事推诿，避重就轻。李自成破京时率众降顺，后降清，仍任原职，为士林所不齿。"
+  },
+  {
+    "minister_id": "庞天寿",
+    "name": "庞天寿",
+    "role": "司礼监秉笔",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "西学太监",
+      "忠心"
+    ],
+    "loyalty_to_emperor": 79,
+    "personal_power": 64,
+    "competence": 65,
+    "corruption": 31,
+    "risk_tolerance": 47,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "司礼监",
+    "hometown": "顺天府宛平县",
+    "biography": "庞天寿，明末宦官，籍宛平。天启间入宫，崇祯朝掌御马监，司礼监秉笔太监。好西学，与汤若望交厚，助修历法。甲申之变，从崇祯帝殉国，忠心不二。"
+  },
+  {
+    "minister_id": "海瑞",
+    "name": "海瑞",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "极清廉",
+      "偏执",
+      "认死理"
+    ],
+    "loyalty_to_emperor": 74,
+    "personal_power": 70,
+    "competence": 92,
+    "corruption": 11,
+    "risk_tolerance": 79,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "广东承宣布政使司琼州府琼山县",
+    "biography": "海瑞，刚正不阿，清廉至极，敢批龙鳞。任户部主事时上《治安疏》，痛斥嘉靖修道误国，获罪下狱。后复出，推行一条鞭法，平反冤狱，为民请命，然性偏执，认死理，不合时宜，终被排挤。万历初卒，谥忠介，家无余财，天下哀之。"
+  },
+  {
+    "minister_id": "陈子龙",
+    "name": "陈子龙",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "才华横溢",
+      "复社领袖",
+      "经济之学"
+    ],
+    "loyalty_to_emperor": 66,
+    "personal_power": 77,
+    "competence": 79,
+    "corruption": 79,
+    "risk_tolerance": 53,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "南直隶松江府华亭县",
+    "biography": "复社领袖，明末文学家。进士出身，任兵科给事中，以经世致用著称，倡导经济之学。清军南下后组织抗清，事败被捕，投水殉国。"
+  },
+  {
+    "minister_id": "夏完淳",
+    "name": "夏完淳",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "少年天才",
+      "忠烈",
+      "激昂"
+    ],
+    "loyalty_to_emperor": 40,
+    "personal_power": 21,
+    "competence": 87,
+    "corruption": 43,
+    "risk_tolerance": 52,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "南直隶松江府华亭县",
+    "biography": "夏完淳，松江华亭人，自幼聪慧，有神童之誉。师从陈子龙，参与抗清斗争，被捕后英勇就义，年仅十七。其诗文激昂悲壮，充满忠烈之气，是明末少年英雄之典范。"
+  },
+  {
+    "minister_id": "张岱",
+    "name": "张岱",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "名士",
+      "避世",
+      "奢华"
+    ],
+    "loyalty_to_emperor": 67,
+    "personal_power": 49,
+    "competence": 74,
+    "corruption": 12,
+    "risk_tolerance": 40,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "浙江承宣布政使司绍兴府山阴县",
+    "biography": "张岱，字宗子，号陶庵，山阴人。明末著名文学家、史学家。出身仕宦世家，早年生活奢华，喜游历，交游广泛。性耽山水，工诗文，善品茗。明亡后避世著书，以遗民自居，著有《陶庵梦忆》《西湖梦寻》等，文笔清丽，寄托故国之思。"
+  },
+  {
+    "minister_id": "归有光",
+    "name": "归有光",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "文学大家",
+      "仕途不顺"
+    ],
+    "loyalty_to_emperor": 90,
+    "personal_power": 49,
+    "competence": 56,
+    "corruption": 73,
+    "risk_tolerance": 83,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "南直隶苏州府昆山县",
+    "biography": "归有光，字熙甫，号震川，南直隶昆山人。明代著名文学家，崇尚唐宋古文，与王慎中、唐顺之等并称“唐宋派”。虽才华横溢，但科举不顺，直至60岁方中进士。曾任长兴知县，为官清廉，后任南京太仆寺丞。晚年被引为东林党前辈，其散文平实感人，对后世影响深远。"
+  },
+  {
+    "minister_id": "瞿式耜",
+    "name": "瞿式耜",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "坚韧",
+      "忠贞",
+      "善守"
+    ],
+    "loyalty_to_emperor": 51,
+    "personal_power": 38,
+    "competence": 53,
+    "corruption": 71,
+    "risk_tolerance": 59,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "南直隶苏州府常熟县",
+    "biography": "瞿式耜，南直隶常熟人，明末东林党重臣。清军南下，与焦琏协力守桂林，数次击退清军。后城破被俘，从容就义，留下浩气长存。"
+  },
+  {
+    "minister_id": "沐天波",
+    "name": "沐天波",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "世镇云南",
+      "忠直",
+      "武勇"
+    ],
+    "loyalty_to_emperor": 93,
+    "personal_power": 73,
+    "competence": 68,
+    "corruption": 55,
+    "risk_tolerance": 50,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "大同某府县",
+    "biography": "沐天波，黔国公沐氏之后，世镇云南。性格忠直武勇，承袭爵位后一心报国。永历帝入滇时，天波竭力护驾，随帝入缅。咒水之难，天波奋力抵抗，手刃数敌，最终殉国，尽显忠烈。"
+  },
+  {
+    "minister_id": "郑芝龙",
+    "name": "郑芝龙",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "海盗出身",
+      "极度投机",
+      "巨富"
+    ],
+    "loyalty_to_emperor": 59,
+    "personal_power": 79,
+    "competence": 51,
+    "corruption": 38,
+    "risk_tolerance": 39,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "宣府某府县",
+    "biography": "郑芝龙，号飞黄，福建南安石井人。早年浪迹澳门、日本，习航海经商，后为海盗首领，雄踞东南。崇祯初受抚，官至总兵，凭巨资与船队纵横海陆，助明平叛亦暗通清廷。甲申后为降清保产，挟隆武北降，终被清囚杀。一生投机，海盗霸气与商人狡狯交织。"
+  },
+  {
+    "minister_id": "李定国",
+    "name": "李定国",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "战神",
+      "忠义双全",
+      "流寇出身"
+    ],
+    "loyalty_to_emperor": 86,
+    "personal_power": 22,
+    "competence": 81,
+    "corruption": 46,
+    "risk_tolerance": 35,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "宣府某府县",
+    "biography": "李定国，陕西延安人，早年从张献忠起义，勇猛善战，为献忠义子。献忠死后，投南明永历帝，以忠义闻。率军抗清，两蹶名王，天下震动，获“战神”之誉。后因局势所困，忧愤而死，明廷追谥忠烈。"
+  },
+  {
+    "minister_id": "宋应星",
+    "name": "宋应星",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "奇工巧匠",
+      "务实",
+      "科学探索"
+    ],
+    "loyalty_to_emperor": 81,
+    "personal_power": 24,
+    "competence": 56,
+    "corruption": 44,
+    "risk_tolerance": 54,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "江西承宣布政使司南昌府奉新县",
+    "biography": "宋应星，字长庚，万历举人。历任江西分宜教谕、福建汀州府推官等职，后辞官归里。他博学多才，尤重实学与工艺，著《天工开物》，详录农业、手工业技术，被誉为“中国17世纪的工艺百科全书”。其务实求真、科学探索的精神，在明末空谈误国的风气中独树一帜，为后世所重。"
+  },
+  {
+    "minister_id": "方以智",
+    "name": "方以智",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "百科全书",
+      "大儒",
+      "博学"
+    ],
+    "loyalty_to_emperor": 61,
+    "personal_power": 38,
+    "competence": 85,
+    "corruption": 33,
+    "risk_tolerance": 90,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "南直隶安庆府桐城县",
+    "biography": "方以智，字密之，桐城人，明末大儒、博物学家，复社四公子之一。家学渊源，博览群书，通晓天文、地理、音韵、医药、哲学，被誉为百科全书式学者。早年入东林、复社，针砭时弊。明亡后出家为僧，潜心著述，代表作《物理小识》《通雅》。其学贯通中西，尤重实学，对后世影响深远。"
+  },
+  {
+    "minister_id": "游士任",
+    "name": "游士任",
+    "role": "四川道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "强硬",
+      "擅弹劾"
+    ],
+    "loyalty_to_emperor": 66,
+    "personal_power": 74,
+    "competence": 88,
+    "corruption": 25,
+    "risk_tolerance": 74,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "湖广承宣布政使司武昌府嘉鱼县",
+    "biography": "游士任，天启间进士，授御史。以直言敢谏著称，屡劾阉党及朝中权贵，尤指魏忠贤擅权。崇祯初起复，仍刚正不阿，弹劾不避权幸。后因触怒权臣，被贬谪远方，卒于贬所。其一生以弹劾为业，东林党中称其强硬。"
+  },
+  {
+    "minister_id": "李应升",
+    "name": "李应升",
+    "role": "陕西道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "不畏死",
+      "忠义"
+    ],
+    "loyalty_to_emperor": 41,
+    "personal_power": 41,
+    "competence": 76,
+    "corruption": 64,
+    "risk_tolerance": 41,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "南直隶常州府江阴县",
+    "biography": "李应升，东林党人，万历四十四年进士，授南康推官，以清正廉明著称。天启年间，任御史，上疏弹劾魏忠贤及其党羽，直言敢谏，不畏权阉。后遭魏忠贤诬陷，被捕入狱，受尽酷刑，不屈而死，年仅三十四岁。其忠义气节，震动朝野。"
+  },
+  {
+    "minister_id": "张弘道",
+    "name": "张弘道",
+    "role": "云南道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "圆滑",
+      "观望"
+    ],
+    "loyalty_to_emperor": 93,
+    "personal_power": 27,
+    "competence": 54,
+    "corruption": 54,
+    "risk_tolerance": 38,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "南直隶应天府上元县",
+    "biography": "张弘道，南直隶应天府人，天启二年进士。初任户部主事，以圆滑世故著称，善察上官之意，故仕途平稳。崇祯初年，升任山西司郎中，主管钱粮，然见朝局动荡，常以观望自保，不轻言利弊。时人讥其“但知守成，不知振作”。后因解送钱粮稽迟，被劾罢归。"
+  },
+  {
+    "minister_id": "史记枢",
+    "name": "史记枢",
+    "role": "河南道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "刚直",
+      "廉洁"
+    ],
+    "loyalty_to_emperor": 55,
+    "personal_power": 71,
+    "competence": 76,
+    "corruption": 38,
+    "risk_tolerance": 44,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "南直隶苏州府吴县",
+    "biography": "史记枢，字君敬，南直吴县人。天启二年进士，授福建道御史。崇祯初，屡疏劾阉党余孽，并请罢矿税、止织造，以宽民力。尝巡按陕西，岁饥，不待奏报即发仓赈灾，全活甚众。后以事忤权臣，罢归。性刚直，居官清廉，家无余财，卒之日，敛以布衾。"
+  },
+  {
+    "minister_id": "周宗建",
+    "name": "周宗建",
+    "role": "广西道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "敢言",
+      "殉难"
+    ],
+    "loyalty_to_emperor": 67,
+    "personal_power": 25,
+    "competence": 62,
+    "corruption": 25,
+    "risk_tolerance": 32,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "南直隶苏州府吴江县",
+    "biography": "周宗建，字季侯，号来玉，南直隶吴江人。万历四十一年进士，授武康知县，擢御史。天启初，疏劾魏忠贤与客氏，直言敢谏，忠贤深恨之。后被诬陷，下诏狱，毙于狱中。崇祯初平反，追赠太仆寺卿。"
+  },
+  {
+    "minister_id": "李邦华",
+    "name": "李邦华",
+    "role": "广东道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "精干",
+      "知兵"
+    ],
+    "loyalty_to_emperor": 87,
+    "personal_power": 69,
+    "competence": 78,
+    "corruption": 9,
+    "risk_tolerance": 41,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "江西承宣布政使司吉安府庐陵县",
+    "biography": "李邦华，江西庐陵人，东林党人。精干知兵，历任兵部尚书等职。以整饬边防、主张剿抚流寇著称，但受朝局掣肘，崇祯末殉国。"
+  },
+  {
+    "minister_id": "刘之纶",
+    "name": "刘之纶",
+    "role": "山西道御史",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "慷慨",
+      "谈兵"
+    ],
+    "loyalty_to_emperor": 83,
+    "personal_power": 74,
+    "competence": 82,
+    "corruption": 70,
+    "risk_tolerance": 36,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "四川承宣布政使司成都府宜宾县",
+    "biography": "刘之纶，字元诚，慷慨谈兵，以东林党人入仕。崇祯二年清军入关，之纶以兵部侍郎自请督师，募万人出京东御敌。因器械不利、援军不至，在遵化娘娘庙山力战殉国。其直言敢谏，然书生用兵，空怀报国之志。"
+  },
+  {
+    "minister_id": "许誉卿",
+    "name": "许誉卿",
+    "role": "山东道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "固执",
+      "清流"
+    ],
+    "loyalty_to_emperor": 41,
+    "personal_power": 53,
+    "competence": 79,
+    "corruption": 39,
+    "risk_tolerance": 62,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "南直隶松江府华亭县",
+    "biography": "许誉卿，字公实，东林党人。天启间进士，任吏科给事中，以直言敢谏闻名。崇祯初，屡疏劾阉党余孽，忤旨罢归。后起复原官，仍刚直不阿，弹劾权贵无所避。性固执，与同僚多不合，然清流自许，终以党争去职。明亡后，悲愤而卒。"
+  },
+  {
+    "minister_id": "熊明遇",
+    "name": "熊明遇",
+    "role": "湖广道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "圆融",
+      "附和"
+    ],
+    "loyalty_to_emperor": 88,
+    "personal_power": 52,
+    "competence": 53,
+    "corruption": 79,
+    "risk_tolerance": 43,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "江西承宣布政使司南昌府进贤县",
+    "biography": "熊明遇，字子良，万历进士，历任兵科给事中、南京右佥都御史。其人性圆融，善附和时论，在明末党争中屡有周旋。曾上疏言边事，然多随声附和，鲜有独见。崇祯初官至兵部尚书，后因事罢归。著有《绿雪楼集》。"
+  },
+  {
+    "minister_id": "姜曰广",
+    "name": "姜曰广",
+    "role": "贵州道御史",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "名臣",
+      "守正"
+    ],
+    "loyalty_to_emperor": 68,
+    "personal_power": 57,
+    "competence": 84,
+    "corruption": 71,
+    "risk_tolerance": 77,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "十三道监察御史",
+    "hometown": "江西承宣布政使司南昌府新建县",
+    "biography": "姜曰广，崇祯朝名臣，东林党人，以守正不阿著称。历任翰林院编修、吏部侍郎等职，直言敢谏，力主抗清。南明时官至礼部尚书，因党争失势，后殉国。"
+  },
+  {
+    "minister_id": "曹文诏",
+    "name": "曹文诏",
+    "role": "山西总兵",
+    "status": "active",
+    "faction": "eunuch",
+    "personality": [
+      "猛将",
+      "屠夫",
+      "嗜杀"
+    ],
+    "loyalty_to_emperor": 83,
+    "personal_power": 35,
+    "competence": 65,
+    "corruption": 61,
+    "risk_tolerance": 33,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总兵",
+    "hometown": "山西大同府大同县",
+    "biography": "曹文诏，明末猛将，以善战闻名，然性嗜杀。崇祯年间随洪承畴镇压农民军，每战必屠戮甚众，人称‘曹屠夫’。于陕甘等地屡破义军，后于湫头镇被围，力战不降，自尽殉明。"
+  },
+  {
+    "minister_id": "贺人龙",
+    "name": "贺人龙",
+    "role": "陕西总兵",
+    "status": "active",
+    "faction": "jiangnan",
+    "personality": [
+      "畏战",
+      "骄横",
+      "称贺疯子"
+    ],
+    "loyalty_to_emperor": 68,
+    "personal_power": 36,
+    "competence": 82,
+    "corruption": 27,
+    "risk_tolerance": 67,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总兵",
+    "hometown": "江西某府县",
+    "biography": "贺人龙，陕西清涧人，行伍出身，积功至延绥镇总兵。号‘贺疯子’，以猛悍著称，然畏敌如虎，每遇强敌辄避战，常先溃。崇祯年间，与李自成等部周旋，屡受督师节制，骄横难制，终因屡次临阵脱逃为孙传庭所诛。"
+  },
+  {
+    "minister_id": "尤世威",
+    "name": "尤世威",
+    "role": "延绥总兵",
+    "status": "active",
+    "faction": "beifang",
+    "personality": [
+      "骁将",
+      "忠勇",
+      "善防守"
+    ],
+    "loyalty_to_emperor": 43,
+    "personal_power": 52,
+    "competence": 72,
+    "corruption": 70,
+    "risk_tolerance": 46,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "department": "总兵",
+    "hometown": "陕西承宣布政使司榆林卫",
+    "biography": "榆林卫人，世职指挥使。崇祯中，以勇猛善守著称。闯军破榆林，世威督兵坚守，城破被执，不屈而死。其忠勇为明季边将之典范。"
+  },
+  {
+    "minister_id": "高杰",
+    "name": "高杰",
+    "role": "陕西游击",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "反复无常",
+      "猛将",
+      "残暴"
+    ],
+    "loyalty_to_emperor": 83,
+    "personal_power": 66,
+    "competence": 82,
+    "corruption": 74,
+    "risk_tolerance": 39,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "广东某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "黄得功",
+    "name": "黄得功",
+    "role": "京营游击",
+    "status": "reserve",
+    "faction": "eunuch",
+    "personality": [
+      "忠勇",
+      "善战",
+      "嗜酒"
+    ],
+    "loyalty_to_emperor": 47,
+    "personal_power": 75,
+    "competence": 77,
+    "corruption": 6,
+    "risk_tolerance": 81,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "未知",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "刘良佐",
+    "name": "刘良佐",
+    "role": "河南参将",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "首鼠两端",
+      "骑兵将领"
+    ],
+    "loyalty_to_emperor": 48,
+    "personal_power": 31,
+    "competence": 77,
+    "corruption": 72,
+    "risk_tolerance": 48,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "山东某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "阎应元",
+    "name": "阎应元",
+    "role": "江阴典史",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "极度忠烈",
+      "善守城",
+      "小官大义"
+    ],
+    "loyalty_to_emperor": 81,
+    "personal_power": 38,
+    "competence": 52,
+    "corruption": 44,
+    "risk_tolerance": 75,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "山西某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "陈明遇",
+    "name": "陈明遇",
+    "role": "江阴县尉",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "忠肝义胆",
+      "视死如归"
+    ],
+    "loyalty_to_emperor": 95,
+    "personal_power": 40,
+    "competence": 78,
+    "corruption": 78,
+    "risk_tolerance": 75,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "北直隶某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "张同敞",
+    "name": "张同敞",
+    "role": "兵部主事",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "刚直",
+      "名臣之后",
+      "死节"
+    ],
+    "loyalty_to_emperor": 78,
+    "personal_power": 44,
+    "competence": 93,
+    "corruption": 50,
+    "risk_tolerance": 56,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "延绥某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "杨廷麟",
+    "name": "杨廷麟",
+    "role": "兵部职方司主事",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "忠烈",
+      "知兵"
+    ],
+    "loyalty_to_emperor": 43,
+    "personal_power": 67,
+    "competence": 68,
+    "corruption": 9,
+    "risk_tolerance": 82,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "广东某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "祁彪佳",
+    "name": "祁彪佳",
+    "role": "苏州推官",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "清正",
+      "殉国",
+      "文士"
+    ],
+    "loyalty_to_emperor": 88,
+    "personal_power": 31,
+    "competence": 61,
+    "corruption": 78,
+    "risk_tolerance": 66,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "陕西某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "吴伟业",
+    "name": "吴伟业",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "江南才子",
+      "文弱",
+      "摇摆"
+    ],
+    "loyalty_to_emperor": 65,
+    "personal_power": 71,
+    "competence": 71,
+    "corruption": 35,
+    "risk_tolerance": 53,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "山西某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "黄宗羲",
+    "name": "黄宗羲",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "思想家",
+      "坚毅",
+      "大儒"
+    ],
+    "loyalty_to_emperor": 60,
+    "personal_power": 34,
+    "competence": 89,
+    "corruption": 74,
+    "risk_tolerance": 65,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "四川某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "顾炎武",
+    "name": "顾炎武",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "学者",
+      "经世致用",
+      "倔强"
+    ],
+    "loyalty_to_emperor": 53,
+    "personal_power": 25,
+    "competence": 84,
+    "corruption": 78,
+    "risk_tolerance": 34,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "北直隶某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "王夫之",
+    "name": "王夫之",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "大儒",
+      "隐士",
+      "孤傲"
+    ],
+    "loyalty_to_emperor": 44,
+    "personal_power": 62,
+    "competence": 78,
+    "corruption": 76,
+    "risk_tolerance": 86,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "陕西某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "张煌言",
+    "name": "张煌言",
+    "role": "举人",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "忠臣",
+      "抗清",
+      "百折不挠"
+    ],
+    "loyalty_to_emperor": 51,
+    "personal_power": 73,
+    "competence": 90,
+    "corruption": 6,
+    "risk_tolerance": 80,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "四川某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "郑成功",
+    "name": "郑成功",
+    "role": "南安生员",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "名将",
+      "海主",
+      "忠勇",
+      "极度执着"
+    ],
+    "loyalty_to_emperor": 56,
+    "personal_power": 60,
+    "competence": 52,
+    "corruption": 17,
+    "risk_tolerance": 71,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "甘肃某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "李海蛟",
+    "name": "李海蛟",
+    "role": "山东把总",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "草根",
+      "悍勇"
+    ],
+    "loyalty_to_emperor": 74,
+    "personal_power": 24,
+    "competence": 76,
+    "corruption": 37,
+    "risk_tolerance": 57,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "宣府某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "马士英",
+    "name": "马士英",
+    "role": "凤阳总督",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "权臣",
+      "贪婪",
+      "排斥异己"
+    ],
+    "loyalty_to_emperor": 47,
+    "personal_power": 56,
+    "competence": 69,
+    "corruption": 10,
+    "risk_tolerance": 65,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "宣府某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "阮大铖",
+    "name": "阮大铖",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "才子",
+      "戏曲家",
+      "反复无常"
+    ],
+    "loyalty_to_emperor": 53,
+    "personal_power": 23,
+    "competence": 89,
+    "corruption": 69,
+    "risk_tolerance": 73,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "北直隶某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "堵胤锡",
+    "name": "堵胤锡",
+    "role": "湖广知府",
+    "status": "reserve",
+    "faction": "beifang",
+    "personality": [
+      "统帅",
+      "联合流寇抗清",
+      "大局观"
+    ],
+    "loyalty_to_emperor": 69,
+    "personal_power": 25,
+    "competence": 92,
+    "corruption": 71,
+    "risk_tolerance": 69,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "山东某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "何腾蛟",
+    "name": "何腾蛟",
+    "role": "湖广巡抚",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "忠心",
+      "无能",
+      "排内"
+    ],
+    "loyalty_to_emperor": 83,
+    "personal_power": 77,
+    "competence": 53,
+    "corruption": 65,
+    "risk_tolerance": 40,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "宁夏某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "金声桓",
+    "name": "金声桓",
+    "role": "江西左都督",
+    "status": "reserve",
+    "faction": "jiangnan",
+    "personality": [
+      "军阀",
+      "反覆"
+    ],
+    "loyalty_to_emperor": 67,
+    "personal_power": 21,
+    "competence": 67,
+    "corruption": 8,
+    "risk_tolerance": 68,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "福建某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "李成栋",
+    "name": "李成栋",
+    "role": "江南提督",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "残暴",
+      "后倒戈抗清"
+    ],
+    "loyalty_to_emperor": 42,
+    "personal_power": 54,
+    "competence": 93,
+    "corruption": 79,
+    "risk_tolerance": 50,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "宁夏某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "孙可望",
+    "name": "孙可望",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "枭雄",
+      "野心极大",
+      "内斗"
+    ],
+    "loyalty_to_emperor": 49,
+    "personal_power": 36,
+    "competence": 62,
+    "corruption": 19,
+    "risk_tolerance": 76,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "蓟州某府县",
+    "biography": "生平不详。"
+  },
+  {
+    "minister_id": "刘文秀",
+    "name": "刘文秀",
+    "role": "在野",
+    "status": "reserve",
+    "faction": "frontier_army",
+    "personality": [
+      "名将",
+      "忠厚",
+      "善战"
+    ],
+    "loyalty_to_emperor": 77,
+    "personal_power": 21,
+    "competence": 79,
+    "corruption": 49,
+    "risk_tolerance": 86,
+    "policy_bias": {},
+    "speaking_style": "...",
+    "hometown": "甘肃某府县",
+    "biography": "生平不详。"
   }
 ]

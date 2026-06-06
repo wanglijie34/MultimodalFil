@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { I18nProvider } from "@/lib/i18n";
+import { ToastContainer } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
   title: "崇祯模拟器",
@@ -23,6 +24,7 @@ export default function RootLayout({
           <AppShell>
             {children}
           </AppShell>
+          <ToastContainer />
         </I18nProvider>
       </body>
     </html>

@@ -12,7 +12,8 @@ import {
   Settings,
   Book as BookIcon,
   Map as MapIcon,
-  PanelLeftClose
+  PanelLeftClose,
+  Users
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -20,10 +21,11 @@ import { useI18n } from "@/lib/i18n"
 
 const navigation = [
   { name: "御门听政", href: "/dashboard", icon: LayoutDashboard },
+  { name: "大明堪舆图", href: "/map", icon: MapIcon },
+  { name: "朝堂百官", href: "/court", icon: Users },
   { name: "内阁卷宗", href: "/files", icon: FileText },
   { name: "内府藏书", href: "/books", icon: BookIcon },
   { name: "锦衣卫密查", href: "/search", icon: Search },
-  { name: "大明堪舆图", href: "/map", icon: MapIcon },
   { name: "翰林经筵", href: "/agent", icon: MessageSquare },
   { name: "脉络推演", href: "/graph", icon: Share2 },
   { name: "各地奏报", href: "/reports", icon: FileBarChart },

@@ -126,4 +126,25 @@
       radial-gradient(circle at center, transparent 0%, rgba(10, 7, 5, 0.8) 100%);
     background-blend-mode: multiply, normal;
   }
+
+  /* Global Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(26, 17, 11, 0.4); 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(192, 154, 83, 0.5); 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(192, 154, 83, 0.8); 
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 154, 83, 0.5) rgba(26, 17, 11, 0.4);
+  }
 }

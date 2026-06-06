@@ -11,30 +11,38 @@ class RuleEngine:
         self.state_manager = state_manager
 
     def calculate_execution_rate(self, prestige, bureaucracy, faction_resistance, local_support, corruption, difficulty):
+        # Deprecated: Now handled by CourtFlowEngine. Retained as fallback.
         score = prestige * 0.25 + bureaucracy * 0.25 + local_support * 0.2
         penalty = faction_resistance * 0.15 + corruption * 0.1 + difficulty * 0.2
         return max(5, min(95, score - penalty + 40))
 
-    def apply_policies(self, policies: list[dict]) -> list[dict]:
+    def apply_policies(self, policies: list[dict], flow_results: list[dict] = None) -> list[dict]:
         world = self.state_manager.world_state
         results = []
         
-        for policy in policies:
+        for i, policy in enumerate(policies):
             ptype = policy.get("policy_type")
             result = {"policy": policy, "effects": {}}
+            flow_result = flow_results[i] if flow_results and i < len(flow_results) else {}
+            
+            if "political_backlash" in flow_result:
+                bl = flow_result["political_backlash"]
+                world["national_metrics"]["factional_conflict"] = clamp(world["national_metrics"]["factional_conflict"] + bl * 0.1)
+                world["national_metrics"]["bureaucratic_efficiency"] = clamp(world["national_metrics"]["bureaucratic_efficiency"] - bl * 0.05)
+                world["emperor"]["prestige"] = clamp(world["emperor"]["prestige"] - bl * 0.02)
             
             if ptype == "disaster_relief":
-                result = self._apply_disaster_relief(world, policy)
+                result = self._apply_disaster_relief(world, policy, flow_result)
             elif ptype == "grain_transfer":
-                result = self._apply_grain_transfer(world, policy)
+                result = self._apply_grain_transfer(world, policy, flow_result)
             elif ptype == "tax_adjustment":
-                result = self._apply_tax_adjustment(world, policy)
+                result = self._apply_tax_adjustment(world, policy, flow_result)
             elif ptype == "military_supply":
-                result = self._apply_military_supply(world, policy)
+                result = self._apply_military_supply(world, policy, flow_result)
             elif ptype == "anti_corruption":
-                result = self._apply_anti_corruption(world, policy)
+                result = self._apply_anti_corruption(world, policy, flow_result)
             elif ptype == "faction_purge":
-                result = self._apply_faction_purge(world, policy)
+                result = self._apply_faction_purge(world, policy, flow_result)
             else:
                 result["message"] = f"Unknown policy type: {ptype}"
                 
@@ -42,7 +50,7 @@ class RuleEngine:
             
         return results
 
-    def _apply_disaster_relief(self, world, policy):
+    def _apply_disaster_relief(self, world, policy, flow_result):
         budget = policy.get("budget_silver", 0)
         if budget > world["treasury"]["silver"]:
             budget = world["treasury"]["silver"]
@@ -60,13 +68,10 @@ class RuleEngine:
             region = self.state_manager.get_region(region_id)
             if not region: continue
             
-            exec_rate = self.calculate_execution_rate(
-                world["emperor"]["prestige"],
-                world["national_metrics"]["bureaucratic_efficiency"],
-                30, region["local_elite_support"], region["corruption"], 20
-            )
+            exec_rate = flow_result.get("execution_rate", 50)
+            corr_loss = flow_result.get("corruption_loss", region["corruption"])
             
-            effective_budget = budget_per_region * (exec_rate / 100.0)
+            effective_budget = budget_per_region * (exec_rate / 100.0) * ((100 - corr_loss) / 100.0)
             
             famine_reduction = (effective_budget / 5000) * 2
             support_gain = (effective_budget / 5000) * 1.5
@@ -86,7 +91,7 @@ class RuleEngine:
             
         return {"policy": policy, "treasury_delta": -budget, "regional_effects": regional_effects}
 
-    def _apply_grain_transfer(self, world, policy):
+    def _apply_grain_transfer(self, world, policy, flow_result):
         # Implementation of grain transfer
         amount = policy.get("grain_amount", 0)
         sources = policy.get("source_regions", [])
@@ -110,8 +115,9 @@ class RuleEngine:
                 actual_total += taken
                 effects.append({"region": s_region["name"], "grain_storage_change": -taken})
                 
-        # Transport loss
-        actual_total *= 0.7  # 30% loss
+        # Transport loss + corruption
+        corr_loss = flow_result.get("corruption_loss", 20)
+        actual_total = actual_total * (1 - (corr_loss / 100.0)) * 0.7  # 30% base transport loss + corruption
         
         for tid in targets:
             t_region = self.state_manager.get_region(tid)
@@ -123,7 +129,7 @@ class RuleEngine:
                 
         return {"policy": policy, "regional_effects": effects}
 
-    def _apply_tax_adjustment(self, world, policy):
+    def _apply_tax_adjustment(self, world, policy, flow_result):
         targets = policy.get("target_regions", [])
         delta = policy.get("tax_delta", 0)
         effects = []
@@ -131,8 +137,10 @@ class RuleEngine:
         for tid in targets:
             region = self.state_manager.get_region(tid)
             if region:
+                exec_rate = flow_result.get("execution_rate", 50)
                 region["tax_burden"] = clamp(region["tax_burden"] + delta)
-                region["monthly_tax_income"] += (delta * 500)
+                actual_income = (delta * 500) * (exec_rate / 100.0)
+                region["monthly_tax_income"] += actual_income
                 region["public_support"] = clamp(region["public_support"] - (delta * 0.5))
                 if delta > 0:
                     region["rebel_risk"] = clamp(region["rebel_risk"] + delta)
@@ -143,7 +151,7 @@ class RuleEngine:
                 })
         return {"policy": policy, "regional_effects": effects}
 
-    def _apply_military_supply(self, world, policy):
+    def _apply_military_supply(self, world, policy, flow_result):
         budget = policy.get("budget_silver", 0)
         if budget > world["treasury"]["silver"]:
             budget = world["treasury"]["silver"]
@@ -156,18 +164,22 @@ class RuleEngine:
         for tid in targets:
             region = self.state_manager.get_region(tid)
             if region:
-                region["military_presence"] = clamp(region["military_presence"] + (budget_per_region / 10000))
-                region["defense_level"] = clamp(region["defense_level"] + (budget_per_region / 8000))
+                exec_rate = flow_result.get("execution_rate", 50)
+                corr_loss = flow_result.get("corruption_loss", region["corruption"])
+                effective_budget = budget_per_region * (exec_rate / 100.0) * ((100 - corr_loss) / 100.0)
+                
+                region["military_presence"] = clamp(region["military_presence"] + (effective_budget / 10000))
+                region["defense_level"] = clamp(region["defense_level"] + (effective_budget / 8000))
                 if tid == "liaodong":
-                    world["national_metrics"]["manchu_pressure"] = clamp(world["national_metrics"]["manchu_pressure"] - (budget_per_region / 15000))
+                    world["national_metrics"]["manchu_pressure"] = clamp(world["national_metrics"]["manchu_pressure"] - (effective_budget / 15000))
                 effects.append({
                     "region": region["name"],
-                    "military_presence_change": budget_per_region / 10000
+                    "military_presence_change": effective_budget / 10000
                 })
                 
         return {"policy": policy, "treasury_delta": -budget, "regional_effects": effects}
 
-    def _apply_anti_corruption(self, world, policy):
+    def _apply_anti_corruption(self, world, policy, flow_result):
         targets = policy.get("target_regions", [])
         strictness = policy.get("strictness", 50)
         effects = []
@@ -175,11 +187,7 @@ class RuleEngine:
         for tid in targets:
             region = self.state_manager.get_region(tid)
             if region:
-                exec_rate = self.calculate_execution_rate(
-                    world["emperor"]["prestige"],
-                    world["national_metrics"]["bureaucratic_efficiency"],
-                    45, region["local_elite_support"], region["corruption"], 12
-                )
+                exec_rate = flow_result.get("execution_rate", 50)
                 
                 corr_red = (strictness / 20) * (exec_rate / 100)
                 region["corruption"] = clamp(region["corruption"] - corr_red)
@@ -194,7 +202,7 @@ class RuleEngine:
         world["emperor"]["prestige"] = clamp(world["emperor"]["prestige"] + (strictness/20))
         return {"policy": policy, "regional_effects": effects}
 
-    def _apply_faction_purge(self, world, policy):
+    def _apply_faction_purge(self, world, policy, flow_result):
         target = policy.get("target_faction")
         strictness = policy.get("strictness", 70)
         
@@ -202,7 +210,8 @@ class RuleEngine:
         if not faction:
             return {"policy": policy, "error": "Faction not found"}
             
-        power_loss = strictness * 0.35
+        exec_rate = flow_result.get("execution_rate", 50)
+        power_loss = strictness * 0.35 * (exec_rate / 100.0)
         faction["influence"] = clamp(faction["influence"] - power_loss)
         faction["hostility"] = clamp(faction["hostility"] + (strictness * 0.45))
         

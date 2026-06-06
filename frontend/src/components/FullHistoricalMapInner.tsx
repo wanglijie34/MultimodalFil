@@ -8,7 +8,7 @@ import { factionBoundaries, factionLabels, mingProvinces } from '@/lib/faction-b
 import { X, MapPin, Shield, Swords, Home, Mountain, Waves, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GameOverlay from './game/GameOverlay';
-import { GameState } from '@/lib/gameApi';
+import { GameState, getChongzhenDate } from '@/lib/gameApi';
 import { GAME_ASSETS } from '@/lib/gameAssets';
 
 export default function FullHistoricalMapInner() {
@@ -19,6 +19,81 @@ export default function FullHistoricalMapInner() {
   const [clickInfo, setClickInfo] = useState<{lng: number, lat: number, name: string, faction: string, type?: string} | null>(null);
   const [cursor, setCursor] = useState<string>('');
   const interactiveLayers = useMemo(() => ['location-circles', 'location-labels', 'faction-names', 'ming-provinces-labels', 'ming-prefectures-labels', 'extra-factions-labels'], []);
+
+  const dynamicFillColor = useMemo(() => {
+    if (activeView === 'standard' || !gameState?.regions) {
+      return [
+        'match', ['get', 'province'],
+        '陕西', '#c6a982',
+        '山西', '#ceb28a',
+        '北直隶', '#be9d73',
+        '山东', '#c0a680',
+        '河南', '#cca67a',
+        '四川', '#ceb28a',
+        '湖广', '#be9d73',
+        '江西', '#c6a982',
+        '南直隶', '#ceb28a',
+        '浙江', '#cca67a',
+        '福建', '#c0a680',
+        '广东', '#c6a982',
+        '广西', '#be9d73',
+        '贵州', '#c0a680',
+        '云南', '#cca67a',
+        '辽东', '#c0a680',
+        '#c6a982'
+      ];
+    }
+
+    const matchExpr: any[] = ['match', ['get', 'province']];
+
+    const getFamineColor = (val: number) => {
+      if (val >= 80) return '#6b0000'; // Extreme famine
+      if (val >= 60) return '#9e1a1a'; // Severe famine
+      if (val >= 40) return '#cc3300'; // Moderate
+      if (val >= 20) return '#e65c00'; // Mild
+      return '#c6a982'; // Normal
+    };
+
+    const getStabilityColor = (val: number) => { 
+      if (val >= 80) return '#2980b9'; // Very stable
+      if (val >= 60) return '#3498db'; // Stable
+      if (val >= 40) return '#c6a982'; // Average
+      if (val >= 20) return '#e74c3c'; // Danger
+      return '#c0392b'; // Revolt
+    };
+
+    const getTaxColor = (val: number) => {
+      if (val >= 80) return '#3e2723'; // Crushing tax
+      if (val >= 60) return '#5d4037'; // Heavy tax
+      if (val >= 40) return '#8d6e63'; // Moderate
+      if (val >= 20) return '#bcaaa4'; // Light
+      return '#c6a982'; // Normal
+    };
+
+    const getMilitaryColor = (val: number) => {
+      if (val >= 80) return '#1b5e20'; // Heavy military presence
+      if (val >= 60) return '#388e3c'; // Defended
+      if (val >= 40) return '#81c784'; // Average
+      if (val >= 20) return '#f57f17'; // Weak
+      return '#bf360c'; // Critical danger
+    };
+
+    gameState.regions.forEach(region => {
+      matchExpr.push(region.name);
+      
+      let color = '#c6a982';
+      if (activeView === 'famine') color = getFamineColor(region.famine_level || region.disaster_level || 0);
+      else if (activeView === 'stability') color = getStabilityColor(region.public_support || 0);
+      else if (activeView === 'tax') color = getTaxColor(region.tax_burden || 0);
+      else if (activeView === 'military') color = getMilitaryColor(region.defense_level || 0);
+
+      matchExpr.push(color);
+    });
+
+    matchExpr.push('#c6a982'); // Default fallback
+    return matchExpr;
+
+  }, [activeView, gameState]);
   
   const mapStyle = useMemo(() => ({
     version: 8,
@@ -47,31 +122,6 @@ export default function FullHistoricalMapInner() {
   }), []);
 
   // Convert relations to GeoJSON for rendering route lines
-  const linesGeoJson = useMemo(() => {
-    return {
-      type: 'FeatureCollection',
-      features: mapRelations.map(rel => {
-        const fromNode = mapLocations.find(l => l.id === rel.from);
-        const toNode = mapLocations.find(l => l.id === rel.to);
-        if (!fromNode || !toNode) return null;
-        
-        let color = '#d49a6a';
-        if (rel.type === 'campaign') color = '#ff4d4d'; // Red for crisis/campaigns
-        if (rel.type === 'route') color = '#4da6ff'; // Blue for postal/logistics
-        if (rel.type === 'defense') color = '#ffb366'; // Orange for defense lines
-        
-        return {
-          type: 'Feature',
-          properties: { ...rel, color },
-          geometry: {
-            type: 'LineString',
-            coordinates: [ [fromNode.lng, fromNode.lat], [toNode.lng, toNode.lat] ]
-          }
-        };
-      }).filter(Boolean)
-    };
-  }, []);
-
   const locationsGeoJson = useMemo(() => {
     return {
       type: 'FeatureCollection',
@@ -274,31 +324,10 @@ export default function FullHistoricalMapInner() {
               id="ming-prefectures-fill"
               type="fill"
               paint={{
-                'fill-color': activeView === 'famine' ? '#cc3300' :
-                              activeView === 'stability' ? '#3366cc' :
-                              activeView === 'military' ? '#ff9900' :
-                              activeView === 'tax' ? '#996633' :
-                              ['match', ['get', 'province'],
-                                '陕西', '#c6a982',
-                                '山西', '#ceb28a',
-                                '北直隶', '#be9d73',
-                                '山东', '#c0a680',
-                                '河南', '#cca67a',
-                                '四川', '#ceb28a',
-                                '湖广', '#be9d73',
-                                '江西', '#c6a982',
-                                '南直隶', '#ceb28a',
-                                '浙江', '#cca67a',
-                                '福建', '#c0a680',
-                                '广东', '#c6a982',
-                                '广西', '#be9d73',
-                                '贵州', '#c0a680',
-                                '云南', '#cca67a',
-                                '#c6a982' // Fallback Base parchment color
-                              ],
+                'fill-color': dynamicFillColor,
                 'fill-opacity': isMacroView 
-                  ? (activeView !== 'standard' ? 0.5 : 1) 
-                  : (activeView !== 'standard' ? 0.3 : 1)
+                  ? (activeView !== 'standard' ? 0.7 : 1) 
+                  : (activeView !== 'standard' ? 0.5 : 1)
               }}
             />
             <Layer
@@ -422,28 +451,7 @@ export default function FullHistoricalMapInner() {
                 />
               </Source>
 
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Source id="routes" type="geojson" data={linesGeoJson as any}>
-                <Layer 
-                  id="route-lines-glow"
-                  type="line"
-                  paint={{
-                    'line-color': ['get', 'color'],
-                    'line-width': 6,
-                    'line-opacity': 0.3,
-                    'line-blur': 4
-                  }}
-                />
-                <Layer 
-                  id="route-lines"
-                  type="line"
-                  paint={{
-                    'line-color': ['get', 'color'],
-                    'line-width': 2,
-                    'line-dasharray': [2, 2]
-                  }}
-                />
-              </Source>
+
             </>
           )}
 
@@ -465,7 +473,20 @@ export default function FullHistoricalMapInner() {
                 id="location-labels"
                 type="symbol"
                 layout={{
-                  'text-field': ['get', 'name'],
+                  'text-field': [
+                    'concat',
+                    ['match', ['get', 'type'],
+                      'mountain', '⛰️ ',
+                      'river', '🌊 ',
+                      'fortress', '🛡️ ',
+                      'garrison', '⚔️ ',
+                      'event', '🔥 ',
+                      'capital', '👑 ',
+                      'city', '🏛️ ',
+                      ''
+                    ],
+                    ['get', 'name']
+                  ],
                   'text-size': 13,
                   'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
                   'text-offset': [0, -1.2],

@@ -15,21 +15,139 @@ export interface GameState {
   prestige?: number;
 }
 
+export interface Institution {
+  institution_id: string;
+  name: string;
+  type: string;
+  influence: number;
+  efficiency: number;
+  corruption: number;
+  loyalty: number;
+  faction_bias: string;
+  hostility: number;
+}
+
+export interface Faction {
+  faction_id: string;
+  name: string;
+  influence: number;
+  hostility: number;
+  cohesion: number;
+}
+
+export interface ConsultationResult {
+  minister_id: string;
+  minister_name: string;
+  stance: string;
+  recommended_policies: string[];
+  warning_tags: string[];
+  content: string;
+}
+
+export interface CourtFlowResult {
+  lead_institutions: string[];
+  stages: string[];
+  final_status: string;
+  delay_days: number;
+  execution_rate: number;
+  corruption_loss: number;
+  distortion_level: number;
+  political_backlash: number;
+  notes: string;
+}
+
 export interface SimulationResult {
   new_state: GameState;
   narrative: string;
   impact_summary: string[];
+  court_flow_results: CourtFlowResult[];
+  institutions: Institution[];
+  factions: Faction[];
+  regions: any[];
 }
 
 export async function startGame(): Promise<GameState> {
   return fetchApi('/game/start', { method: 'POST' });
 }
 
-export async function advise(state: GameState, minister: string): Promise<{ advice: string }> {
-  return fetchApi('/game/advise', {
+export async function getGameState(): Promise<{world_state: any, regions: any[], factions: Faction[], institutions: Institution[], available_ministers: any[]}> {
+  return fetchApi('/game/state');
+}
+
+export async function advise(state: GameState, ministerIds: string[]): Promise<ConsultationResult[]> {
+  const res = await fetchApi('/game/consult', {
     method: 'POST',
-    body: JSON.stringify({ state, minister })
+    body: JSON.stringify({ minister_ids: ministerIds })
   });
+  return res.consultations || [];
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export async function chatWithMinister(ministerId: string, userMessage: string, history: ChatMessage[] = []): Promise<string> {
+  const res = await fetchApi('/game/chat', {
+    method: 'POST',
+    body: JSON.stringify({ minister_id: ministerId, user_message: userMessage, history })
+  });
+  return res.reply || "臣惶恐，不敢妄言。";
+}
+
+export async function getReserveMinisters(): Promise<any[]> {
+  const res = await fetchApi('/game/ministers/reserve');
+  return res.reserves || [];
+}
+
+export async function appointMinister(ministerId: string, targetRole: string, targetDepartment: string = ""): Promise<any> {
+  return await fetchApi('/game/ministers/appoint', {
+    method: 'POST',
+    body: JSON.stringify({ minister_id: ministerId, target_role: targetRole, target_department: targetDepartment })
+  });
+}
+
+export async function dismissMinister(ministerId: string): Promise<any> {
+  return await fetchApi('/game/ministers/dismiss', {
+    method: 'POST',
+    body: JSON.stringify({ minister_id: ministerId })
+  });
+}
+
+export async function getSaves(): Promise<string[]> {
+  const res = await fetchApi('/game/saves');
+  return res.saves || [];
+}
+
+export async function saveGame(saveName: string): Promise<boolean> {
+  const res = await fetchApi('/game/save', {
+    method: 'POST',
+    body: JSON.stringify({ save_name: saveName })
+  });
+  return res.status === 'success';
+}
+
+export async function loadGame(saveName: string): Promise<boolean> {
+  const res = await fetchApi('/game/load', {
+    method: 'POST',
+    body: JSON.stringify({ save_name: saveName })
+  });
+  return res.status === 'success';
+}
+
+export async function recruitMinisters(cost: number = 100000): Promise<{status: string, message?: string, candidates?: any[], treasury?: number}> {
+  return await fetchApi('/game/ministers/recruit', {
+    method: 'POST',
+    body: JSON.stringify({ cost })
+  });
+}
+
+export async function acceptCandidates(candidateIds: string[]): Promise<boolean> {
+  const res = await fetchApi('/game/ministers/accept_candidate', {
+    method: 'POST',
+    body: JSON.stringify({ candidate_ids: candidateIds })
+  });
+  return res.status === 'success';
 }
 
 export async function simulateEdict(state: GameState, edict: string): Promise<SimulationResult> {
@@ -63,6 +181,10 @@ export async function simulateEdict(state: GameState, edict: string): Promise<Si
   return {
     new_state: mappedState,
     narrative: text || "圣旨已下，百官奉行。",
-    impact_summary: narrativeObj.summary_effects || []
+    impact_summary: narrativeObj.summary_effects || [],
+    court_flow_results: backendRes.court_flow_results || [],
+    institutions: backendRes.institutions || [],
+    factions: backendRes.factions || [],
+    regions: backendRes.regions || []
   };
 }
