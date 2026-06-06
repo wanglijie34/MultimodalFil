@@ -68,7 +68,7 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
   
   const [showEdict, setShowEdict] = useState(false);
   const [edictText, setEdictText] = useState('');
-  const [edictCategory, setEdictCategory] = useState<'军'|'政'|'外'|'他'>('政');
+  const [edictCategories, setEdictCategories] = useState<string[]>(['政']);
   const [isStamping, setIsStamping] = useState(false);
   const [validationError, setValidationError] = useState('');
   
@@ -88,7 +88,7 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
     setLoading(true);
     setValidationError('');
     try {
-      const policies = await parseEdict(`【${edictCategory}】` + edictText);
+      const policies = await parseEdict(`【${edictCategories.join(',')}】` + edictText);
       
       if (!policies || policies.length === 0) {
         setValidationError("内阁未能领会圣意，请陛下明示诏书的具体指令（如拨银多少、去往何地、交由何人去办）。");
@@ -247,11 +247,17 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
               <div className="flex gap-12 flex-1 relative z-20">
                 <div className="w-1/6 flex flex-col gap-4 justify-center items-center pl-4">
                   {(['军','政','外','他'] as const).map(cat => {
-                    const isActive = edictCategory === cat;
+                    const isActive = edictCategories.includes(cat);
                     return (
                       <button
                         key={cat}
-                        onClick={() => setEdictCategory(cat)}
+                        onClick={() => {
+                          setEdictCategories(prev => 
+                            prev.includes(cat) 
+                              ? (prev.length > 1 ? prev.filter(c => c !== cat) : prev) 
+                              : [...prev, cat]
+                          );
+                        }}
                         className="w-20 h-20 relative flex items-center justify-center text-2xl font-bold transition-all hover:scale-110"
                       >
                         <img 
@@ -272,7 +278,7 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
                       onChange={e => { setEdictText(e.target.value); setValidationError(''); }}
                       className="w-full h-full flex-1 bg-transparent text-[#3d2b1f] font-bold p-8 font-serif text-[22px] resize-none focus:outline-none leading-[2.5] placeholder:text-[#3d2b1f]/30 relative z-10"
                       style={{ textIndent: '2em' }}
-                      placeholder={`请输入${edictCategory}事诏书内容...\n朕知天下艰难，今特下明诏，凡涉${edictCategory}务者，皆依此令，勿敢违。`}
+                      placeholder={`请输入${edictCategories.join('、')}事诏书内容...\n朕知天下艰难，今特下明诏，凡涉${edictCategories.join('、')}务者，皆依此令，勿敢违。`}
                     />
                     {validationError && (
                       <div className="absolute bottom-4 left-8 right-8 bg-[#8b2323]/95 text-[#f4ebd0] p-4 shadow-xl border-2 border-[#3d2b1f] z-50 animate-in fade-in slide-in-from-bottom-2">
@@ -289,7 +295,7 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
                     >
                       <img src={GAME_ASSETS.ui.ming_assets.btnNormal} className="absolute inset-0 w-full h-full object-contain group-hover:hidden" alt="" />
                       <img src={GAME_ASSETS.ui.ming_assets.btnHover} className="absolute inset-0 w-full h-full object-contain hidden group-hover:block" alt="" />
-                      <span className="relative z-10 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{loading ? '拟旨中...' : '交由内阁票拟'}</span>
+                      <span className="relative z-10 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{loading ? '发布中...' : '发布中旨'}</span>
                     </button>
                   </div>
                 </div>
@@ -344,7 +350,20 @@ export default function GameOverlay({ gameState: propsGameState, onStateChange, 
                         />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm text-[#8a7f72]">行文布政使司 (逗号分隔)</span>
+                        <span className="text-sm text-[#8a7f72]">调出地 (逗号分隔)</span>
+                        <input 
+                          type="text" 
+                          value={t(policy.source_regions)} 
+                          onChange={(e) => {
+                            const newPolicies = [...draftPolicies];
+                            newPolicies[idx].source_regions = e.target.value.split(',').map(s => s.trim());
+                            setDraftPolicies(newPolicies);
+                          }}
+                          className="bg-transparent border-b border-[#cca366] focus:border-[#8b2323] outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm text-[#8a7f72]">行文布政使司 (目标地)</span>
                         <input 
                           type="text" 
                           value={t(policy.target_regions)} 

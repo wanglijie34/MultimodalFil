@@ -18,7 +18,12 @@
     "monthly_tax_income": 20000,
     "monthly_grain_output": 10000,
     "relief_need": 10000,
-    "tags": ["capital", "political_center"]
+    "tags": [
+      "capital",
+      "political_center"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "liaodong",
@@ -39,7 +44,12 @@
     "monthly_tax_income": 10000,
     "monthly_grain_output": 8000,
     "relief_need": 25000,
-    "tags": ["frontier", "manchu_threat"]
+    "tags": [
+      "frontier",
+      "manchu_threat"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "shanhaiguan",
@@ -60,7 +70,12 @@
     "monthly_tax_income": 8000,
     "monthly_grain_output": 6000,
     "relief_need": 8000,
-    "tags": ["fortress", "frontier"]
+    "tags": [
+      "fortress",
+      "frontier"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "shaanxi",
@@ -81,7 +96,13 @@
     "monthly_tax_income": 25000,
     "monthly_grain_output": 12000,
     "relief_need": 90000,
-    "tags": ["drought", "famine", "high_rebel_risk"]
+    "tags": [
+      "drought",
+      "famine",
+      "high_rebel_risk"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "shanxi",
@@ -102,7 +123,12 @@
     "monthly_tax_income": 22000,
     "monthly_grain_output": 18000,
     "relief_need": 50000,
-    "tags": ["drought_risk", "rebel_spread_risk"]
+    "tags": [
+      "drought_risk",
+      "rebel_spread_risk"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "henan",
@@ -123,7 +149,12 @@
     "monthly_tax_income": 30000,
     "monthly_grain_output": 25000,
     "relief_need": 55000,
-    "tags": ["central_plain", "rebel_spread_risk"]
+    "tags": [
+      "central_plain",
+      "rebel_spread_risk"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "shandong",
@@ -144,7 +175,11 @@
     "monthly_tax_income": 28000,
     "monthly_grain_output": 30000,
     "relief_need": 35000,
-    "tags": ["grain_region"]
+    "tags": [
+      "grain_region"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "zhili",
@@ -165,7 +200,11 @@
     "monthly_tax_income": 26000,
     "monthly_grain_output": 26000,
     "relief_need": 28000,
-    "tags": ["near_capital"]
+    "tags": [
+      "near_capital"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "jiangnan",
@@ -186,7 +225,12 @@
     "monthly_tax_income": 75000,
     "monthly_grain_output": 70000,
     "relief_need": 15000,
-    "tags": ["rich_region", "tax_core"]
+    "tags": [
+      "rich_region",
+      "tax_core"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "huguang",
@@ -207,7 +251,11 @@
     "monthly_tax_income": 42000,
     "monthly_grain_output": 80000,
     "relief_need": 18000,
-    "tags": ["grain_core"]
+    "tags": [
+      "grain_core"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "sichuan",
@@ -228,7 +276,11 @@
     "monthly_tax_income": 20000,
     "monthly_grain_output": 45000,
     "relief_need": 20000,
-    "tags": ["interior"]
+    "tags": [
+      "interior"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   },
   {
     "region_id": "yungui",
@@ -249,6 +301,11 @@
     "monthly_tax_income": 12000,
     "monthly_grain_output": 18000,
     "relief_need": 25000,
-    "tags": ["frontier", "local_chieftain"]
+    "tags": [
+      "frontier",
+      "local_chieftain"
+    ],
+    "tax_efficiency": 100,
+    "rebel_conversion_rate": 1.0
   }
 ]

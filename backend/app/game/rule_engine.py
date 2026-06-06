@@ -30,6 +30,21 @@ class RuleEngine:
                 world["national_metrics"]["factional_conflict"] = clamp(world["national_metrics"]["factional_conflict"] + bl * 0.1)
                 world["national_metrics"]["bureaucratic_efficiency"] = clamp(world["national_metrics"]["bureaucratic_efficiency"] - bl * 0.05)
                 world["emperor"]["prestige"] = clamp(world["emperor"]["prestige"] - bl * 0.02)
+                
+            if flow_result.get("civil_trust_drop"):
+                if "civil_trust" not in world["emperor"]:
+                    world["emperor"]["civil_trust"] = 50
+                world["emperor"]["civil_trust"] = clamp(world["emperor"]["civil_trust"] - 15)
+                world["national_metrics"]["bureaucratic_efficiency"] = clamp(world["national_metrics"]["bureaucratic_efficiency"] - 20)
+
+            if flow_result.get("public_burden_shift"):
+                targets = policy.get("target_regions", [])
+                for tid in targets:
+                    region = self.state_manager.get_region(tid)
+                    if region:
+                        region["public_support"] = clamp(region["public_support"] - 20)
+                        region["rebel_risk"] = clamp(region["rebel_risk"] + 25)
+
             
             if ptype == "disaster_relief":
                 result = self._apply_disaster_relief(world, policy, flow_result)

@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -31,7 +32,22 @@ const navigation = [
   { name: "各地奏报", href: "/reports", icon: FileBarChart },
 ]
 
-export function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean, setIsOpen?: (val: boolean) => void }) {
+const STATE_DESCRIPTIONS: Record<string, string> = {
+  "雷霆万钧": "天子威望极高，百官慑服。政令执行率上升，流程摩擦大幅减小。",
+  "政令不出乾清宫": "威望低迷，皇权旁落。政令被无限期拖延，地方阳奉阴违，执行率极低。",
+  "中旨抗药性": "连发中旨导致法统崩坏。百官伏阙请愿，常规诏令原地死锁，通政司罢工。",
+  "深宫疑云": "皇帝猜忌深重，圣意难测。解析系统会故意曲解诏书，政令大概率发生变异。",
+  "门户之见": "朝堂党争极度胶着。若强行推进党争议案，流程摩擦将被恶意拉满。",
+  "弹劾狂热": "言官杀红了眼。弹劾奏折满天飞，能臣压力暴增，行政效率大幅下滑。",
+  "南财北调阻断": "江南士绅抗税。南方各省税收解运率暴跌，国库断血。",
+  "层层剥皮": "官僚系统深度腐败。赈灾与调粮指令在途损耗率强制拉高至 80%。",
+  "积案如山": "奏折留中不发过多。中央行政秩序紊乱，威望与行政效率持续下降。",
+  "长城锁死": "满清边患极度严重。九边精锐被全部锁死在防线上，无法抽调回内地剿匪。",
+  "流贼狂飙": "天灾加重赋导致难民失控。流寇滋生速度暴增 150%，且向周边省份迅速蔓延。"
+}
+
+export function Sidebar({ isOpen, setIsOpen, gameState }: { isOpen?: boolean, setIsOpen?: (val: boolean) => void, gameState?: any }) {
+  const [isStatesExpanded, setIsStatesExpanded] = useState(false)
   const pathname = usePathname()
   const { t } = useI18n()
 
@@ -55,6 +71,39 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean, setIsOpen?: (
           </button>
         )}
       </div>
+
+      <div className="px-6 py-4 border-b border-[#c09a53]/20 relative z-10 shrink-0">
+        <div className="flex flex-col relative">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-[#e4cfa1] tracking-widest drop-shadow-md whitespace-nowrap">崇祯元年 · 十月</h2>
+          </div>
+          {gameState?.active_states && gameState.active_states.length > 0 && (
+            <button 
+              onClick={() => setIsStatesExpanded(!isStatesExpanded)}
+              className="flex items-center gap-1 px-2 py-0.5 mt-2 border border-[#8b2323] bg-[#8b2323]/20 hover:bg-[#8b2323]/40 text-[#e8debe] text-[11px] rounded-sm transition-colors shadow-[0_0_5px_rgba(139,35,35,0.5)] whitespace-nowrap self-start"
+            >
+              <span>天下危局 ({gameState.active_states.length})</span>
+              <svg className={`w-3 h-3 transition-transform ${isStatesExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
+          
+          {isStatesExpanded && gameState?.active_states && gameState.active_states.length > 0 && (
+            <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-[#8b2323]/30">
+              {gameState.active_states.map((state: string, idx: number) => (
+                <div key={idx} className="flex flex-col border-l-2 border-[#8b2323] pl-2 py-1 relative group">
+                  <span className="text-[12px] font-bold text-[#e8debe] cursor-help">{state}</span>
+                  <div className="absolute left-0 top-full mt-1 w-[220px] p-2.5 bg-[#1a110b] border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[110] text-[#d4c4a8] text-[12px] whitespace-normal leading-relaxed">
+                    {STATE_DESCRIPTIONS[state] || "系统状态正在生效中，它将深远改变底层流转规则。"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto py-4 whitespace-nowrap relative z-10">
         <nav className="px-3 space-y-1">
           {navigation.map((item) => {

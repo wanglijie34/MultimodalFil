@@ -28,7 +28,22 @@ export function AppShell({ children }: AppShellProps) {
   const [showConsult, setShowConsult] = useState(false)
   const [consulting, setConsulting] = useState(false)
   const [consultations, setConsultations] = useState<ConsultationResult[]>([])
+  const [isStatesExpanded, setIsStatesExpanded] = useState(false)
   const [selectedMinisters, setSelectedMinisters] = useState<string[]>([])
+  
+  const STATE_DESCRIPTIONS: Record<string, string> = {
+    "雷霆万钧": "天子威望极高，百官慑服。政令执行率上升，流程摩擦大幅减小。",
+    "政令不出乾清宫": "威望低迷，皇权旁落。政令被无限期拖延，地方阳奉阴违，执行率极低。",
+    "中旨抗药性": "连发中旨导致法统崩坏。百官伏阙请愿，常规诏令原地死锁，通政司罢工。",
+    "深宫疑云": "皇帝猜忌深重，圣意难测。解析系统会故意曲解诏书，政令大概率发生变异。",
+    "门户之见": "朝堂党争极度胶着。若强行推进党争议案，流程摩擦将被恶意拉满。",
+    "弹劾狂热": "言官杀红了眼。弹劾奏折满天飞，能臣压力暴增，行政效率大幅下滑。",
+    "南财北调阻断": "江南士绅抗税。南方各省税收解运率暴跌，国库断血。",
+    "层层剥皮": "官僚系统深度腐败。赈灾与调粮指令在途损耗率强制拉高至 80%。",
+    "积案如山": "奏折留中不发过多。中央行政秩序紊乱，威望与行政效率持续下降。",
+    "长城锁死": "满清边患极度严重。九边精锐被全部锁死在防线上，无法抽调回内地剿匪。",
+    "流贼狂飙": "天灾加重赋导致难民失控。流寇滋生速度暴增 150%，且向周边省份迅速蔓延。"
+  }
   
 
   const [gameState, setGameState] = useState<any>({})
@@ -62,7 +77,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <ToastRegion />
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} gameState={gameState} />
       <div className="flex flex-col flex-1 overflow-hidden relative">
         <header className="flex h-16 items-center justify-between px-6 border-b border-[#c09a53]/30 bg-[#1a110b]/90 shadow-md relative z-30">
           <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[#c09a53]/50 to-transparent pointer-events-none" />
@@ -77,7 +92,7 @@ export function AppShell({ children }: AppShellProps) {
                   <PanelLeftOpen className="h-5 w-5" />
                 </button>
               )}
-              <h1 className="text-xl font-bold text-[#e4cfa1] tracking-widest drop-shadow-md whitespace-nowrap">崇祯元年 · 十月</h1>
+              {/* Date block moved to Sidebar */}
               
               <button
                 onClick={() => setIsCourtOpen(!isCourtOpen)}
@@ -98,16 +113,16 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">太仓银 (国库)</span>
                 <div className="flex items-center gap-3 whitespace-nowrap">
                   <span className="text-[#8b2323] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                    {gameState?.treasury?.silver?.toLocaleString() || '100,000'} <span className="text-sm font-sans">两</span>
+                    {gameState?.treasury?.silver ? Math.floor(gameState.treasury.silver).toLocaleString() : '100,000'} <span className="text-sm font-sans">两</span>
                   </span>
                   <div className="flex flex-col justify-center gap-1 border-l border-[#c09a53]/20 pl-2 h-7">
-                    <span className="text-[#c09a53] text-[10px] leading-none">岁入: +{(gameState?.treasury?.monthly_income * 12)?.toLocaleString() || '6,000,000'}</span>
-                    <span className="text-[#8b2323] text-[10px] leading-none">岁出: -{(gameState?.treasury?.monthly_expense * 12)?.toLocaleString() || '11,200,000'}</span>
+                    <span className="text-[#c09a53] text-[10px] leading-none">岁入: +{gameState?.treasury?.monthly_income ? Math.floor(gameState.treasury.monthly_income * 12).toLocaleString() : '6,000,000'}</span>
+                    <span className="text-[#8b2323] text-[10px] leading-none">岁出: -{gameState?.treasury?.monthly_expense ? Math.floor(gameState.treasury.monthly_expense * 12).toLocaleString() : '11,200,000'}</span>
                   </div>
                 </div>
                 {gameState?.treasury?.debt > 0 && (
                   <div className="absolute -bottom-8 whitespace-nowrap text-[#8b2323] text-[11px] font-bold animate-pulse border border-[#8b2323]/50 px-2 py-0.5 bg-[#8b2323]/10 backdrop-blur-sm shadow-[0_0_10px_rgba(139,35,35,0.2)]">
-                    欠饷总额: {gameState?.treasury?.debt?.toLocaleString()} 两
+                    欠饷总额: {Math.floor(gameState.treasury.debt).toLocaleString()} 两
                   </div>
                 )}
                 {/* Tooltip */}
@@ -123,7 +138,7 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">内帑银 (私房钱)</span>
                 <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   <span className="text-[#c09a53] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                    {gameState?.treasury?.privy_purse?.toLocaleString() || '2,000,000'} <span className="text-sm font-sans">两</span>
+                    {gameState?.treasury?.privy_purse ? Math.floor(gameState.treasury.privy_purse).toLocaleString() : '2,000,000'} <span className="text-sm font-sans">两</span>
                   </span>
                   <span className="text-sm drop-shadow-md">🔒</span>
                 </div>
@@ -140,10 +155,10 @@ export function AppShell({ children }: AppShellProps) {
                 <span className="text-[#a38a6a] text-[11px] mb-1 tracking-widest">天下存粮 (京仓/通州仓)</span>
                 <div className="flex items-center gap-3 whitespace-nowrap">
                   <span className="text-[#e8debe] font-bold text-2xl font-serif leading-none tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                    {gameState?.treasury?.grain?.toLocaleString() || '200,000'} <span className="text-sm font-sans text-[#d4c4a8]">石</span>
+                    {gameState?.treasury?.grain ? Math.floor(gameState.treasury.grain).toLocaleString() : '200,000'} <span className="text-sm font-sans text-[#d4c4a8]">石</span>
                   </span>
                   <div className="flex flex-col justify-center border-l border-[#c09a53]/20 pl-2 h-7">
-                    <span className="text-[#8b2323] text-[10px] leading-none">消耗率: -{gameState?.treasury?.grain_consumption?.toLocaleString() || '50,000'} 石/月</span>
+                    <span className="text-[#8b2323] text-[10px] leading-none">消耗率: -{gameState?.treasury?.grain_consumption ? Math.floor(gameState.treasury.grain_consumption).toLocaleString() : '50,000'} 石/月</span>
                   </div>
                 </div>
                 {/* Tooltip */}
@@ -164,7 +179,7 @@ export function AppShell({ children }: AppShellProps) {
                 {isTrustExpanded ? (
                   <div className="flex items-center gap-4 bg-[#1a110b]/80 border border-[#c09a53]/30 px-3 py-1 rounded shadow-inner" onClick={e => e.stopPropagation()}>
                      <div className="flex flex-col items-center group relative cursor-help">
-                       <span className="text-[#8b2323] font-bold text-lg font-serif leading-none drop-shadow-sm">{gameState?.emperor?.civil_trust ?? 10}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
+                       <span className="text-[#8b2323] font-bold text-lg font-serif leading-none drop-shadow-sm">{Math.floor(gameState?.emperor?.civil_trust ?? 10)}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
                        <span className="text-[10px] text-[#c09a53] mt-0.5">文官</span>
                        <div className="absolute top-full mt-3 w-48 p-2.5 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] text-[#d4c4a8] text-[12px] rounded-sm text-center leading-relaxed">
                          内阁和六部全是敌人。
@@ -172,10 +187,18 @@ export function AppShell({ children }: AppShellProps) {
                      </div>
                      <div className="w-px h-6 bg-[#c09a53]/30"></div>
                      <div className="flex flex-col items-center group relative cursor-help">
-                       <span className="text-[#8b2323] font-bold text-lg font-serif leading-none drop-shadow-sm">{gameState?.emperor?.eunuch_trust ?? 0}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
+                       <span className="text-[#8b2323] font-bold text-lg font-serif leading-none drop-shadow-sm">{Math.floor(gameState?.emperor?.eunuch_trust ?? 0)}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
                        <span className="text-[10px] text-[#c09a53] mt-0.5">内廷</span>
                        <div className="absolute top-full mt-3 w-48 p-2.5 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] text-[#d4c4a8] text-[12px] rounded-sm text-center leading-relaxed">
                          你身边的太监随时可能在你的饭菜里下毒。
+                       </div>
+                     </div>
+                     <div className="w-px h-6 bg-[#c09a53]/30"></div>
+                     <div className="flex flex-col items-center group relative cursor-help">
+                       <span className="text-[#e4cfa1] font-bold text-lg font-serif leading-none drop-shadow-sm">{Math.floor(gameState?.emperor?.military_trust ?? 50)}<span className="text-[10px] text-[#c09a53] font-sans">/100</span></span>
+                       <span className="text-[10px] text-[#c09a53] mt-0.5">武将</span>
+                       <div className="absolute top-full mt-3 w-48 p-2.5 bg-[#1a110b]/95 border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] text-[#d4c4a8] text-[12px] rounded-sm text-center leading-relaxed">
+                         克扣军饷或妄杀大将，将导致边军哗变或拥兵自重。
                        </div>
                      </div>
                   </div>
@@ -195,7 +218,7 @@ export function AppShell({ children }: AppShellProps) {
                   <div className="w-24 h-2.5 bg-[#1a110b] border border-[#c09a53]/30 relative overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.9)] rounded-sm">
                     <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#8b6b3d] to-[#c09a53] shadow-[0_0_10px_rgba(192,154,83,0.5)]" style={{width: `${Math.min(100, Math.max(0, gameState?.emperor?.prestige || 65))}%`}}/>
                   </div>
-                  <span className="text-[#e8debe] font-bold font-serif text-xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{gameState?.emperor?.prestige || 65}</span>
+                  <span className="text-[#e8debe] font-bold font-serif text-xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{Math.floor(gameState?.emperor?.prestige || 65)}</span>
                 </div>
                 {/* Tooltip */}
                 <div className="absolute top-full right-0 mt-4 w-60 p-3 bg-[#1a110b]/95 backdrop-blur-md border border-[#c09a53]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-[100] text-[#d4c4a8] text-[13px] leading-relaxed rounded-sm text-left font-serif">

@@ -9,6 +9,7 @@ from app.game.monthly_update import MonthlyUpdateEngine
 from app.game.event_engine import EventEngine
 from app.game.narrative_generator import NarrativeGenerator
 from app.game.chat_engine import ChatEngine
+from app.game.state_evaluator import StateEvaluator
 from app.models.game_models import AdviseRequest, EdictRequest, SimulationResult, ChatRequest, ChatResponse
 
 router = APIRouter()
@@ -28,6 +29,7 @@ chat_engine = ChatEngine(global_state_manager)
 @router.post("/start")
 async def start_game():
     global_state_manager.load_initial_state()
+    StateEvaluator.evaluate_all(global_state_manager)
     return {
         "status": "success",
         "world_state": global_state_manager.world_state,
@@ -39,6 +41,7 @@ async def start_game():
 
 @router.get("/state")
 async def get_state():
+    StateEvaluator.evaluate_all(global_state_manager)
     return {
         "turn": global_state_manager.world_state.get("turn"),
         "date": global_state_manager.world_state.get("date"),
@@ -156,7 +159,13 @@ async def dismiss_minister(request: DismissRequest):
 @router.post("/parse_edict", response_model=ParseEdictResponse)
 async def parse_edict(request: EdictRequest):
     edict_text = request.edict_text
-    policies = await policy_parser.parse_edict(edict_text)
+    active_states = global_state_manager.world_state.get("active_states", [])
+    policies = await policy_parser.parse_edict(edict_text, active_states)
+    
+    # 默认从Map主界面发出的诏书（无廷议前置）均强制视为中旨
+    for p in policies:
+        p["is_zhongzhi"] = True
+        
     return ParseEdictResponse(parsed_policy=policies)
 
 @router.post("/execute_edict", response_model=SimulationResult)
@@ -164,14 +173,20 @@ async def execute_edict(request: ExecuteEdictRequest):
     edict_text = request.edict_text
     policies = request.parsed_policy
     
+    # 1.5 Evaluate States before executing
+    StateEvaluator.evaluate_all(global_state_manager)
+
     # 2. Court Flow Engine
     flow_results = court_flow_engine.process_policies(policies)
     
     # 3. Rule engine
     calc_results = rule_engine.apply_policies(policies, flow_results)
     
-    # 3. Monthly updates
+    # 3.5 Monthly updates
     monthly_update_engine.process_month()
+    
+    # Evaluate States again after monthly update
+    StateEvaluator.evaluate_all(global_state_manager)
     
     # 4. Events
     triggered_events = event_engine.evaluate_events()

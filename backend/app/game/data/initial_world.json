@@ -10,8 +10,12 @@
     "legitimacy": 75,
     "stress": 80,
     "civil_trust": 10,
-    "eunuch_trust": 0
+    "eunuch_trust": 0,
+    "military_trust": 50,
+    "suspicion": 50,
+    "zhongzhi_count_this_turn": 0
   },
+  "active_states": [],
   "treasury": {
     "silver": 200000,
     "privy_purse": 4000000,
@@ -31,7 +35,8 @@
     "factional_conflict": 85,
     "disaster_pressure": 90,
     "rebel_pressure": 60,
-    "manchu_pressure": 85
+    "manchu_pressure": 85,
+    "ignored_memorials": 0
   },
   "policy_flags": {
     "wei_zhongxian_purged": false,
