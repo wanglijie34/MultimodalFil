@@ -220,22 +220,23 @@ export default function FullHistoricalMapInner() {
   const locationsGeoJson = useMemo(() => {
     return {
       type: 'FeatureCollection',
-      features: mapLocations.map(loc => {
+      features: mapLocations
+        .filter(loc => !['capital', 'fortress', 'garrison'].includes(loc.type))
+        .map(loc => {
         let color = '#d49a6a';
         let radius = 5;
-        if (loc.type === 'capital') { color = '#a32727'; radius = 8; }
-        else if (loc.type === 'city') { color = '#293d3d'; radius = 6; }
-        else if (loc.type === 'fortress') { color = '#4d3c2b'; radius = 6; }
-        else if (loc.type === 'event') { color = '#d94a18'; radius = 7; }
-        else if (loc.type === 'mountain') { color = 'transparent'; radius = 0; }
-        else if (loc.type === 'river') { color = 'transparent'; radius = 0; }
+        let strokeWidth = 1.5;
+        if (loc.type === 'city') { color = '#293d3d'; radius = 6; strokeWidth = 1.5; }
+        else if (loc.type === 'event') { color = '#d94a18'; radius = 7; strokeWidth = 1.5; }
+        else if (loc.type === 'mountain') { color = 'transparent'; radius = 0; strokeWidth = 0; }
+        else if (loc.type === 'river') { color = 'transparent'; radius = 0; strokeWidth = 0; }
         let text_color = '#3b2f24'; // Ink black/brown
         if (loc.type === 'mountain') text_color = '#5c4b3a';
         if (loc.type === 'river') text_color = '#2d4b5a';
         
         return {
           type: 'Feature',
-          properties: { ...loc, color, radius, text_color },
+          properties: { ...loc, color, radius, strokeWidth, text_color },
           geometry: { type: 'Point', coordinates: [loc.lng, loc.lat] }
         };
       })
@@ -548,8 +549,8 @@ export default function FullHistoricalMapInner() {
                 paint={{
                   'circle-color': ['get', 'color'],
                   'circle-radius': ['get', 'radius'],
-                  'circle-stroke-color': '#ffb366',
-                  'circle-stroke-width': ['case', ['==', ['get', 'radius'], 0], 0, 1.5],
+                  'circle-stroke-color': ['case', ['==', ['get', 'type'], 'capital'], '#ffd700', '#ffb366'],
+                  'circle-stroke-width': ['get', 'strokeWidth'],
                   'circle-pitch-alignment': 'map'
                 }}
               />
@@ -562,10 +563,7 @@ export default function FullHistoricalMapInner() {
                     ['match', ['get', 'type'],
                       'mountain', '⛰️ ',
                       'river', '🌊 ',
-                      'fortress', '🛡️ ',
-                      'garrison', '⚔️ ',
                       'event', '🔥 ',
-                      'capital', '👑 ',
                       'city', '🏛️ ',
                       ''
                     ],
@@ -585,6 +583,41 @@ export default function FullHistoricalMapInner() {
               />
             </Source>
           )}
+
+          {/* HTML Markers for Capitals and Fortresses */}
+          {!isMacroView && mapLocations.filter(loc => ['capital', 'fortress', 'garrison'].includes(loc.type)).map(loc => (
+            <Marker
+              key={loc.id}
+              longitude={loc.lng!}
+              latitude={loc.lat!}
+              anchor="bottom"
+              className="z-10"
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                setClickInfo({
+                  lng: loc.lng!,
+                  lat: loc.lat!,
+                  name: loc.name,
+                  faction: '大明',
+                  type: loc.type
+                });
+              }}
+            >
+              <div className="relative flex flex-col items-center group cursor-pointer transform hover:scale-110 transition-transform">
+                <img 
+                  src={loc.type === 'capital' ? '/images/capital_icon.png' : '/images/fortress_icon.png'} 
+                  className={loc.type === 'capital' ? "w-12 h-12 drop-shadow-[0_4px_4px_rgba(0,0,0,0.6)]" : "w-8 h-8 drop-shadow-[0_3px_3px_rgba(0,0,0,0.6)]"}
+                  alt={loc.name}
+                />
+                <span className={`mt-0.5 whitespace-nowrap font-bold drop-shadow-md ${loc.type === 'capital' ? 'text-[14px] text-[#8b2323]' : 'text-[12px] text-[#3b2f24]'} [-webkit-text-stroke:1px_rgba(215,196,161,0.8)]`}>
+                  {loc.name}
+                </span>
+                <span className={`absolute ${loc.type === 'capital' ? 'top-12' : 'top-8'} mt-1 whitespace-nowrap font-bold drop-shadow-md z-[-1] ${loc.type === 'capital' ? 'text-[14px] text-[#8b2323]' : 'text-[12px] text-[#3b2f24]'}`}>
+                  {loc.name}
+                </span>
+              </div>
+            </Marker>
+          ))}
 
           {/* Click Popup using Marker for stability */}
           {clickInfo && !activeLocation && (

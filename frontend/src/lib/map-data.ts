@@ -19,19 +19,27 @@ export interface MapRelation {
 export const mapLocations: MapLocation[] = [
   {
     id: 'beijing',
-    name: '顺天府 (北京)',
+    name: '京师 (顺天府)',
     lat: 39.9042,
     lng: 116.4074,
     type: 'capital',
-    description: '明朝京师，永乐大帝迁都于此，是帝国的政治、军事中心。'
+    description: '大明京师，天子守国门。永乐大帝迁都于此，是帝国的绝对政治、军事与权力中枢。'
   },
   {
     id: 'nanjing',
-    name: '应天府 (南京)',
+    name: '南京 (应天府)',
     lat: 32.0603,
     lng: 118.7969,
     type: 'capital',
-    description: '明初首都，后作为留都，保留了一套完整的中央机构，是南方的经济文化中心。'
+    description: '大明留都，明初首都。保留了完整的中央六部机构，是南方江南财赋重地的核心与文化中心。'
+  },
+  {
+    id: 'fengyang',
+    name: '中都 (凤阳)',
+    lat: 32.868,
+    lng: 117.561,
+    type: 'capital',
+    description: '大明中都，太祖高皇帝朱元璋的龙兴之地。这里不仅是皇室祖陵所在，更是维系大明法统与“祖宗成法”的精神圣地。'
   },
   {
     id: 'tumu',
@@ -46,8 +54,8 @@ export const mapLocations: MapLocation[] = [
     name: '大同镇',
     lat: 40.0903,
     lng: 113.2914,
-    type: 'garrison',
-    description: '九边重镇之一，直面蒙古本部的防御核心。'
+    type: 'fortress',
+    description: '九边重镇之一，山西门户，直面蒙古察哈尔部（林丹汗）的兵锋。'
   },
   {
     id: 'shanhaiguan',
@@ -58,85 +66,51 @@ export const mapLocations: MapLocation[] = [
     description: '天下第一关，扼守辽西走廊，是防范东北女真等部族的重要关隘。'
   },
   {
-    id: 'jiayuguan',
-    name: '嘉峪关',
-    lat: 39.7733,
-    lng: 98.2892,
+    id: 'ningyuan',
+    name: '宁远',
+    lat: 40.62,
+    lng: 120.71,
     type: 'fortress',
-    description: '明长城最西端的关口，控制河西走廊，连接西域的咽喉要道。'
-  },
-  // --- 内三关 (Inner Three Passes) ---
-  {
-    id: 'juyongguan',
-    name: '居庸关',
-    lat: 40.288,
-    lng: 116.068,
-    type: 'fortress',
-    description: '内三关之首，太行八陉之一，直接拱卫京师的天下第一雄关。'
+    description: '关外坚城，袁崇焕凭借红夷大炮在此击退努尔哈赤，是关宁锦防线的核心。'
   },
   {
-    id: 'zijingguan',
-    name: '紫荆关',
-    lat: 39.426,
-    lng: 115.166,
+    id: 'jinzhou',
+    name: '锦州',
+    lat: 41.11,
+    lng: 121.12,
     type: 'fortress',
-    description: '内三关之一，防范自太行山脉突袭京畿的咽喉要冲。'
+    description: '大明在关外最前沿的重镇，像一颗钉子死死钉在后金的咽喉上。'
   },
   {
-    id: 'daomaguan',
-    name: '倒马关',
-    lat: 39.043,
-    lng: 114.619,
+    id: 'gansu',
+    name: '甘肃镇',
+    lat: 38.93,
+    lng: 100.45,
     type: 'fortress',
-    description: '内三关之一，山路险峻，战马至此皆寸步难行而得名。'
-  },
-  // --- 外三关 (Outer Three Passes) ---
-  {
-    id: 'yanmenguan',
-    name: '雁门关',
-    lat: 39.186,
-    lng: 112.868,
-    type: 'fortress',
-    description: '外三关之首，“中华第一关”，控制晋北高原进入中原的交通要道。'
+    description: '九边重镇之一，最西端的防区，控制河西走廊，防范西域与青海方向的威胁。'
   },
   {
-    id: 'ningwuguan',
-    name: '宁武关',
-    lat: 39.001,
-    lng: 112.302,
-    type: 'fortress',
-    description: '外三关之一，防御蒙古部落从偏头关渗入三晋腹地的核心中枢。'
-  },
-  {
-    id: 'piantouguan',
-    name: '偏头关',
+    id: 'shanxi_zhen',
+    name: '山西镇 (偏头关)',
     lat: 39.444,
     lng: 111.498,
     type: 'fortress',
-    description: '外三关之一，扼守黄河入晋的渡口，大明防范套部蒙古的黄河屏障。'
-  },
-  {
-    id: 'jianmenguan',
-    name: '剑门关',
-    lat: 32.228,
-    lng: 105.578,
-    type: 'fortress',
-    description: '“剑阁峥嵘而崔嵬，一夫当关，万夫莫开”，蜀道之核心咽喉。'
+    description: '九边重镇之一，防范蒙古骑兵从黄河渡口渗入晋中。'
   },
   {
     id: 'liaodong',
-    name: '辽东都司',
+    name: '辽东镇',
     lat: 41.2694,
     lng: 123.1815,
-    type: 'garrison',
-    description: '明朝在东北地区设立的最高军政机构（治所辽阳）。'
+    type: 'fortress',
+    description: '九边重镇之一，防区极广，直面女真（后金）与东部蒙古，是大明晚期流血最多的防线。'
   },
   {
     id: 'nurgan',
     name: '奴儿干都司',
     lat: 52.9833,
     lng: 139.7667,
-    type: 'garrison',
+    type: 'event',
     description: '明朝管辖黑龙江、乌苏里江流域及库页岛的军政机构（治所特林），永乐年间设立。'
   },
   // ----- 新增：根据 1443 年地图提取的北疆与塞外势力 -----
@@ -161,7 +135,7 @@ export const mapLocations: MapLocation[] = [
     name: '失必儿 (Sibir)',
     lat: 56.0,
     lng: 69.0,
-    type: 'garrison',
+    type: 'event',
     description: '西伯利亚汗国的前身，位于鄂毕河流域，明代地图所标注的最西北端势力之一。'
   },
   {
@@ -169,7 +143,7 @@ export const mapLocations: MapLocation[] = [
     name: '乞儿吉思',
     lat: 52.0,
     lng: 92.0,
-    type: 'garrison',
+    type: 'event',
     description: '叶尼塞吉尔吉斯人，游牧于叶尼塞河上游。'
   },
   {
@@ -177,7 +151,7 @@ export const mapLocations: MapLocation[] = [
     name: '建州卫',
     lat: 41.8,
     lng: 124.9,
-    type: 'garrison',
+    type: 'event',
     description: '明朝在女真地区设立的羁縻卫所，后努尔哈赤统一建州女真，建立后金。'
   },
   // ----- 新增：明朝九边重镇与核心卫所 -----
@@ -187,7 +161,7 @@ export const mapLocations: MapLocation[] = [
     lat: 40.6,
     lng: 115.0,
     type: 'fortress',
-    description: '明朝九边重镇之一，京师西北的绝对门户。'
+    description: '九边重镇之一，京师西北的大门，扼守蒙古骑兵南下京城的要道。'
   },
   {
     id: 'jizhou',
@@ -195,7 +169,7 @@ export const mapLocations: MapLocation[] = [
     lat: 40.0,
     lng: 117.4,
     type: 'fortress',
-    description: '明朝九边重镇之一，负责防卫古北口等长城核心关隘。'
+    description: '九边重镇之一，京师的绝对门户，负责防卫山海关至古北口一线的长城，护卫京畿安全。'
   },
   {
     id: 'ningxia',
@@ -203,7 +177,7 @@ export const mapLocations: MapLocation[] = [
     lat: 38.5,
     lng: 106.2,
     type: 'fortress',
-    description: '九边重镇，防范蒙古骑兵顺黄河南下的重要基地。'
+    description: '九边重镇之一，扼守黄河几字弯，有着“塞上江南”之称的重要军屯与防御基地。'
   },
   {
     id: 'yulin',
@@ -211,15 +185,15 @@ export const mapLocations: MapLocation[] = [
     lat: 38.3,
     lng: 109.7,
     type: 'fortress',
-    description: '九边重镇，扼守陕北高原，直面鄂尔多斯高原的蒙古部落。'
+    description: '九边重镇之一，扼守陕北高原，防范鄂尔多斯高原的“套部”蒙古，也是明末民变的策源地之一。'
   },
   {
-    id: 'hami',
-    name: '哈密卫',
-    lat: 42.8,
-    lng: 93.5,
+    id: 'guyuan',
+    name: '固原镇',
+    lat: 36.00,
+    lng: 106.24,
     type: 'fortress',
-    description: '明朝在西域设立的羁縻卫所，丝绸之路的咽喉，多次在明朝与吐鲁番之间易手。'
+    description: '九边重镇之一，位于西北大后方，是陕西三边（延绥、宁夏、甘肃）的总后方与预备队兵源地。'
   },
   // Mountains and Rivers
   {
